@@ -2,9 +2,7 @@ package com.luckyseven.backend.domain.settlements.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.verify;
@@ -91,11 +89,11 @@ class SettlementServiceTest {
 
     //then
     assertNotNull(created);
-    assertThat(created.amount()).isEqualTo(BigDecimal.valueOf(1000));
+    assertThat(created.amount).isEqualTo(BigDecimal.valueOf(1000));
     assertThat(created.settlerId()).isEqualTo(settler.getId());
-    assertThat(created.payerId()).isEqualTo(payer.getId());
-    assertThat(created.expenseId()).isEqualTo(expense.getId());
-    assertFalse(created.isSettled());
+    assertThat(created.payerId).isEqualTo(payer.getId());
+    assertThat(created.expenseId).isEqualTo(expense.getId());
+    assertFalse(created.isSettled);
   }
 
   @Test
@@ -108,7 +106,7 @@ class SettlementServiceTest {
 
     SettlementResponse updated = settlementService.settleSettlement(1L);
 
-    assertTrue(updated.isSettled());
+    assertTrue(updated.isSettled);
     verify(settlementRepository).save(settlement);
   }
 
@@ -124,10 +122,10 @@ class SettlementServiceTest {
 
     //then
     assertNotNull(found);
-    assertThat(found.amount()).isEqualTo(BigDecimal.valueOf(1000));
+    assertThat(found.amount).isEqualTo(BigDecimal.valueOf(1000));
     assertThat(found.settlerId()).isEqualTo(settler.getId());
-    assertThat(found.payerId()).isEqualTo(payer.getId());
-    assertThat(found.expenseId()).isEqualTo(expense.getId());
+    assertThat(found.payerId).isEqualTo(payer.getId());
+    assertThat(found.expenseId).isEqualTo(expense.getId());
   }
 
   @Test
@@ -151,10 +149,10 @@ class SettlementServiceTest {
 
     //then
     assertNotNull(updated);
-    assertThat(updated.amount()).isEqualTo(newAmount);
+    assertThat(updated.amount).isEqualTo(newAmount);
     assertThat(updated.settlerId()).isEqualTo(settler.getId());
-    assertThat(updated.payerId()).isEqualTo(payer.getId());
-    assertThat(updated.expenseId()).isEqualTo(expense.getId());
+    assertThat(updated.payerId).isEqualTo(payer.getId());
+    assertThat(updated.expenseId).isEqualTo(expense.getId());
   }
 
   @Test
@@ -180,8 +178,8 @@ class SettlementServiceTest {
 
     //then
     assertThat(result.getContent().size()).isEqualTo(1);
-    assertThat(result.getContent()).allMatch(s -> s.amount().equals(BigDecimal.valueOf(1000)));
-    assertThat(result.getContent()).allMatch(s -> !s.isSettled());
+    assertThat(result.getContent()).allMatch(s -> s.amount.equals(BigDecimal.valueOf(1000)));
+    assertThat(result.getContent()).allMatch(s -> !s.isSettled);
     verify(settlementRepository).findAll(any(Specification.class), any(Pageable.class));
   }
 

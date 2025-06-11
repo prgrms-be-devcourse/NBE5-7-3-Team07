@@ -115,8 +115,8 @@ class SettlementControllerTest {
     MvcResult result = mockMvc.perform(get("/api/teams/{teamId}/settlements", teamId)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.content[0].id").value(settlement1.id()))
-        .andExpect(jsonPath("$.content[1].id").value(settlement2.id()))
+        .andExpect(jsonPath("$.content[0].id").value(settlement1.id))
+        .andExpect(jsonPath("$.content[1].id").value(settlement2.id))
         .andReturn();
 
     // then
@@ -202,12 +202,12 @@ class SettlementControllerTest {
     String content = result.getResponse().getContentAsString();
     SettlementResponse response = objectMapper.readValue(content, SettlementResponse.class);
 
-    assertThat(response.id()).isEqualTo(settlementId);
-    assertThat(response.amount()).isEqualTo(BigDecimal.valueOf(2000));
+    assertThat(response.id).isEqualTo(settlementId);
+    assertThat(response.amount).isEqualTo(BigDecimal.valueOf(2000));
     assertThat(response.settlerId()).isEqualTo(10L);
-    assertThat(response.payerId()).isEqualTo(20L);
-    assertThat(response.expenseId()).isEqualTo(30L);
-    assertThat(response.isSettled()).isFalse();
+    assertThat(response.payerId).isEqualTo(20L);
+    assertThat(response.expenseId).isEqualTo(30L);
+    assertThat(response.isSettled).isFalse();
 
     verify(settlementService, times(1)).updateSettlement(eq(settlementId),
         any(SettlementUpdateRequest.class));
@@ -248,8 +248,8 @@ class SettlementControllerTest {
     String content = result.getResponse().getContentAsString();
     SettlementResponse response = objectMapper.readValue(content, SettlementResponse.class);
 
-    assertThat(response.id()).isEqualTo(settlementId);
-    assertThat(response.isSettled()).isTrue(); // 정산 완료됨 확인
+    assertThat(response.id).isEqualTo(settlementId);
+    assertThat(response.isSettled).isTrue(); // 정산 완료됨 확인
 
     verify(settlementService, times(1)).settleSettlement(settlementId);
     verify(settlementService, times(0)).updateSettlement(anyLong(),

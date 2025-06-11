@@ -122,15 +122,15 @@ public class SettlementService {
     Member settler = request.settlerId() != null ?
         memberService.findMemberOrThrow(request.settlerId()) : null;
     Member payer = request.settlerId() != null ?
-        memberService.findMemberOrThrow(request.payerId()) : null;
+        memberService.findMemberOrThrow(request.payerId) : null;
     Expense expense = getExpense(request);
 
-    settlement.update(request.amount(), settler, payer, expense, request.isSettled());
+    settlement.update(request.amount, settler, payer, expense, request.isSettled);
     return SettlementMapper.toSettlementResponse(settlementRepository.save(settlement));
   }
 
   private Expense getExpense(SettlementUpdateRequest request) {
-    return expenseRepository.findById(request.expenseId())
+    return expenseRepository.findById(request.expenseId)
         .orElseThrow(() -> new CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND));
   }
 
