@@ -10,20 +10,20 @@ import java.math.BigDecimal
 object SettlementMapper {
 
     fun toSettlementResponse(settlement: Settlement): SettlementResponse {
-        return SettlementResponse.builder()
-            .id(settlement.id)
-            .amount(settlement.amount)
-            .createdAt(settlement.createdAt)
-            .updatedAt(settlement.updatedAt)
-            .isSettled(settlement.isSettled)
-            .settlerId(settlement.settler.id)
-            .settlerNickname(settlement.settler.nickname)
-            .payerId(settlement.payer.id)
-            .payerNickname(settlement.payer.nickname)
-            .expenseId(settlement.expense.id)
-            .expenseDescription(settlement.expense.description)
-            .teamId(settlement.expense.team.id)
-            .build()
+        return SettlementResponse(
+            id = settlement.id,
+            amount = settlement.amount,
+            createdAt = settlement.createdAt,
+            updatedAt = settlement.updatedAt,
+            isSettled = settlement.isSettled,
+            settlerId = settlement.settler.id,
+            settlerNickName = settlement.settler.nickname,
+            payerId = settlement.payer.id,
+            payerNickName = settlement.payer.nickname,
+            expenseId = settlement.expense.id,
+            expenseDescription = settlement.expense.description,
+            teamId = settlement.expense.team.id
+        )
     }
 
     fun fromSettlementCreateRequest(
@@ -46,11 +46,11 @@ object SettlementMapper {
         settlerId: Long,
         shareAmount: BigDecimal
     ): SettlementCreateRequest {
-        return SettlementCreateRequest.builder()
-            .expenseId(expense.id)
-            .payerId(payerId)
-            .settlerId(settlerId)
-            .amount(shareAmount)
-            .build()
+        return SettlementCreateRequest(
+            expenseId = expense.id,
+            payerId = payerId,
+            settlerId = settlerId,
+            amount = shareAmount
+        )
     }
 }
