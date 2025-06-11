@@ -19,10 +19,10 @@ public class ExpenseMapper {
   public static Expense fromExpenseRequest(ExpenseRequest request, Team team,
       Member payer) {
     return Expense.builder()
-        .description(request.description())
-        .amount(request.amount())
-        .paymentMethod(request.paymentMethod())
-        .category(request.category())
+        .description(request.description)
+        .amount(request.amount)
+        .paymentMethod(request.paymentMethod)
+        .category(request.category)
         .payer(payer)
         .team(team)
         .build();

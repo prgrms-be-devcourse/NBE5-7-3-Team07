@@ -1,12 +1,9 @@
-package com.luckyseven.backend.domain.expense.dto;
+package com.luckyseven.backend.domain.expense.dto
 
-import java.math.BigDecimal;
-import lombok.Builder;
+import java.math.BigDecimal
 
-@Builder
-public record ExpenseBalanceResponse(
-    BigDecimal foreignBalance,
-    BigDecimal balance
-) {
 
-}
+data class ExpenseBalanceResponse(
+    val foreignBalance: BigDecimal,
+    val balance: BigDecimal
+)

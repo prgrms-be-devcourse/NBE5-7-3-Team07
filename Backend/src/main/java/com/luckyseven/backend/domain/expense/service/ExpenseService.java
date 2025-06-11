@@ -44,10 +44,10 @@ public class ExpenseService {
   @Transactional
   public CreateExpenseResponse saveExpense(Long teamId, ExpenseRequest request) {
     Team team = findTeamOrThrow(teamId);
-    Member payer = memberService.findMemberOrThrow(request.payerId());
+    Member payer = memberService.findMemberOrThrow(request.payerId);
     Budget budget = getBudgetFromTeam(team);
 
-    calculateAndBudgetUpdate(request.paymentMethod(), budget, request.amount());
+    calculateAndBudgetUpdate(request.paymentMethod, budget, request.amount);
 
     Expense expense = ExpenseMapper.fromExpenseRequest(request, team, payer);
     Expense saved = expenseRepository.save(expense);
@@ -75,7 +75,7 @@ public class ExpenseService {
   public CreateExpenseResponse updateExpense(Long expenseId, ExpenseUpdateRequest request) {
     Expense expense = findExpenseOrThrow(expenseId);
     BigDecimal originalAmount = expense.getAmount();
-    BigDecimal newAmount = request.amount();
+    BigDecimal newAmount = request.amount;
     BigDecimal delta = newAmount.subtract(originalAmount);
 
     Budget budget = getBudgetFromTeam(expense.getTeam());
@@ -83,7 +83,7 @@ public class ExpenseService {
 
     updateBudget(delta, method, budget);
 
-    expense.update(request.description(), newAmount, request.category());
+    expense.update(request.description, newAmount, request.category);
     evictRecentExpensesForTeam(expense.getTeam().getId());
     return ExpenseMapper.toCreateExpenseResponse(expense, budget);
   }

@@ -1,19 +1,15 @@
-package com.luckyseven.backend.domain.expense.dto;
+package com.luckyseven.backend.domain.expense.dto
 
-import com.luckyseven.backend.domain.expense.enums.ExpenseCategory;
-import jakarta.validation.constraints.DecimalMin;
-import java.math.BigDecimal;
-import lombok.Builder;
+import com.luckyseven.backend.domain.expense.enums.ExpenseCategory
+import jakarta.validation.constraints.DecimalMin
+import java.math.BigDecimal
 
-@Builder
-public record ExpenseUpdateRequest(
-    String description,
+data class ExpenseUpdateRequest(
 
-    @DecimalMin(value = "0.00", message = "금액은 0 이상이어야 합니다.")
-    BigDecimal amount,
+    val description: String? = null,
 
-    ExpenseCategory category
-) {
+    @field:DecimalMin(value = "0.00", message = "금액은 0 이상이어야 합니다.")
+    val amount: BigDecimal? = null,
 
-}
-
+    val category: ExpenseCategory? = null
+)
