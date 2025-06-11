@@ -10,32 +10,32 @@ import org.springframework.data.jpa.domain.Specification
 object SettlementSpecification {
     fun hasTeamId(teamId: Long?): Specification<Settlement> = Specification { root, _, cb ->
         teamId?.let {
-            cb.equal(root.get<Expense>("expense").get<Team>("team").get<Long>("id"), teamId)
+            cb.equal(root.get<Expense>("expense").get<Team>("team").get<Long>("id"), it)
         }
     }
 
     fun hasPayerId(payerId: Long?): Specification<Settlement> = Specification { root, _, cb ->
-        payerId.let {
-            cb.equal(root.get<Member>("payer").get<Long>("id"), payerId)
+        payerId?.let {
+            cb.equal(root.get<Member>("payer").get<Long>("id"), it)
         }
     }
 
     fun hasSettlerId(settlerId: Long?): Specification<Settlement> = Specification { root, _, cb ->
         settlerId?.let {
-            cb.equal(root.get<Member>("settler").get<Long>("id"), settlerId)
+            cb.equal(root.get<Member>("settler").get<Long>("id"), it)
         }
 
     }
 
     fun hasExpenseId(expenseId: Long?): Specification<Settlement> = Specification { root, _, cb ->
         expenseId?.let {
-            cb.equal(root.get<Expense>("expense").get<Long>("id"), expenseId)
+            cb.equal(root.get<Expense>("expense").get<Long>("id"), it)
         }
     }
 
     fun isSettled(isSettled: Boolean?): Specification<Settlement> = Specification { root, _, cb ->
         isSettled?.let {
-            cb.equal(root.get<Boolean>("isSettled"), isSettled)
+            cb.equal(root.get<Boolean>("isSettled"), it)
         }
     }
 
