@@ -88,7 +88,7 @@ class SettlementService(
      */
     @Transactional(readOnly = true)
     fun readSettlementPage(
-        teamId: Long?,
+        teamId: Long,
         condition: SettlementSearchCondition,
         pageable: Pageable
     ): Page<SettlementResponse> {

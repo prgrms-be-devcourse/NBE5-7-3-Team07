@@ -9,32 +9,38 @@ import org.springframework.data.jpa.domain.Specification
 
 object SettlementSpecification {
     fun hasTeamId(teamId: Long?): Specification<Settlement> = Specification { root, _, cb ->
-        if (teamId == null) null
-        else cb.equal(root.get<Expense>("expense").get<Team>("team").get<Long>("id"), teamId)
+        teamId?.let {
+            cb.equal(root.get<Expense>("expense").get<Team>("team").get<Long>("id"), teamId)
+        }
     }
 
     fun hasPayerId(payerId: Long?): Specification<Settlement> = Specification { root, _, cb ->
-        if (payerId == null) null
-        else cb.equal(root.get<Member>("payer").get<Long>("id"), payerId)
+        payerId.let {
+            cb.equal(root.get<Member>("payer").get<Long>("id"), payerId)
+        }
     }
 
     fun hasSettlerId(settlerId: Long?): Specification<Settlement> = Specification { root, _, cb ->
-        if (settlerId == null) null
-        else cb.equal(root.get<Member>("settler").get<Long>("id"), settlerId)
+        settlerId?.let {
+            cb.equal(root.get<Member>("settler").get<Long>("id"), settlerId)
+        }
+
     }
 
     fun hasExpenseId(expenseId: Long?): Specification<Settlement> = Specification { root, _, cb ->
-        if (expenseId == null) null
-        else cb.equal(root.get<Expense>("expense").get<Long>("id"), expenseId)
+        expenseId?.let {
+            cb.equal(root.get<Expense>("expense").get<Long>("id"), expenseId)
+        }
     }
 
     fun isSettled(isSettled: Boolean?): Specification<Settlement> = Specification { root, _, cb ->
-        if (isSettled == null) null
-        else cb.equal(root.get<Boolean>("isSettled"), isSettled)
+        isSettled?.let {
+            cb.equal(root.get<Boolean>("isSettled"), isSettled)
+        }
     }
 
     fun createSpecification(
-        teamId: Long?,
+        teamId: Long,
         condition: SettlementSearchCondition
     ): Specification<Settlement> = Specification
         .where(hasTeamId(teamId))
