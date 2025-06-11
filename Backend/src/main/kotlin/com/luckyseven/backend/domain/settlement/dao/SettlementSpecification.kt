@@ -1,9 +1,9 @@
-package com.luckyseven.backend.domain.settlements.dao
+package com.luckyseven.backend.domain.settlement.dao
 
 import com.luckyseven.backend.domain.expense.entity.Expense
 import com.luckyseven.backend.domain.member.entity.Member
-import com.luckyseven.backend.domain.settlements.dto.SettlementSearchCondition
-import com.luckyseven.backend.domain.settlements.entity.Settlement
+import com.luckyseven.backend.domain.settlement.dto.SettlementSearchCondition
+import com.luckyseven.backend.domain.settlement.entity.Settlement
 import com.luckyseven.backend.domain.team.entity.Team
 import org.springframework.data.jpa.domain.Specification
 

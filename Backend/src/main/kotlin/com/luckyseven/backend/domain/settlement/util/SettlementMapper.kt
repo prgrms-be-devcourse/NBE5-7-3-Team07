@@ -1,10 +1,10 @@
-package com.luckyseven.backend.domain.settlements.util;
+package com.luckyseven.backend.domain.settlement.util
 
 import com.luckyseven.backend.domain.expense.entity.Expense
 import com.luckyseven.backend.domain.member.entity.Member
-import com.luckyseven.backend.domain.settlements.dto.SettlementCreateRequest
-import com.luckyseven.backend.domain.settlements.dto.SettlementResponse
-import com.luckyseven.backend.domain.settlements.entity.Settlement
+import com.luckyseven.backend.domain.settlement.dto.SettlementCreateRequest
+import com.luckyseven.backend.domain.settlement.dto.SettlementResponse
+import com.luckyseven.backend.domain.settlement.entity.Settlement
 import java.math.BigDecimal
 
 object SettlementMapper {

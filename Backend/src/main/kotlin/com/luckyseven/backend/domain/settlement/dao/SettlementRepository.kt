@@ -1,6 +1,6 @@
-package com.luckyseven.backend.domain.settlements.dao
+package com.luckyseven.backend.domain.settlement.dao
 
-import com.luckyseven.backend.domain.settlements.entity.Settlement
+import com.luckyseven.backend.domain.settlement.entity.Settlement
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
