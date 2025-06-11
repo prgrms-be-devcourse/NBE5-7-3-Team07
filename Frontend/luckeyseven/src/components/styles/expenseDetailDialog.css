@@ -1,0 +1,262 @@
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+
+.modal {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 460px;
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+
+.modal header {
+  background: linear-gradient(135deg, #4568dc, #b06ab3);
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+.modal header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal .close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.modal .close-btn:hover {
+  opacity: 1;
+}
+
+
+.detail-content {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* 수정 모드가 아닐 때의 필드 스타일 */
+.detail-content p {
+  margin: 12px 0;
+  font-size: 15px;
+  line-height: 24px;
+  color: #333;
+  display: flex;
+  justify-content: space-between;
+}
+
+.detail-content p strong {
+  font-weight: 600;
+  color: #444;
+  min-width: 100px;
+}
+
+
+.detail-content p:nth-child(2) strong + span {
+  color: #1a56db;
+  font-weight: 600;
+  font-size: 17px;
+}
+.category, .payment {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+
+.category[data-category="MEAL"] {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.category[data-category="SNACK"] {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.category[data-category="TRANSPORT"] {
+  background-color: #e0f2f1;
+  color: #00695c;
+}
+
+.category[data-category="ACCOMMODATION"] {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.category[data-category="MISCELLANEOUS"] {
+  background-color: #f5f5f5;
+  color: #424242;
+}
+
+
+.payment[data-payment="CARD"] {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.payment[data-payment="CASH"] {
+  background-color: #fffde7;
+  color: #f57f17;
+}
+
+.payment[data-payment="OTHER"] {
+  background-color: #f5f5f5;
+  color: #424242;
+}
+
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.field input, .field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border-color 0.2s;
+}
+
+.field input:focus, .field select:focus {
+  border-color: #4568dc;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(69, 104, 220, 0.2);
+}
+
+
+.modal-actions {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #eee;
+}
+
+
+.modal-actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+
+.modal-actions button:not(.save-btn):not(.delete-btn) {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.modal-actions button:not(.save-btn):not(.delete-btn):hover {
+  background-color: #e8e8e8;
+}
+
+
+.save-btn {
+  background-color: #4568dc;
+  color: white;
+}
+
+.save-btn:hover {
+  background-color: #3a57c5;
+}
+
+
+.delete-btn {
+  background-color: #ff5252;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #e04848;
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+
+@media (max-width: 480px) {
+  .modal {
+    width: 95%;
+    max-height: 85vh;
+  }
+  
+  .detail-content {
+    padding: 16px;
+  }
+  
+  .modal-actions {
+    padding: 12px 16px;
+  }
+}
+
+
+.detail-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detail-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.detail-content::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 10px;
+}
+
+.detail-content::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}

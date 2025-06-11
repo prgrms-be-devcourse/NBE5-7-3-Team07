@@ -1,0 +1,30 @@
+/* Summary cards */
+
+
+.summaryCard {
+  background-color: var(--color-card);
+  padding: clamp(0.75rem, 5%, 1.25rem);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.05);
+  flex: 0 0 auto; /* Prevent cards from growing or shrinking, maintain their auto width */
+  margin: 0.625rem; /* Spacing around cards */
+  min-width: 200px; /* Minimum width before wrapping */
+  /* max-width: calc(33.333% - 1.25rem); /* Ensure 3 cards per row - removed for auto width */
+}
+
+.cardTitle {
+  margin: 0 0 0.3125rem 0;
+  color: var(--color-text-secondary);
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.cardAmount {
+  margin: 0 0 0.3125rem 0;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+}
+
+.cardPercentage {
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: clamp(0.7rem, 2vw, 0.75rem);
+}

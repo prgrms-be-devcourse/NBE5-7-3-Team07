@@ -1,0 +1,132 @@
+/* Members Tab Content - New Styles */
+.membersTabContent {
+  padding: var(--space-lg) 0; /* Add some padding to the overall container if needed */
+}
+
+.membersPageTitle {
+  font-size: var(--text-2xl); /* Larger title like "Team members" */
+  font-weight: bold;
+  margin-bottom: var(--space-lg);
+  color: var(--color-text);
+}
+
+.inviteMembersSection {
+  background-color: #eeeeee; /* Light grey background */
+  padding: var(--space-lg);
+  border-radius: 0.5rem; /* Rounded corners */
+  margin-bottom: var(--space-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; /* Allow wrapping for smaller screens */
+}
+
+.inviteMembersTitle {
+  font-size: var(--text-xl);
+  font-weight: bold;
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--color-text);
+  flex-basis: 100%; /* Title takes full width initially */
+}
+
+.inviteDetails {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  display: flex;
+  gap: var(--space-lg); /* Space between Team Code and Password */
+  margin-bottom: var(--space-md); /* Space below details before button on small screens */
+  flex-grow: 1;
+}
+
+.copyInviteButton {
+  background-color: var(--color-card); /* White background */
+  color: var(--color-text); /* Black text */
+  border: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 0.5rem; /* Rounded corners */
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.copyInviteButton:hover {
+  background-color: #f9f9f9;
+}
+
+.membersList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.memberItem {
+  display: flex;
+  align-items: center;
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.memberItem:last-child {
+  border-bottom: none;
+}
+
+.memberAvatar {
+  width: 40px; /* Avatar size */
+  height: 40px;
+  border-radius: 50%; /* Circular avatar */
+  background-color: #e0e0e0; /* Placeholder avatar color */
+  margin-right: var(--space-md);
+}
+
+.memberInfo {
+  flex-grow: 1; /* Takes up available space */
+  display: flex;
+  flex-direction: column;
+}
+
+.memberName {
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.memberEmail {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.memberRole { /* Base styling for role tags, specific styles below */
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 1rem; /* Pill shape */
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: center;
+  min-width: 80px; /* Ensure tags have some minimum width */
+}
+
+.leaderRole {
+  background-color: #000000; /* Black background for Leader */
+  color: #ffffff; /* White text */
+}
+
+.memberRoleTag {
+  background-color: var(--color-card); /* White background for Member */
+  color: var(--color-text); /* Black text */
+  border: 1px solid #cccccc; /* Grey border */
+}
+
+/* Responsive adjustments for invite section */
+@media (max-width: 768px) {
+  .inviteMembersSection {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .inviteDetails {
+    margin-bottom: var(--space-md);
+    gap: var(--space-md);
+  }
+  .copyInviteButton {
+    align-self: flex-start; /* Align button to the start on smaller screens */
+  }
+}

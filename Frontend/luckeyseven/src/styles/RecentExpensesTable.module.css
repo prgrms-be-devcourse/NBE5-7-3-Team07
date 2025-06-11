@@ -1,0 +1,79 @@
+/* Recent expenses table */
+.recentExpenses {
+  background-color: var(--color-card);
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.05);
+  flex: 1;
+}
+
+.expensesTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.75rem, 2vw, 0.8125rem);
+}
+
+.expensesTable th,
+.expensesTable td {
+  padding: 0.5rem 0.25rem;
+  text-align: left;
+}
+
+.expensesTable th {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.expensesTable tr {
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.expenseCategory {
+  padding: 0.1875rem 0.5rem;
+  border-radius: 0.75rem;
+  color: #fff;
+  font-size: clamp(0.65rem, 2vw, 0.6875rem);
+  display: inline-block;
+}
+
+.expenseAmount {
+  font-size: clamp(0.75rem, 2vw, 0.8125rem);
+}
+
+.expenseAmountSecondary {
+  font-size: clamp(0.65rem, 2vw, 0.6875rem);
+  color: #777;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 640px) {
+  .expensesTable thead {
+    display: none;
+  }
+
+  .expensesTable,
+  .expensesTable tbody,
+  .expensesTable tr,
+  .expensesTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .expensesTable tr {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .expensesTable td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+    text-align: right;
+  }
+
+  .expensesTable td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    float: left;
+    text-align: left;
+  }
+}

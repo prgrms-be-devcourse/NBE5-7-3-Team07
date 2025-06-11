@@ -1,0 +1,134 @@
+:root {
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+  --modal-bg: #ffffff;
+  --border-radius: 12px;
+  --modal-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --text-color: #333333;
+  --text-light: #666666;
+  --primary-color: #4a90e2;
+  --primary-hover: #357ab8;
+  --neutral-bg: #f5f5f5;
+  --neutral-border: #dddddd;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--modal-bg);
+  border-radius: var(--border-radius);
+  width: 400px;
+  max-width: 90%;
+  padding: var(--spacing-lg);
+  box-shadow: var(--modal-shadow);
+  font-family: var(--font-family);
+  color: var(--text-color);
+  animation: fadeInScale 0.25s ease-out;
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.modal header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: color 0.2s;
+}
+.close-btn:hover {
+  color: var(--primary-color);
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-form label {
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-light);
+}
+
+.modal-form input,
+.modal-form select {
+  width: 100%;
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--neutral-border);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal-form input:focus,
+.modal-form select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.modal-actions button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 6px;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.modal-actions button[type="button"] {
+  background: var(--neutral-bg);
+  color: var(--text-color);
+  border: 1px solid var(--neutral-border);
+}
+.modal-actions button[type="button"]:hover {
+  background: #eaeaea;
+  transform: translateY(-1px);
+}
+
+.modal-actions button[type="submit"] {
+  background: var(--primary-color);
+  color: #fff;
+}
+.modal-actions button[type="submit"]:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}

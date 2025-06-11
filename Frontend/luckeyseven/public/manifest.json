@@ -1,0 +1,9 @@
+{
+  "short_name": "인증 시스템",
+  "name": "React 인증 시스템",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+} 

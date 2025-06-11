@@ -1,0 +1,25 @@
+name: Auto assign creator to issue or PR
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  assign-creator:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign to creator (for issues and PRs)
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const isPR = !!context.payload.pull_request;
+            const number = isPR ? context.payload.pull_request.number : context.issue.number;
+
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: number,
+              assignees: [context.actor]
+            });

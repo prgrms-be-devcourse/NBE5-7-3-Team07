@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: locust-cloud
+Version: 1.21.7
+Summary: Locust Cloud
+Project-URL: homepage, https://locust.cloud
+Project-URL: repository, https://github.com/locustcloud/locust-cloud
+License: MIT
+License-File: LICENSE
+Requires-Python: >=3.10
+Requires-Dist: configargparse>=1.5.5
+Requires-Dist: gevent<25.0.0,>=24.10.1
+Requires-Dist: platformdirs<5.0.0,>=4.3.6
+Requires-Dist: python-socketio[client]==5.13.0
+Requires-Dist: tomli>=1.1.0; python_version < '3.11'
+Description-Content-Type: text/markdown
+
+# Locust Cloud
+
+See https://locust.cloud for general information on Locust Cloud, or https://docs.locust.cloud for usage instructions.
+
+If you encounter issues with the code here, contact Locust Cloud support or file an issue here https://github.com/locustio/locust/issues

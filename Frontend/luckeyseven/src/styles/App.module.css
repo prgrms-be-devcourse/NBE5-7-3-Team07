@@ -1,0 +1,87 @@
+:root {
+  /* Base font size for rem calculations */
+  font-size: 16px;
+
+  /* Color variables */
+  --color-primary: #007bff;
+  --color-background: #f4f6f8;
+  --color-card: #fff;
+  --color-text: #333;
+  --color-text-secondary: #666;
+  --color-text-tertiary: #888;
+  --color-border: #eee;
+
+  /* Spacing scale */
+  --space-xs: 0.25rem;  /* 4px */
+  --space-sm: 0.5rem;   /* 8px */
+  --space-md: 1rem;     /* 16px */
+  --space-lg: 1.25rem;  /* 20px */
+  --space-xl: 1.5rem;   /* 24px */
+
+  /* Typography scale */
+  --text-xs: 0.75rem;   /* 12px */
+  --text-sm: 0.875rem;  /* 14px */
+  --text-base: 1rem;    /* 16px */
+  --text-lg: 1.125rem;  /* 18px */
+  --text-xl: 1.5rem;    /* 24px */
+  --text-2xl: 1.75rem;  /* 28px */
+}
+
+/* App container */
+.app {
+  background-color: var(--color-background);
+  min-height: 100vh;
+}
+
+/* Container class */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Main content */
+.main {
+  padding: 0 1.25rem; /* Existing vertical padding */
+  padding-left: var(--space-lg); /* Add left padding */
+  padding-right: var(--space-lg); /* Add right padding */
+}
+
+.summaryCardContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;                 /* 카드 간 간격 */
+  margin-bottom: 2rem;
+}
+
+/* Details container */
+.detailsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Responsive breakpoints */
+@media (min-width: 768px) {
+  .pageHeaderControls {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .pageActions {
+    margin-top: 0;
+  }
+
+  .detailsContainer {
+    flex-direction: row;
+  }
+
+  .budgetBreakdown {
+    margin-right: 1.25rem;
+  }
+
+  .chartContainer {
+    flex-direction: row;
+  }
+}

@@ -1,0 +1,2 @@
+[console_scripts]
+locust-cloud = locust_cloud.cloud:main

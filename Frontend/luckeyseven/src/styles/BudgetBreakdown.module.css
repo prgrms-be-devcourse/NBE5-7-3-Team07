@@ -1,0 +1,105 @@
+/* Budget breakdown */
+.budgetBreakdown {
+  background-color: var(--color-card);
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.05);
+  flex: 1.5;
+}
+
+.sectionTitle {
+  margin: 0 0 0.3125rem 0;
+  font-size: clamp(1rem, 3vw, 1.125rem);
+}
+
+.sectionSubtitle {
+  margin: 0 0 1.25rem 0;
+  color: var(--color-text-secondary);
+  font-size: clamp(0.7rem, 2vw, 0.75rem);
+}
+
+.chartContainer {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.doughnutChart {
+  width: clamp(120px, 30%, 150px);
+  height: clamp(120px, 30%, 150px);
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  background: conic-gradient(#4CAF50 0% 25%, #2196F3 25% 50%, #FFC107 50% 70%, #E91E63 70% 85%, #9C27B0 85% 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.25rem auto;
+  color: #555;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* Styles for the new category breakdown list */
+.categoryBreakdownList {
+  margin-bottom: 1.25rem; /* Add some space before budget stats */
+  padding: 0;
+  list-style: none;
+}
+
+.categoryBreakdownItem {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-sm) 0; /* Use existing spacing variable */
+  font-size: var(--text-sm); /* Use existing text size variable */
+  border-bottom: 1px solid var(--color-border); /* Add a light separator */
+}
+
+.categoryBreakdownItem:last-child {
+  border-bottom: none; /* Remove border for the last item */
+}
+
+.categoryBreakdownItem span:first-child {
+  color: var(--color-text-secondary); /* Subtler color for category name */
+}
+
+.categoryBreakdownItem span:last-child {
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.legendContainer {
+  display: flex;
+  flex-direction: column;
+  padding-left: 1.25rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.3125rem;
+  font-size: clamp(0.7rem, 2vw, 0.75rem);
+}
+
+.legendColor {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.budgetStats {
+  margin-top: 1.25rem;
+  padding-top: 0.9375rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.budgetStatRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: clamp(0.75rem, 2vw, 0.8125rem);
+  margin-bottom: 0.3125rem;
+}
+
+.budgetStatRowBold {
+  font-weight: bold;
+}

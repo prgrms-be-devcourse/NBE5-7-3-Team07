@@ -1,0 +1,95 @@
+/* Page header controls */
+.pageHeaderControls {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.25rem 0;
+  margin-bottom: 1.25rem;
+}
+
+.pageTitle {
+  margin: 0 0 0.3125rem 0;
+  font-size: clamp(1.5rem, 5vw, 1.75rem);
+}
+
+.pageSubtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: clamp(0.875rem, 3vw, 1rem);
+}
+
+.pageActions {
+  display: flex;
+  margin-top: 1rem;
+}
+
+.buttonSecondary {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  padding: 0.625rem 0.9375rem;
+  border: 1px solid #ccc;
+  border-radius: 0.3125rem;
+  background-color: var(--color-secondary-rgb);
+  cursor: pointer;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.buttonSecondary:hover {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  padding: 0.625rem 0.9375rem;
+  border: 1px solid #ccc;
+  border-radius: 0.3125rem;
+  background-color: var(--color-secondary);
+  cursor: pointer;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.buttonPrimary {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  padding: 0.625rem 0.9375rem;
+  border: none;
+  border-radius: 0.3125rem;
+  background-color: var(--color-primary);
+  color: white;
+  cursor: pointer;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.buttonPrimary:hover {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  padding: 0.625rem 0.9375rem;
+  border: none;
+  border-radius: 0.3125rem;
+  background-color: var(--color-primary-hover);
+  color: white;
+  cursor: pointer;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.buttonDanger {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  padding: 0.625rem 0.9375rem;
+  border: none;
+  border-radius: 0.3125rem;
+  background-color: var(--color-destructive);
+  color: white;
+  cursor: pointer;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.buttonDanger:hover {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  padding: 0.625rem 0.9375rem;
+  border: none;
+  border-radius: 0.3125rem;
+  background-color: rgba(var(--color-destructive-rgb), 0.9);
+  color: white;
+  cursor: pointer;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
