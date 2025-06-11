@@ -103,13 +103,13 @@ class SettlementService(
         val settlement = findSettlementOrThrow(id)
         val settler = request.settlerId?.let { memberService.findMemberOrThrow(it) }
         val payer = request.payerId?.let { memberService.findMemberOrThrow(it) }
-        val expense = getExpense(request)
+        val expense = request.expenseId?.let { getExpense(it) }
         settlement.update(request.amount, settler, payer, expense, request.isSettled)
         return SettlementMapper.toSettlementResponse(settlementRepository.save(settlement))
     }
 
-    private fun getExpense(request: SettlementUpdateRequest): Expense =
-        expenseRepository.findById(request.expenseId)
+    private fun getExpense(expenseId: Long): Expense =
+        expenseRepository.findById(expenseId)
             .orElseThrow { CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND) }
 
     @Transactional
