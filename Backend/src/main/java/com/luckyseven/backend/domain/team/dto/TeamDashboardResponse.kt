@@ -4,10 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.luckyseven.backend.domain.budget.entity.CurrencyCode
 import com.luckyseven.backend.domain.expense.enums.ExpenseCategory
 import com.luckyseven.backend.domain.expense.enums.PaymentMethod
-import lombok.AllArgsConstructor
-import lombok.Builder
-import lombok.Getter
-import lombok.NoArgsConstructor
 import java.math.BigDecimal
 import java.time.LocalDateTime
 

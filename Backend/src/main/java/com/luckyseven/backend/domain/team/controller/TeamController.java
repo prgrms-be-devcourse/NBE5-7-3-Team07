@@ -10,7 +10,6 @@ import com.luckyseven.backend.domain.team.dto.TeamListResponse;
 import com.luckyseven.backend.domain.team.dto.TeamMemberDto;
 import com.luckyseven.backend.domain.team.service.TeamMemberService;
 import com.luckyseven.backend.domain.team.service.TeamService;
-import com.luckyseven.backend.domain.team.service.TempMemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

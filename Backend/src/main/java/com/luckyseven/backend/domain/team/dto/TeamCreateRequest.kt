@@ -1,6 +1,5 @@
 package com.luckyseven.backend.domain.team.dto
 
-import com.luckyseven.backend.domain.team.entity.Team
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
