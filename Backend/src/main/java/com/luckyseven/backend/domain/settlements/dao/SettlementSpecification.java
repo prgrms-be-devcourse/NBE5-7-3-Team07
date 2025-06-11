@@ -35,9 +35,9 @@ public class SettlementSpecification {
       SettlementSearchCondition condition) {
     return Specification
         .where(SettlementSpecification.hasTeamId(teamId))
-        .and(hasPayerId(condition.payerId()))
+        .and(hasPayerId(condition.payerId))
         .and(hasSettlerId(condition.settlerId()))
-        .and(hasExpenseId(condition.expenseId()))
-        .and(isSettled(condition.isSettled()));
+        .and(hasExpenseId(condition.expenseId))
+        .and(isSettled(condition.isSettled));
   }
 }
