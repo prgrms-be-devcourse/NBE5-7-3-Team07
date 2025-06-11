@@ -89,9 +89,9 @@ public class TeamMemberServiceTest {
 
     // 검증
     assertEquals(1, result.size());
-    assertEquals(expectedDtos.getFirst().id(), result.getFirst().id());
-    assertEquals(expectedDtos.getFirst().teamId(), result.getFirst().teamId());
-    assertEquals(expectedDtos.getFirst().teamName(), result.getFirst().teamName());
+    assertEquals(expectedDtos.getFirst().id, result.getFirst().id);
+    assertEquals(expectedDtos.getFirst().teamId, result.getFirst().teamId);
+    assertEquals(expectedDtos.getFirst().teamName, result.getFirst().teamName);
     verify(teamRepository).existsById(teamId);
     verify(teamMemberRepository).findByTeamId(teamId);
   }

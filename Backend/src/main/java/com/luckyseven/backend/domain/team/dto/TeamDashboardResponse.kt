@@ -1,72 +1,57 @@
-package com.luckyseven.backend.domain.team.dto;
+package com.luckyseven.backend.domain.team.dto
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.luckyseven.backend.domain.budget.entity.CurrencyCode;
-import com.luckyseven.backend.domain.expense.enums.ExpenseCategory;
-import com.luckyseven.backend.domain.expense.enums.PaymentMethod;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class TeamDashboardResponse {
-
-  private Long team_id;
-
-  private String teamName;
-
-  private String teamCode;
-
-  private String teamPassword;
-
-  private CurrencyCode foreignCurrency;
-
-  private BigDecimal balance;
-
-  private BigDecimal foreignBalance;
-
-  private BigDecimal totalAmount;
-
-  private BigDecimal avgExchangeRate;
-
-  private LocalDateTime updatedAt;
-
-  private List<ExpenseDto> expenseList = new ArrayList<>();
-
-  private List<CategoryExpenseSumDto> categoryExpenseSumList = new ArrayList<>();
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.luckyseven.backend.domain.budget.entity.CurrencyCode
+import com.luckyseven.backend.domain.expense.enums.ExpenseCategory
+import com.luckyseven.backend.domain.expense.enums.PaymentMethod
+import lombok.AllArgsConstructor
+import lombok.Builder
+import lombok.Getter
+import lombok.NoArgsConstructor
+import java.math.BigDecimal
+import java.time.LocalDateTime
 
 
-  @Getter
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class CategoryExpenseSumDto {
-    private ExpenseCategory category;
-    private BigDecimal totalAmount;
-  }
+data class TeamDashboardResponse(
+    var team_id: Long? = null,
 
-  @Getter
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class ExpenseDto {
+    var teamName: String? = null,
 
-    private Long id;
-    private String description;
-    private BigDecimal amount;
-    private ExpenseCategory category;
-    private PaymentMethod paymentMethod;
+    var teamCode: String? = null,
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime date;
-    private String payerNickname;
-  }
+    var teamPassword: String? = null,
+
+    var foreignCurrency: CurrencyCode? = null,
+
+    var balance: BigDecimal? = null,
+
+    var foreignBalance: BigDecimal? = null,
+    var totalAmount: BigDecimal? = null,
+
+    var avgExchangeRate: BigDecimal? = null,
+
+    var updatedAt: LocalDateTime? = null,
+
+    val expenseList: List<ExpenseDto?> = emptyList(),
+
+    val categoryExpenseSumList: List<CategoryExpenseSumDto?> = emptyList()
+) {
+
+
+    data class CategoryExpenseSumDto(
+        var category: ExpenseCategory? = null,
+        var totalAmount: BigDecimal? = null
+    )
+
+    data class ExpenseDto(
+        var id: Long? = null,
+        var description: String? = null,
+        var amount: BigDecimal? = null,
+        var category: ExpenseCategory? = null,
+        var paymentMethod: PaymentMethod? = null,
+
+        @field:JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        var date: LocalDateTime? = null,
+        var payerNickname: String? = null
+    )
 }

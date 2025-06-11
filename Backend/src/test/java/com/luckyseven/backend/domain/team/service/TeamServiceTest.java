@@ -118,17 +118,17 @@ public class TeamServiceTest {
 
     //then
     assertThat(result).isNotNull();
-    assertThat(result.id()).isEqualTo(team.getId());
-    assertThat(result.name()).isEqualTo(request.name());
-    assertThat(team.getTeamPassword()).isEqualTo(request.teamPassword());
-    assertThat(result.leaderId()).isEqualTo(creator.getId());
+    assertThat(result.id).isEqualTo(team.getId());
+    assertThat(result.name).isEqualTo(request.name);
+    assertThat(team.getTeamPassword()).isEqualTo(request.teamPassword);
+    assertThat(result.leaderId).isEqualTo(creator.getId());
 
     //팀 저장
     ArgumentCaptor<Team> teamCaptor = ArgumentCaptor.forClass(Team.class);
     verify(teamRepository).save(teamCaptor.capture());
-    assertThat(teamCaptor.getValue().getName()).isEqualTo(request.name());
+    assertThat(teamCaptor.getValue().getName()).isEqualTo(request.name);
     assertThat(teamCaptor.getValue().getLeader().getId()).isEqualTo(creator.getId());
-    assertThat(teamCaptor.getValue().getTeamPassword()).isEqualTo(request.teamPassword());
+    assertThat(teamCaptor.getValue().getTeamPassword()).isEqualTo(request.teamPassword);
 
     //팀 멤버 저장
     ArgumentCaptor<TeamMember> teamMemberCaptor = ArgumentCaptor.forClass(TeamMember.class);
@@ -176,10 +176,10 @@ public class TeamServiceTest {
 
     // then
     assertThat(result).isNotNull();
-    assertThat(result.id()).isEqualTo(team.getId());
-    assertThat(result.teamName()).isEqualTo(team.getName());
-    assertThat(result.leaderId()).isEqualTo(team.getLeader().getId());
-    assertThat(result.teamCode()).isEqualTo(team.getTeamCode());
+    assertThat(result.id).isEqualTo(team.getId());
+    assertThat(result.teamName).isEqualTo(team.getName());
+    assertThat(result.leaderId).isEqualTo(team.getLeader().getId());
+    assertThat(result.teamCode).isEqualTo(team.getTeamCode());
 
     // 팀 멤버 저장
     ArgumentCaptor<TeamMember> teamMemberCaptor = ArgumentCaptor.forClass(TeamMember.class);

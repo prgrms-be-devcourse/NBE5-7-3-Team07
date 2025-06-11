@@ -1,46 +1,11 @@
-package com.luckyseven.backend.domain.team.dto;
+package com.luckyseven.backend.domain.team.dto
 
-public record TeamJoinResponse(
-    Long id,
-    String teamName,
-    String teamCode,
-    Long leaderId
+data class TeamJoinResponse(
+  val id: Long?,
+  val teamName: String?,
+  val teamCode: String?,
+  val leaderId: Long?
 ) {
-
-  // 빌더 메서드 추가
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public static class Builder {
-
-    private Long id;
-    private String teamName;
-    private String teamCode;
-    private Long leaderId;
-
-    public Builder id(Long id) {
-      this.id = id;
-      return this;
+    companion object {
     }
-
-    public Builder teamName(String teamName) {
-      this.teamName = teamName;
-      return this;
-    }
-
-    public Builder teamCode(String teamCode) {
-      this.teamCode = teamCode;
-      return this;
-    }
-
-    public Builder leaderId(Long leaderId) {
-      this.leaderId = leaderId;
-      return this;
-    }
-
-    public TeamJoinResponse build() {
-      return new TeamJoinResponse(id, teamName, teamCode, leaderId);
-    }
-  }
 }
