@@ -38,9 +38,9 @@ public class SettlementService {
 
   public void createAllSettlements(ExpenseRequest request, Member payer, Expense expense) {
     List<Long> settlerIds = request.settlerId();
-    List<Long> nonPayerIds = getNonPayerIds(settlerIds, request.payerId());
+    List<Long> nonPayerIds = getNonPayerIds(settlerIds, request.payerId);
 
-    BigDecimal shareAmount = calculateShareAmount(request.amount(), settlerIds.size());
+    BigDecimal shareAmount = calculateShareAmount(request.amount, settlerIds.size());
 
     Map<Long, Member> settlerMap = getSettlerMap(nonPayerIds);
 
