@@ -1,0 +1,15 @@
+package com.luckyseven.backend.domain.settlements.dao
+
+import com.luckyseven.backend.domain.settlements.entity.Settlement
+import org.springframework.data.jpa.repository.EntityGraph
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.stereotype.Repository
+
+@Repository
+interface SettlementRepository : JpaRepository<Settlement, Long>,
+    JpaSpecificationExecutor<Settlement?> {
+
+    @EntityGraph(attributePaths = ["settler", "payer"])
+    fun findWithSettlerAndPayerById(id: Long): Settlement?
+}
