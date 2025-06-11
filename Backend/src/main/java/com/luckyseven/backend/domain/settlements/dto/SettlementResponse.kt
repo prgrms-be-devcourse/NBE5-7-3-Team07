@@ -4,15 +4,16 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class SettlementResponse(
-    val id: Long,
+    val id: Long?,
     val amount: BigDecimal,
     val isSettled: Boolean,
     val settlerId: Long,
-    val settlerName: String,
+    val settlerNickName: String,
     val payerId: Long,
-    val payerName: String,
+    val payerNickName: String,
     val expenseId: Long,
-    val expenseName: String,
+    val expenseDescription: String,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
+    val updatedAt: LocalDateTime,
+    val teamId: Long
 )
