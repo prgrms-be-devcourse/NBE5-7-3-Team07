@@ -104,7 +104,8 @@ public class TeamController {
       content = @Content(schema = @Schema(implementation = ErrorResponse.class))
   )
   @PostMapping("/members")
-  public ResponseEntity<TeamJoinResponse> joinTeam(@AuthenticationPrincipal MemberDetails memberDetails,
+  public ResponseEntity<TeamJoinResponse> joinTeam(
+      @AuthenticationPrincipal MemberDetails memberDetails,
       @Parameter(description = "팀 참가 요청 정보") @Valid @RequestBody TeamJoinRequest request) {
     // Service
     TeamJoinResponse response = teamService.joinTeam(memberDetails, request.teamCode(),
@@ -112,6 +113,7 @@ public class TeamController {
 
     return ResponseEntity.ok(response);
   }
+
   @GetMapping("/myTeams")
   @Operation(
       summary = "내 팀 목록 조회",
@@ -133,6 +135,7 @@ public class TeamController {
     List<TeamListResponse> teams = teamService.getTeamsByMemberId(memberDetails.getId());
     return ResponseEntity.ok(teams);
   }
+
   @Operation(
       summary = "팀 멤버 조회",
       description = "팀의 모든 멤버를 조회합니다"
@@ -237,7 +240,9 @@ public class TeamController {
   )
   @GetMapping("/{teamId}/dashboard")
   public ResponseEntity<TeamDashboardResponse> getTeamDashboard(@PathVariable Long teamId) {
+
     TeamDashboardResponse dashboardResponse = teamService.getTeamDashboard(teamId);
+
     return ResponseEntity.ok(dashboardResponse);
   }
 }

@@ -38,6 +38,8 @@ public class TeamDashboardResponse {
 
   private BigDecimal avgExchangeRate;
 
+  private LocalDateTime updatedAt;
+
   private List<ExpenseDto> expenseList = new ArrayList<>();
 
   private List<CategoryExpenseSumDto> categoryExpenseSumList = new ArrayList<>();

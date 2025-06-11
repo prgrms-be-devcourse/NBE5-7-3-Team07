@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
   private final ObjectMapper objectMapper;
 
   public CustomAuthenticationEntryPoint(ObjectMapper objectMapper) {
@@ -40,7 +41,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     ErrorResponse error = ErrorResponse.of(ex);
     response.setContentType("application/json;charset=UTF-8");
     response.setStatus(ex.getExceptionCode().getHttpStatus().value());
-    try(PrintWriter w = response.getWriter()) {
+    try (PrintWriter w = response.getWriter()) {
       w.write(objectMapper.writeValueAsString(error));
     }
   }

@@ -8,6 +8,7 @@ import com.luckyseven.backend.domain.expense.repository.ExpenseRepository;
 import com.luckyseven.backend.domain.member.entity.Member;
 import com.luckyseven.backend.domain.member.repository.MemberRepository;
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails;
+import com.luckyseven.backend.domain.team.cache.TeamDashboardCacheService;
 import com.luckyseven.backend.domain.team.dto.TeamCreateRequest;
 import com.luckyseven.backend.domain.team.dto.TeamCreateResponse;
 import com.luckyseven.backend.domain.team.dto.TeamDashboardResponse;
@@ -20,7 +21,9 @@ import com.luckyseven.backend.domain.team.repository.TeamRepository;
 import com.luckyseven.backend.domain.team.util.TeamMapper;
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException;
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -152,28 +155,69 @@ public class TeamService {
         .collect(Collectors.toList());
   }
 
+  private final TeamDashboardCacheService teamDashboardCacheService;
+
   /**
-   * 대시보드를 가져온다.
+   * 팀 대시보드를 조회합니다.
+   * 캐시된 데이터가 있고 Budget의 updatedAt과 일치하면 캐시에서 반환,
+   * 그렇지 않으면 데이터베이스에서 조회하여 캐시에 저장 후 반환합니다.
    *
-   * @param teamId 팀의 ID
-   * @return 팀 대시보드
+   * @param teamId 팀 ID
+   * @return 팀 대시보드 응답
    */
   @Transactional(readOnly = true)
   public TeamDashboardResponse getTeamDashboard(Long teamId) {
+    // 1. 캐시에서 대시보드 데이터 조회
+    TeamDashboardResponse cachedDashboard = teamDashboardCacheService.getCachedTeamDashboard(teamId);
+
+    // 2. 캐시가 있으면 Budget의 updatedAt 확인
+    if (cachedDashboard != null) {
+      Optional<LocalDateTime> latestBudgetUpdate = budgetRepository.findUpdatedAtByTeamId(teamId);
+
+      // 3. Budget의 updatedAt이 있고 캐시의 updatedAt과 일치하면 캐시 사용
+      if (latestBudgetUpdate.isPresent() &&
+          cachedDashboard.getUpdatedAt() != null &&
+          latestBudgetUpdate.get().equals(cachedDashboard.getUpdatedAt())) {
+        return cachedDashboard;
+      }
+    }
+
+    // 4. 캐시가 없거나 updatedAt이 다르면 새로 조회하여 캐시 갱신
+    return refreshTeamDashboard(teamId);
+  }
+
+  /**
+   * 팀 대시보드를 새로 조회하여 캐시에 저장합니다.
+   *
+   * @param teamId 팀 ID
+   * @return 팀 대시보드 응답
+   */
+  @Transactional(readOnly = true)
+  public TeamDashboardResponse refreshTeamDashboard(Long teamId) {
+    // 팀 및 예산 정보 조회
     Team team = teamRepository.findById(teamId)
         .orElseThrow(() -> new CustomLogicException(ExceptionCode.TEAM_NOT_FOUND,
             "ID가 [%d]인 팀을 찾을 수 없습니다", teamId));
 
-    // 예산이 없는 경우 null로 처리 (Optional 사용)
+    // 예산 조회 (없으면 null)
     Budget budget = budgetRepository.findByTeamId(teamId).orElse(null);
 
+    // 최근 지출 내역 조회
     Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
-    Page<Expense> expensePage = expenseRepository.findByTeamId(teamId, pageable);
-    List<Expense> recentExpenses = expensePage.getContent();
-    List<CategoryExpenseSum> categoryExpenseSums = expenseRepository.findCategoryExpenseSumsByTeamId(
-        teamId).orElse(null);
+    List<Expense> recentExpenses = expenseRepository.findByTeamId(teamId, pageable).getContent();
 
-    return TeamMapper.toTeamDashboardResponse(team, budget, recentExpenses, categoryExpenseSums);
+    // 카테고리별 지출 합계 조회
+    List<CategoryExpenseSum> categoryExpenseSums =
+        expenseRepository.findCategoryExpenseSumsByTeamId(teamId).orElse(null);
+
+    // 대시보드 응답 생성
+    TeamDashboardResponse dashboard = TeamMapper.toTeamDashboardResponse(
+        team, budget, recentExpenses, categoryExpenseSums);
+
+    // 캐시에 저장
+    teamDashboardCacheService.cacheTeamDashboard(teamId, dashboard);
+
+    return dashboard;
   }
 
 }

@@ -16,6 +16,7 @@ import com.luckyseven.backend.domain.expense.repository.ExpenseRepository;
 import com.luckyseven.backend.domain.member.entity.Member;
 import com.luckyseven.backend.domain.member.service.MemberService;
 import com.luckyseven.backend.domain.settlements.app.SettlementService;
+import com.luckyseven.backend.domain.team.cache.TeamDashboardCacheService;
 import com.luckyseven.backend.domain.team.entity.Team;
 import com.luckyseven.backend.domain.team.repository.TeamRepository;
 import com.luckyseven.backend.sharedkernel.cache.CacheEvictService;
@@ -40,6 +41,7 @@ public class ExpenseService {
   private final MemberService memberService;
   private final SettlementService settlementService;
   private final CacheEvictService cacheEvictService;
+  private final TeamDashboardCacheService teamDashboardCacheService;
 
   @Transactional
   public CreateExpenseResponse saveExpense(Long teamId, ExpenseRequest request) {
@@ -54,6 +56,8 @@ public class ExpenseService {
 
     settlementService.createAllSettlements(request, payer, saved);
     evictRecentExpensesForTeam(teamId);
+    teamDashboardCacheService.evictTeamDashboardCache(teamId);
+
     return ExpenseMapper.toCreateExpenseResponse(saved, budget);
   }
 
@@ -84,7 +88,11 @@ public class ExpenseService {
     updateBudget(delta, method, budget);
 
     expense.update(request.description(), newAmount, request.category());
-    evictRecentExpensesForTeam(expense.getTeam().getId());
+    Long teamId = expense.getTeam().getId();
+
+    evictRecentExpensesForTeam(teamId);
+    teamDashboardCacheService.evictTeamDashboardCache(teamId);
+
     return ExpenseMapper.toCreateExpenseResponse(expense, budget);
   }
 
@@ -101,6 +109,8 @@ public class ExpenseService {
     expenseRepository.delete(expense);
 
     evictRecentExpensesForTeam(teamId);
+    teamDashboardCacheService.evictTeamDashboardCache(teamId);
+
     return ExpenseMapper.toExpenseBalanceResponse(budget);
   }
 

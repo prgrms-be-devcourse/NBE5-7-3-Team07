@@ -146,6 +146,7 @@ public class TeamMapper {
         .foreignBalance(budget != null ? budget.getForeignBalance() : BigDecimal.ZERO)
         .totalAmount(budget != null ? budget.getTotalAmount() : BigDecimal.ZERO)
         .avgExchangeRate(budget != null ? budget.getAvgExchangeRate() : BigDecimal.ZERO)
+        .updatedAt(budget != null ? budget.getUpdatedAt() : null)
         .expenseList(expenseDtos)
         .categoryExpenseSumList(categorySumDtos)
         .build();
