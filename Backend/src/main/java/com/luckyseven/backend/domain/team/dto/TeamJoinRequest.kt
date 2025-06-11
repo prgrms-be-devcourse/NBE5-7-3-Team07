@@ -15,4 +15,4 @@ data class TeamJoinRequest(
     ) val teamCode: String?,
 
     val teamPassword: String?
-) 
+)

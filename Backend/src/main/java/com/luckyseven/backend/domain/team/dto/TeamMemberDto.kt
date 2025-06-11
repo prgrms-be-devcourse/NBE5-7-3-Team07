@@ -1,5 +1,6 @@
 package com.luckyseven.backend.domain.team.dto
 
+import com.luckyseven.backend.domain.team.entity.TeamMember
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.Size
 
@@ -24,6 +25,23 @@ data class TeamMemberDto(
     val role: String?
 ) {
     companion object {
+        fun toTeamMemberDto(teamMember: TeamMember?): TeamMemberDto? {
+            if (teamMember == null) return null
 
+            val team = teamMember.team
+            val member = teamMember.member
+            val leader = team?.leader
+            val role = if (leader?.id == member?.id) "Leader" else "Member"
+
+            return TeamMemberDto(
+                id = teamMember.id,
+                teamId = team?.id,
+                teamName = team?.name,
+                memberId = member?.id,
+                memberNickName = member?.nickname,
+                memberEmail = member?.email,
+                role = role
+            )
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.luckyseven.backend.domain.team.dto
 
+import com.luckyseven.backend.domain.team.entity.Team
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
@@ -18,13 +19,7 @@ data class TeamCreateRequest(
         regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*#?&]{6,}$",
         message = "비밀번호는 최소 하나의 문자와 숫자를 포함해야 합니다"
     ) val teamPassword: String?
-) {
-
-    companion object {
-
-
-    }
-}
+)
 
 //val req = TeamCreateRequest(
 //    name = "럭키세븐",
