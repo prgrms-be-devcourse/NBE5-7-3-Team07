@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.luckyseven.backend.domain.budget.entity.CurrencyCode;
 import com.luckyseven.backend.domain.expense.enums.ExpenseCategory;
 import com.luckyseven.backend.domain.expense.enums.PaymentMethod;
-import com.luckyseven.backend.domain.expense.repository.CategoryExpenseSum;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

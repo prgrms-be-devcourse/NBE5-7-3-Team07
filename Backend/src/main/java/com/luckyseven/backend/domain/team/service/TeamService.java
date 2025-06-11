@@ -27,7 +27,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -69,21 +68,6 @@ public class TeamService {
 
     // 리더를 TeamMember 에 추가
     teamMemberRepository.save(teamMember);
-
-//    // <TODO> 예산 생성(임시로 구현)
-//    Budget budget = Budget.builder()
-//        .foreignCurrency(com.luckyseven.backend.domain.budget.entity.CurrencyCode.KRW) // Set default currency to KRW
-//        .balance(BigDecimal.ZERO)
-//        .foreignBalance(BigDecimal.ZERO)
-//        .totalAmount(BigDecimal.ZERO)
-//        .avgExchangeRate(BigDecimal.ONE)
-//        .setBy(memberId) // Set the creator as the setter
-//        .build();
-//
-//    // Team이 Budget의 주인이므로, Team 에서 Budget set
-//    Budget savedBudget = budgetRepository.save(budget);
-//    savedTeam.setBudget(savedBudget);
-//    savedBudget.setTeam(savedTeam);
 
     savedTeam.addTeamMember(teamMember);
     return TeamMapper.toTeamCreateResponse(savedTeam);

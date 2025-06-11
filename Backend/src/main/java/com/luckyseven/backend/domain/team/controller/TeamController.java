@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class TeamController {
 
   private final TeamService teamService;
-  private final TempMemberService tempMemberService;
   private final TeamMemberService teamMemberService;
 
   @Operation(
