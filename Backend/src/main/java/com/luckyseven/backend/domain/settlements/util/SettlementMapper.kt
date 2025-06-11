@@ -32,7 +32,12 @@ object SettlementMapper {
         payer: Member,
         expense: Expense
     ): Settlement {
-        return Settlement(request.amount, settler, payer, expense)
+        return Settlement(
+            amount = request.amount,
+            settler = settler,
+            payer = payer,
+            expense = expense
+        )
     }
 
     fun toSettlementCreateRequest(
