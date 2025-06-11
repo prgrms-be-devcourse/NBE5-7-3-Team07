@@ -1,4 +1,4 @@
-package com.luckyseven.backend.domain.settlements.dto
+package com.luckyseven.backend.domain.settlement.dto
 
 data class SettlementSearchCondition(
     val expenseId: Long?,

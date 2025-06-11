@@ -1,9 +1,9 @@
-package com.luckyseven.backend.domain.settlements.api
+package com.luckyseven.backend.domain.settlement.api
 
-import com.luckyseven.backend.domain.settlements.app.SettlementService
-import com.luckyseven.backend.domain.settlements.dto.SettlementResponse
-import com.luckyseven.backend.domain.settlements.dto.SettlementSearchCondition
-import com.luckyseven.backend.domain.settlements.dto.SettlementUpdateRequest
+import com.luckyseven.backend.domain.settlement.app.SettlementService
+import com.luckyseven.backend.domain.settlement.dto.SettlementResponse
+import com.luckyseven.backend.domain.settlement.dto.SettlementSearchCondition
+import com.luckyseven.backend.domain.settlement.dto.SettlementUpdateRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse

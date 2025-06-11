@@ -1,4 +1,4 @@
-package com.luckyseven.backend.domain.settlements.entity
+package com.luckyseven.backend.domain.settlement.entity
 
 import com.luckyseven.backend.domain.expense.entity.Expense
 import com.luckyseven.backend.domain.member.entity.Member

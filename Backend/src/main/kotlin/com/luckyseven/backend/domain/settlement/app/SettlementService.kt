@@ -1,17 +1,17 @@
-package com.luckyseven.backend.domain.settlements.app
+package com.luckyseven.backend.domain.settlement.app
 
 import com.luckyseven.backend.domain.expense.dto.ExpenseRequest
 import com.luckyseven.backend.domain.expense.entity.Expense
 import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.service.MemberService
-import com.luckyseven.backend.domain.settlements.dao.SettlementRepository
-import com.luckyseven.backend.domain.settlements.dao.SettlementSpecification
-import com.luckyseven.backend.domain.settlements.dto.SettlementResponse
-import com.luckyseven.backend.domain.settlements.dto.SettlementSearchCondition
-import com.luckyseven.backend.domain.settlements.dto.SettlementUpdateRequest
-import com.luckyseven.backend.domain.settlements.entity.Settlement
-import com.luckyseven.backend.domain.settlements.util.SettlementMapper
+import com.luckyseven.backend.domain.settlement.dao.SettlementRepository
+import com.luckyseven.backend.domain.settlement.dao.SettlementSpecification
+import com.luckyseven.backend.domain.settlement.dto.SettlementResponse
+import com.luckyseven.backend.domain.settlement.dto.SettlementSearchCondition
+import com.luckyseven.backend.domain.settlement.dto.SettlementUpdateRequest
+import com.luckyseven.backend.domain.settlement.entity.Settlement
+import com.luckyseven.backend.domain.settlement.util.SettlementMapper
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import org.springframework.data.domain.Page

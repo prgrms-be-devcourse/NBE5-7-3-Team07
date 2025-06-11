@@ -14,10 +14,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.luckyseven.backend.core.JwtAuthenticationFilter;
-import com.luckyseven.backend.domain.settlements.app.SettlementService;
-import com.luckyseven.backend.domain.settlements.dto.SettlementResponse;
-import com.luckyseven.backend.domain.settlements.dto.SettlementSearchCondition;
-import com.luckyseven.backend.domain.settlements.dto.SettlementUpdateRequest;
+import com.luckyseven.backend.domain.settlement.api.SettlementController;
+import com.luckyseven.backend.domain.settlement.app.SettlementService;
+import com.luckyseven.backend.domain.settlement.dto.SettlementResponse;
+import com.luckyseven.backend.domain.settlement.dto.SettlementSearchCondition;
+import com.luckyseven.backend.domain.settlement.dto.SettlementUpdateRequest;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
