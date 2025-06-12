@@ -1,9 +1,7 @@
 package com.luckyseven.backend.domain.team.cache
 
 import com.luckyseven.backend.domain.team.dto.TeamDashboardResponse
-import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
-import jakarta.annotation.PostConstruct
 import lombok.RequiredArgsConstructor
 import org.springframework.cache.CacheManager
 import org.springframework.stereotype.Service
