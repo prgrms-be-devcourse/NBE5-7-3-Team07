@@ -1,36 +1,43 @@
 .auth-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 1rem;
-  background-color: #f3f4f6;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .auth-card {
-  width: 100%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
   max-width: 400px;
-  padding: 2rem;
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  width: 100%;
 }
 
 .auth-header {
-  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 2rem;
   text-align: center;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .auth-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  padding: 2rem;
 }
 
 .form-group {
@@ -156,4 +163,431 @@
   margin-bottom: 15px;
   border-radius: 4px;
   text-align: center;
+}
+
+/* 이메일 날아가는 애니메이션 */
+@keyframes flyEmail1 {
+  0% { 
+    transform: translateX(-100px) translateY(0px) rotate(0deg);
+    opacity: 0;
+  }
+  20% { 
+    opacity: 1;
+  }
+  100% { 
+    transform: translateX(100px) translateY(-20px) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes flyEmail2 {
+  0% { 
+    transform: translateX(-80px) translateY(5px) rotate(-5deg);
+    opacity: 0;
+  }
+  30% { 
+    opacity: 0.7;
+  }
+  100% { 
+    transform: translateX(120px) translateY(-15px) rotate(20deg);
+    opacity: 0;
+  }
+}
+
+@keyframes flyEmail3 {
+  0% { 
+    transform: translateX(-60px) translateY(-5px) rotate(5deg);
+    opacity: 0;
+  }
+  40% { 
+    opacity: 0.5;
+  }
+  100% { 
+    transform: translateX(140px) translateY(-25px) rotate(25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes dottedTrail {
+  0% { 
+    width: 0%;
+    opacity: 0;
+  }
+  50% { 
+    width: 80%;
+    opacity: 1;
+  }
+  100% { 
+    width: 100%;
+    opacity: 0;
+  }
+}
+
+.flying-email-1 {
+  position: absolute;
+  animation: flyEmail1 2.5s ease-out infinite;
+  animation-delay: 0s;
+}
+
+.flying-email-2 {
+  position: absolute;
+  animation: flyEmail2 2.8s ease-out infinite;
+  animation-delay: 0.3s;
+}
+
+.flying-email-3 {
+  position: absolute;
+  animation: flyEmail3 3s ease-out infinite;
+  animation-delay: 0.6s;
+}
+
+.dotted-trail {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(to right, 
+    transparent, 
+    rgba(255,255,255,0.3) 20%, 
+    rgba(255,255,255,0.6) 50%, 
+    rgba(255,255,255,0.3) 80%, 
+    transparent
+  );
+  background-size: 10px 2px;
+  border-radius: 1px;
+  animation: dottedTrail 2s ease-in-out infinite;
+}
+
+/* 체크마크 애니메이션 */
+.checkmark-container {
+  animation: checkmark-scale 0.6s ease-in-out;
+}
+
+.checkmark {
+  animation: checkmark-scale 0.6s ease-in-out;
+}
+
+.checkmark-path {
+  stroke-dasharray: 25;
+  stroke-dashoffset: 25;
+  animation: checkmark-draw 0.8s ease-in-out 0.3s forwards;
+}
+
+@keyframes checkmark-scale {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes checkmark-draw {
+  0% {
+    stroke-dashoffset: 25;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 성공 바운스 애니메이션 */
+.success-bounce {
+  animation: success-bounce 0.6s ease-in-out;
+}
+
+@keyframes success-bounce {
+  0% {
+    transform: scale(0.8) translateY(20px);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05) translateY(-5px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 완료 화면 배경 */
+.completion-bg {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
+  min-height: 100vh;
+}
+
+/* 완료 카드 스타일 */
+.completion-card {
+  background: white;
+  border: 2px solid #10b981;
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.15);
+}
+
+.completion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 25px 70px rgba(16, 185, 129, 0.2);
+  transition: all 0.3s ease;
+}
+
+/* 진행 표시기 애니메이션 */
+@keyframes progress-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--progress-width);
+  }
+}
+
+.progress-line {
+  animation: progress-fill 1s ease-in-out;
+}
+
+/* 펄스 효과 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* 로딩 스피너 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* 페이드 인 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* 슬라이드 인 애니메이션 */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-up {
+  animation: slideInUp 0.6s ease-out;
+}
+
+/* 글로우 효과 */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  }
+}
+
+.glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* 타이핑 효과 */
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.typing-effect {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typing 2s steps(40, end);
+}
+
+/* 흔들기 효과 */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* 하트비트 효과 */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+/* 성공 알림 스타일 */
+.success-notification {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* 오류 알림 스타일 */
+.error-notification {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  animation: shake 0.5s ease-in-out;
+}
+
+/* 정보 알림 스타일 */
+.info-notification {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* 경고 알림 스타일 */
+.warning-notification {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  animation: pulse 2s infinite;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 640px) {
+  .auth-container {
+    padding: 0.5rem;
+  }
+  
+  .auth-header {
+    padding: 1.5rem;
+  }
+  
+  .auth-form {
+    padding: 1.5rem;
+  }
+  
+  .auth-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .auth-card {
+    background: #1f2937;
+    color: #f9fafb;
+  }
+  
+  .auth-header {
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  }
+  
+  .auth-title {
+    color: #f9fafb;
+  }
+  
+  .auth-subtitle {
+    color: #d1d5db;
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 포커스 스타일 */
+.auth-form input:focus,
+.auth-form button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* 호버 효과 */
+.auth-form button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* 활성 상태 */
+.auth-form button:active {
+  transform: translateY(0);
+}
+
+/* 로딩 상태 */
+.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* 성공 상태 */
+.success {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+/* 오류 상태 */
+.error {
+  border-color: #ef4444;
+  background-color: #fef2f2;
 } 
