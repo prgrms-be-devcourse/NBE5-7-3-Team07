@@ -1,6 +1,7 @@
 package com.luckyseven.backend.domain.budget.service;
 
 import com.luckyseven.backend.domain.budget.dao.BudgetRepository;
+import com.luckyseven.backend.domain.budget.dto.BudgetAddRequest;
 import com.luckyseven.backend.domain.budget.dto.BudgetCreateRequest;
 import com.luckyseven.backend.domain.budget.dto.BudgetCreateResponse;
 import com.luckyseven.backend.domain.budget.dto.BudgetReadResponse;
@@ -9,19 +10,23 @@ import com.luckyseven.backend.domain.budget.dto.BudgetUpdateResponse;
 import com.luckyseven.backend.domain.budget.entity.Budget;
 import com.luckyseven.backend.domain.budget.mapper.BudgetMapper;
 import com.luckyseven.backend.domain.budget.validator.BudgetValidator;
+import com.luckyseven.backend.domain.expense.repository.ExpenseRepository;
 import com.luckyseven.backend.domain.team.entity.Team;
 import com.luckyseven.backend.domain.team.repository.TeamRepository;
+import com.luckyseven.backend.sharedkernel.exception.CustomLogicException;
+import com.luckyseven.backend.sharedkernel.exception.ExceptionCode;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class BudgetService {
 
   private final TeamRepository teamRepository;
+  private final ExpenseRepository expenseRepository;
   private final BudgetRepository budgetRepository;
   private final BudgetMapper budgetMapper;
   private final BudgetValidator budgetValidator;
@@ -32,14 +37,7 @@ public class BudgetService {
     Team team = teamRepository.findById(teamId)
         .orElseThrow(() -> new EntityNotFoundException("팀을 찾을 수 없습니다: " + teamId));
 
-    Budget budget = Budget.builder()
-        .team(team)
-        .totalAmount(request.totalAmount())
-        .avgExchangeRate(request.exchangeRate())
-        .setBy(loginMemberId)
-        .balance(request.totalAmount())
-        .foreignCurrency(request.foreignCurrency())
-        .build();
+    Budget budget = budgetMapper.toEntity(team, loginMemberId, request);
 
     budget.setExchangeInfo(request.isExchanged(),
         budget.getTotalAmount(),
@@ -51,7 +49,7 @@ public class BudgetService {
     return budgetMapper.toCreateResponse(budget);
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public BudgetReadResponse getByTeamId(Long teamId) {
     Budget budget = budgetValidator.validateBudgetExist(teamId);
 
@@ -64,13 +62,18 @@ public class BudgetService {
     Budget budget = budgetValidator.validateBudgetExist(teamId);
 
     budget.setSetBy(loginMemberId);
-
-    if (request.additionalBudget() != null) {
-      addBudget(request, budget);
-      return budgetMapper.toUpdateResponse(budget);
-    }
-
     updateTotalAmountOrExchangeRate(request, budget);
+
+    return budgetMapper.toUpdateResponse(budget);
+  }
+
+  @Transactional
+  public BudgetUpdateResponse addBudgetByTeamId(Long teamId, Long loginMemberId,
+      BudgetAddRequest request) {
+    Budget budget = budgetValidator.validateBudgetExist(teamId);
+
+    budget.setSetBy(loginMemberId);
+    addBudget(request, budget);
 
     return budgetMapper.toUpdateResponse(budget);
   }
@@ -80,6 +83,9 @@ public class BudgetService {
     Team team = teamRepository.findById(teamId)
         .orElseThrow(() -> new EntityNotFoundException("팀을 찾을 수 없습니다: " + teamId));
 
+    if (expenseRepository.existsByTeamId(teamId)) {
+      throw new CustomLogicException(ExceptionCode.EXIST_EXPENSE);
+    }
 
     Budget budget = budgetValidator.validateBudgetExist(teamId);
 
@@ -88,7 +94,7 @@ public class BudgetService {
     budgetRepository.delete(budget);
   }
 
-  private static void addBudget(BudgetUpdateRequest request, Budget budget) {
+  private static void addBudget(BudgetAddRequest request, Budget budget) {
     // totalAmount, Balance += additionalBudget
     if (request.additionalBudget() != null) {
       budget.updateExchangeInfo(request.isExchanged(),

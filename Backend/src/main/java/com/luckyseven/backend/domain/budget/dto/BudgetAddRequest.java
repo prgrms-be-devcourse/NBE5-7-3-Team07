@@ -4,10 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
 
-public record BudgetUpdateRequest (
-    @JsonProperty("totalAmount")
+public record BudgetAddRequest(
+    @JsonProperty("additionalBudget")
     @DecimalMin(value = "0.0", inclusive = false)
-    BigDecimal totalAmount,
+    BigDecimal additionalBudget,
 
     @JsonProperty("isExchanged")
     Boolean isExchanged,

@@ -6,12 +6,24 @@ import com.luckyseven.backend.domain.budget.dto.BudgetReadResponse;
 import com.luckyseven.backend.domain.budget.dto.BudgetUpdateRequest;
 import com.luckyseven.backend.domain.budget.dto.BudgetUpdateResponse;
 import com.luckyseven.backend.domain.budget.entity.Budget;
+import com.luckyseven.backend.domain.team.entity.Team;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import org.springframework.stereotype.Component;
 
 @Component
 public class BudgetMapper {
+
+  public Budget toEntity(Team team, Long loginMemberId, BudgetCreateRequest request) {
+    return Budget.builder()
+        .team(team)
+        .totalAmount(request.totalAmount())
+        .avgExchangeRate(request.exchangeRate())
+        .setBy(loginMemberId)
+        .balance(request.totalAmount())
+        .foreignCurrency(request.foreignCurrency())
+        .build();
+  }
 
   public BudgetCreateResponse toCreateResponse(Budget budget) {
     return new BudgetCreateResponse(

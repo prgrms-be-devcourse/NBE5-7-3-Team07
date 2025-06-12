@@ -14,6 +14,7 @@ public enum ExceptionCode {
   ALREADY_TEAM_MEMBER(HttpStatus.BAD_REQUEST, "이미 팀에 가입된 회원입니다."),
   NOT_TEAM_MEMBER(HttpStatus.BAD_REQUEST, "해당 팀에 속한 멤버가 아닙니다."),
   INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, "예산이 부족합니다."),
+  EXIST_EXPENSE(HttpStatus.BAD_REQUEST, "이미 등록된 지출이 있어 예산을 삭제할 수 없습니다."),
 
   /*
    * 403 FORBIDDEN: 승인을 거부함
