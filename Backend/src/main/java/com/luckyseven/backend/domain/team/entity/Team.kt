@@ -15,9 +15,9 @@ import jakarta.persistence.*
         Index(
             name = "idx_team_leader_id",
             columnList = "leader_id"
-        ), 
+        ),
         Index(
-            name = "idx_team_budget_id", 
+            name = "idx_team_budget_id",
             columnList = "budget_id"
         )
     ]
@@ -74,19 +74,5 @@ class Team(
         teamMembers.remove(teamMember)
         teamMember.team = null
     }
-
-
-    /**
-     * TeamCreateRequest와 멤버 정보를 Team 엔티티로 변환한다.
-     *
-     * @param request  요청
-     * @param leader   리더가 될 멤버
-     * @param teamCode 팀 join 시 필요한 팀 코드
-     * @return Team 엔티티
-     */
-    companion object {
-
-    }
-
 
 }

@@ -12,7 +12,7 @@ import com.luckyseven.backend.domain.team.entity.TeamMember
 import java.math.BigDecimal
 
 object TeamMapper {
-    fun toTeamListResponse(team: Team?): TeamListResponse? {
+    fun toTeamListResponse(team: Team?): TeamListResponse {
         return TeamListResponse(
             id = team?.id,
             name = team?.name,
@@ -62,8 +62,8 @@ object TeamMapper {
      * @param team 변환할 팀 엔티티
      * @return 변환된 팀 생성 응답 DTO
      */
-    fun toTeamCreateResponse(team: Team?): TeamCreateResponse? {
-        return team?.let {
+    fun toTeamCreateResponse(team: Team): TeamCreateResponse {
+        return team.let {
             TeamCreateResponse(
                 id = it.id,
                 name = it.name,
@@ -79,8 +79,8 @@ object TeamMapper {
      * @param team 변환할 팀 엔티티
      * @return 변환된 팀 참가 응답 DTO
      */
-    fun toTeamJoinResponse(team: Team?): TeamJoinResponse? {
-        return team?.let {
+    fun toTeamJoinResponse(team: Team): TeamJoinResponse {
+        return team.let {
             TeamJoinResponse(
                 id = it.id,
                 teamName = it.name,
