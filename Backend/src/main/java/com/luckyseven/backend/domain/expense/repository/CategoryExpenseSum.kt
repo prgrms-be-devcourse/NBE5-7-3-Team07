@@ -1,9 +1,9 @@
-package com.luckyseven.backend.domain.expense.repository;
+package com.luckyseven.backend.domain.expense.repository
 
-import com.luckyseven.backend.domain.expense.enums.ExpenseCategory;
-import java.math.BigDecimal;
+import com.luckyseven.backend.domain.expense.enums.ExpenseCategory
+import java.math.BigDecimal
 
-public interface CategoryExpenseSum {
-  ExpenseCategory getCategory();
-  BigDecimal getTotalAmount();
+interface CategoryExpenseSum {
+    val category: ExpenseCategory
+    val totalAmount: BigDecimal
 }

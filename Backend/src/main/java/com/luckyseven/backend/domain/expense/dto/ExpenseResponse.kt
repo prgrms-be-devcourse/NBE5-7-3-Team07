@@ -7,11 +7,11 @@ import java.time.LocalDateTime
 
 
 data class ExpenseResponse(
-    val id: Long,
+    val id: Long?,
     val description: String,
     val amount: BigDecimal,
     val category: ExpenseCategory,
-    val payerId: Long,
+    val payerId: Long?,
     val payerNickname: String,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,

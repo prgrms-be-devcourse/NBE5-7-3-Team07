@@ -27,5 +27,5 @@ data class ExpenseRequest(
     val paymentMethod: PaymentMethod,
 
     @field:NotEmpty(message = "정산 대상자가 최소 1명 이상 필요합니다.")
-    val settlerId: MutableList<Long?>
+    val settlerId: MutableList<Long>
 )

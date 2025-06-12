@@ -1,160 +1,144 @@
-package com.luckyseven.backend.domain.expense.service;
+package com.luckyseven.backend.domain.expense.service
 
-import static com.luckyseven.backend.sharedkernel.exception.ExceptionCode.EXPENSE_NOT_FOUND;
-import static com.luckyseven.backend.sharedkernel.exception.ExceptionCode.TEAM_NOT_FOUND;
-
-import com.luckyseven.backend.domain.budget.entity.Budget;
-import com.luckyseven.backend.domain.expense.dto.CreateExpenseResponse;
-import com.luckyseven.backend.domain.expense.dto.ExpenseBalanceResponse;
-import com.luckyseven.backend.domain.expense.dto.ExpenseRequest;
-import com.luckyseven.backend.domain.expense.dto.ExpenseResponse;
-import com.luckyseven.backend.domain.expense.dto.ExpenseUpdateRequest;
-import com.luckyseven.backend.domain.expense.entity.Expense;
-import com.luckyseven.backend.domain.expense.enums.PaymentMethod;
-import com.luckyseven.backend.domain.expense.mapper.ExpenseMapper;
-import com.luckyseven.backend.domain.expense.repository.ExpenseRepository;
-import com.luckyseven.backend.domain.member.entity.Member;
-import com.luckyseven.backend.domain.member.service.MemberService;
-import com.luckyseven.backend.domain.settlement.app.SettlementService;
-import com.luckyseven.backend.domain.team.entity.Team;
-import com.luckyseven.backend.domain.team.repository.TeamRepository;
-import com.luckyseven.backend.sharedkernel.cache.CacheEvictService;
-import com.luckyseven.backend.sharedkernel.dto.PageResponse;
-import com.luckyseven.backend.sharedkernel.exception.CustomLogicException;
-import java.math.BigDecimal;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.luckyseven.backend.domain.budget.entity.Budget
+import com.luckyseven.backend.domain.expense.dto.*
+import com.luckyseven.backend.domain.expense.entity.Expense
+import com.luckyseven.backend.domain.expense.enums.PaymentMethod
+import com.luckyseven.backend.domain.expense.mapper.ExpenseMapper
+import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
+import com.luckyseven.backend.domain.member.service.MemberService
+import com.luckyseven.backend.domain.team.entity.Team
+import com.luckyseven.backend.domain.team.repository.TeamRepository
+import com.luckyseven.backend.sharedkernel.cache.CacheEvictService
+import com.luckyseven.backend.sharedkernel.dto.PageResponse
+import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
+import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
+import org.springframework.cache.annotation.CacheConfig
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Pageable
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 
 @Service
-@RequiredArgsConstructor
-@CacheConfig(cacheNames = "recentExpenses")
-public class ExpenseService {
+@CacheConfig(cacheNames = ["recentExpenses"])
+class ExpenseService(
+    private val expenseRepository: ExpenseRepository,
+    private val teamRepository: TeamRepository,
+    private val memberService: MemberService,
+    private val cacheEvictService: CacheEvictService
+) {
 
-  private final ExpenseRepository expenseRepository;
-  private final TeamRepository teamRepository;
-  private final MemberService memberService;
-  private final SettlementService settlementService;
-  private final CacheEvictService cacheEvictService;
+    @Transactional
+    fun saveExpense(teamId: Long, request: ExpenseRequest): CreateExpenseResponse {
+        val team = findTeamWithBudget(teamId)
+        val payer = memberService.findMemberOrThrow(request.payerId)
+        val budget = findBudgetOrThrow(team)
 
-  @Transactional
-  public CreateExpenseResponse saveExpense(Long teamId, ExpenseRequest request) {
-    Team team = findTeamOrThrow(teamId);
-    Member payer = memberService.findMemberOrThrow(request.payerId);
-    Budget budget = getBudgetFromTeam(team);
+        adjustBudgetOnCreate(request.paymentMethod, budget, request.amount)
 
-    calculateAndBudgetUpdate(request.paymentMethod, budget, request.amount);
+        val expense = ExpenseMapper.fromExpenseRequest(request, team, payer)
+        val savedExpense = expenseRepository.save(expense)
 
-    Expense expense = ExpenseMapper.fromExpenseRequest(request, team, payer);
-    Expense saved = expenseRepository.save(expense);
-
-    settlementService.createAllSettlements(request, payer, saved);
-    evictRecentExpensesForTeam(teamId);
-    return ExpenseMapper.toCreateExpenseResponse(saved, budget);
-  }
-
-  @Transactional(readOnly = true)
-  public ExpenseResponse getExpense(Long expenseId) {
-    Expense expense = findExpenseOrThrowWithPayer(expenseId);
-    return ExpenseMapper.toExpenseResponse(expense);
-  }
-
-  @Transactional(readOnly = true)
-  @Cacheable(key = "'team:' + #teamId + ':page:' + #pageable.pageNumber + ':size:' + #pageable.pageSize")
-  public PageResponse<ExpenseResponse> getListExpense(Long teamId, Pageable pageable) {
-    validateTeamExists(teamId);
-    Page<ExpenseResponse> page = expenseRepository.findResponsesByTeamId(teamId, pageable);
-    return ExpenseMapper.toPageResponse(page);
-  }
-
-  @Transactional
-  public CreateExpenseResponse updateExpense(Long expenseId, ExpenseUpdateRequest request) {
-    Expense expense = findExpenseOrThrow(expenseId);
-    BigDecimal originalAmount = expense.getAmount();
-    BigDecimal newAmount = request.amount;
-    BigDecimal delta = newAmount.subtract(originalAmount);
-
-    Budget budget = getBudgetFromTeam(expense.getTeam());
-    PaymentMethod method = expense.getPaymentMethod();
-
-    updateBudget(delta, method, budget);
-
-    expense.update(request.description, newAmount, request.category);
-    evictRecentExpensesForTeam(expense.getTeam().getId());
-    return ExpenseMapper.toCreateExpenseResponse(expense, budget);
-  }
-
-  @Transactional
-  public ExpenseBalanceResponse deleteExpense(Long expenseId) {
-    Expense expense = findExpenseOrThrow(expenseId);
-    Long teamId = expense.getTeam().getId();
-    Budget budget = getBudgetFromTeam(expense.getTeam());
-
-    PaymentMethod method = expense.getPaymentMethod();
-
-    budgetcredit(method, budget, expense.getAmount());
-
-    expenseRepository.delete(expense);
-
-    evictRecentExpensesForTeam(teamId);
-    return ExpenseMapper.toExpenseBalanceResponse(budget);
-  }
-
-  private static void budgetcredit(PaymentMethod method, Budget budget, BigDecimal amount) {
-    if (method == PaymentMethod.CASH) {
-      budget.creditForeign(amount);
-    } else {
-      budget.creditKrw(amount);
+        // TODO : 나중에 대체
+        /// settlementService.createAllSettlements(request, payer, savedExpense)
+        evictCache(teamId)
+        return ExpenseMapper.toCreateExpenseResponse(savedExpense, budget)
     }
-  }
 
-  private static void calculateAndBudgetUpdate(PaymentMethod request, Budget budget,
-      BigDecimal amount) {
-    if (request == PaymentMethod.CASH) {
-      budget.debitForeign(amount);
-    } else {
-      budget.debitKrw(amount);
+    @Transactional(readOnly = true)
+    fun getExpense(expenseId: Long): ExpenseResponse {
+        val expense = findExpenseWithPayer(expenseId)
+        return ExpenseMapper.toExpenseResponse(expense)
     }
-  }
 
-  private static void updateBudget(BigDecimal delta, PaymentMethod method, Budget budget) {
-    if (delta.compareTo(BigDecimal.ZERO) > 0) {
-      calculateAndBudgetUpdate(method, budget, delta);
-    } else if (delta.compareTo(BigDecimal.ZERO) < 0) {
-      budgetcredit(method, budget, delta.abs());
+    @Transactional(readOnly = true)
+    @Cacheable(key = "'team:' + #teamId + ':page:' + #pageable.pageNumber + ':size:' + #pageable.pageSize")
+    fun getExpenses(teamId: Long, pageable: Pageable): PageResponse<ExpenseResponse> {
+        if (!teamRepository.existsById(teamId)) {
+            throw CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
+        }
+        val page = expenseRepository.findResponsesByTeamId(teamId, pageable)
+        return ExpenseMapper.toPageResponse(page)
     }
-  }
 
-  private Budget getBudgetFromTeam(Team team) {
-    return team.getBudget();
-  }
+    @Transactional
+    fun updateExpense(expenseId: Long, request: ExpenseUpdateRequest): CreateExpenseResponse {
+        val expense = findExpenseWithBudgetOrThrow(expenseId)
 
-  private void evictRecentExpensesForTeam(Long teamId) {
-    cacheEvictService.evictByPrefix("recentExpenses", "team:" + teamId + ":");
-  }
+        val originalAmount = expense.amount
+        val newAmount: BigDecimal = request.amount ?: originalAmount
+        val delta = newAmount.subtract(originalAmount)
+        val budget = findBudgetOrThrow(expense.team)
 
-  private Expense findExpenseOrThrowWithPayer(Long expenseId) {
-    return expenseRepository.findByIdWithPayer(expenseId)
-        .orElseThrow(() -> new CustomLogicException(EXPENSE_NOT_FOUND));
-  }
+        adjustBudgetOnUpdate(delta, expense.paymentMethod, budget)
 
-  private Expense findExpenseOrThrow(Long expenseId) {
-    return expenseRepository.findWithTeamAndBudgetById(expenseId)
-        .orElseThrow(() -> new CustomLogicException(EXPENSE_NOT_FOUND));
-  }
-
-  private void validateTeamExists(Long teamId) {
-    if (!teamRepository.existsById(teamId)) {
-      throw new CustomLogicException(TEAM_NOT_FOUND);
+        expense.update(request.description, newAmount, request.category)
+        evictCache(expense.team.id!!)
+        return ExpenseMapper.toCreateExpenseResponse(expense, budget)
     }
-  }
 
-  private Team findTeamOrThrow(Long teamId) {
-    return teamRepository.findTeamWithBudget(teamId)
-        .orElseThrow(() -> new CustomLogicException(TEAM_NOT_FOUND));
-  }
+    @Transactional
+    fun deleteExpense(expenseId: Long): ExpenseBalanceResponse {
+        val expense = findExpenseWithBudgetOrThrow(expenseId)
+
+        val budget = findBudgetOrThrow(expense.team)
+        creditBudgetOnDelete(expense.paymentMethod, budget, expense.amount)
+
+        expenseRepository.delete(expense)
+        evictCache(expense.team.id!!)
+        return ExpenseMapper.toExpenseBalanceResponse(budget)
+    }
+
+    private fun findExpenseWithPayer(expenseId: Long): Expense = expenseRepository
+        .findByIdWithPayer(expenseId)
+        .orElseThrow { CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND) }
+
+    private fun findBudgetOrThrow(team: Team): Budget =
+        team.budget ?: throw CustomLogicException(ExceptionCode.BUDGET_NOT_FOUND)
+
+    private fun findExpenseWithBudgetOrThrow(expenseId: Long): Expense =
+        expenseRepository
+            .findWithTeamAndBudgetById(expenseId)
+            .orElseThrow { CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND) }
+
+    private fun findTeamWithBudget(teamId: Long): Team =
+        teamRepository
+            .findTeamWithBudget(teamId)
+            .orElseThrow { CustomLogicException(ExceptionCode.TEAM_NOT_FOUND) }
+
+    private fun evictCache(teamId: Long) {
+        cacheEvictService.evictByPrefix("recentExpenses", "team:$teamId:")
+    }
+
+    companion object {
+        private fun adjustBudgetOnCreate(
+            method: PaymentMethod,
+            budget: Budget,
+            amount: BigDecimal
+        ) {
+            if (method == PaymentMethod.CASH) budget.debitForeign(amount)
+            else budget.debitKrw(amount)
+        }
+
+        private fun creditBudgetOnDelete(
+            method: PaymentMethod,
+            budget: Budget,
+            amount: BigDecimal
+        ) {
+            if (method == PaymentMethod.CASH) budget.creditForeign(amount)
+            else budget.creditKrw(amount)
+        }
+
+        private fun adjustBudgetOnUpdate(
+            delta: BigDecimal,
+            method: PaymentMethod,
+            budget: Budget
+        ) {
+            when {
+                delta > BigDecimal.ZERO -> adjustBudgetOnCreate(method, budget, delta)
+                delta < BigDecimal.ZERO -> creditBudgetOnDelete(method, budget, delta.abs())
+            }
+        }
+    }
 }
