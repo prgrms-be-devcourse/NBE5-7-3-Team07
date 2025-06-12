@@ -7,7 +7,7 @@ data class CreateExpenseResponse(
     val id: Long?,
     val amount: BigDecimal,
     val foreignBalance: BigDecimal?,
-    val balance: BigDecimal,
+    val balance: BigDecimal?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
