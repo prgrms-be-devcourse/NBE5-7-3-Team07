@@ -7,6 +7,7 @@ import com.luckyseven.backend.domain.expense.enums.PaymentMethod
 import com.luckyseven.backend.domain.expense.mapper.ExpenseMapper
 import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
 import com.luckyseven.backend.domain.member.service.MemberService
+import com.luckyseven.backend.domain.settlements.app.SettlementService
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.repository.TeamRepository
 import com.luckyseven.backend.sharedkernel.cache.CacheEvictService
@@ -23,6 +24,8 @@ import java.math.BigDecimal
 @Service
 @CacheConfig(cacheNames = ["recentExpenses"])
 class ExpenseService(
+
+    private val settlementService: SettlementService,
     private val expenseRepository: ExpenseRepository,
     private val teamRepository: TeamRepository,
     private val memberService: MemberService,
@@ -40,8 +43,8 @@ class ExpenseService(
         val expense = ExpenseMapper.fromExpenseRequest(request, team, payer)
         val savedExpense = expenseRepository.save(expense)
 
-        // TODO : 나중에 대체
-        /// settlementService.createAllSettlements(request, payer, savedExpense)
+
+        settlementService.createAllSettlements(request, payer, savedExpense)
         evictCache(teamId)
         return ExpenseMapper.toCreateExpenseResponse(savedExpense, budget)
     }
@@ -111,34 +114,32 @@ class ExpenseService(
         cacheEvictService.evictByPrefix("recentExpenses", "team:$teamId:")
     }
 
-    companion object {
-        private fun adjustBudgetOnCreate(
-            method: PaymentMethod,
-            budget: Budget,
-            amount: BigDecimal
-        ) {
-            if (method == PaymentMethod.CASH) budget.debitForeign(amount)
-            else budget.debitKrw(amount)
-        }
+    private fun adjustBudgetOnCreate(
+        method: PaymentMethod,
+        budget: Budget,
+        amount: BigDecimal
+    ) {
+        if (method == PaymentMethod.CASH) budget.debitForeign(amount)
+        else budget.debitKrw(amount)
+    }
 
-        private fun creditBudgetOnDelete(
-            method: PaymentMethod,
-            budget: Budget,
-            amount: BigDecimal
-        ) {
-            if (method == PaymentMethod.CASH) budget.creditForeign(amount)
-            else budget.creditKrw(amount)
-        }
+    private fun creditBudgetOnDelete(
+        method: PaymentMethod,
+        budget: Budget,
+        amount: BigDecimal
+    ) {
+        if (method == PaymentMethod.CASH) budget.creditForeign(amount)
+        else budget.creditKrw(amount)
+    }
 
-        private fun adjustBudgetOnUpdate(
-            delta: BigDecimal,
-            method: PaymentMethod,
-            budget: Budget
-        ) {
-            when {
-                delta > BigDecimal.ZERO -> adjustBudgetOnCreate(method, budget, delta)
-                delta < BigDecimal.ZERO -> creditBudgetOnDelete(method, budget, delta.abs())
-            }
+    private fun adjustBudgetOnUpdate(
+        delta: BigDecimal,
+        method: PaymentMethod,
+        budget: Budget
+    ) {
+        when {
+            delta > BigDecimal.ZERO -> adjustBudgetOnCreate(method, budget, delta)
+            delta < BigDecimal.ZERO -> creditBudgetOnDelete(method, budget, delta.abs())
         }
     }
 }
