@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
-import java.util.*
 
 interface ExpenseRepository : JpaRepository<Expense, Long> {
 
@@ -53,7 +52,7 @@ interface ExpenseRepository : JpaRepository<Expense, Long> {
     )
     fun findByIdWithPayer(
         @Param("expenseId") expenseId: Long
-    ): Optional<Expense>
+    ): Expense?
 
     @Query(
         """
@@ -65,7 +64,7 @@ interface ExpenseRepository : JpaRepository<Expense, Long> {
     )
     fun findWithTeamAndBudgetById(
         @Param("expenseId") expenseId: Long
-    ): Optional<Expense>
+    ): Expense?
 
     @Query(
         value = """
@@ -88,7 +87,7 @@ interface ExpenseRepository : JpaRepository<Expense, Long> {
     )
     fun findCategoryExpenseSumsByTeamId(
         @Param("teamId") teamId: Long
-    ): List<CategoryExpenseSum>?
+    ): List<CategoryExpenseSum>
 
     // 지출이 있는 경우 예산 삭제를 제한하기 위한 지출 조회
     fun existsByTeamId(teamId: Long): Boolean

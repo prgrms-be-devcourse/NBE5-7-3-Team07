@@ -43,7 +43,6 @@ class ExpenseService(
         val expense = ExpenseMapper.fromExpenseRequest(request, team, payer)
         val savedExpense = expenseRepository.save(expense)
 
-
         settlementService.createAllSettlements(request, payer, savedExpense)
         evictCache(teamId)
         return ExpenseMapper.toCreateExpenseResponse(savedExpense, budget)
@@ -93,18 +92,19 @@ class ExpenseService(
         return ExpenseMapper.toExpenseBalanceResponse(budget)
     }
 
-    private fun findExpenseWithPayer(expenseId: Long): Expense = expenseRepository
-        .findByIdWithPayer(expenseId)
-        .orElseThrow { CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND) }
+    // TODO: Optional 제거, Kotlin Nullable + Elvis 연산자로 변경
+    private fun findExpenseWithPayer(expenseId: Long): Expense =
+        expenseRepository.findByIdWithPayer(expenseId)
+            ?: throw CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND)
 
     private fun findBudgetOrThrow(team: Team): Budget =
         team.budget ?: throw CustomLogicException(ExceptionCode.BUDGET_NOT_FOUND)
 
     private fun findExpenseWithBudgetOrThrow(expenseId: Long): Expense =
-        expenseRepository
-            .findWithTeamAndBudgetById(expenseId)
-            .orElseThrow { CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND) }
+        expenseRepository.findWithTeamAndBudgetById(expenseId)
+            ?: throw CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND)
 
+    // Todo: 병합 후 코틀린 스럽게 변경
     private fun findTeamWithBudget(teamId: Long): Team =
         teamRepository
             .findTeamWithBudget(teamId)
