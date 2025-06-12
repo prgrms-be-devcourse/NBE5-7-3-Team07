@@ -1,52 +1,40 @@
-package com.luckyseven.backend.domain.team.util;
+package com.luckyseven.backend.domain.team.util
 
-import com.luckyseven.backend.domain.member.entity.Member;
-import com.luckyseven.backend.domain.team.dto.TeamMemberDto;
-import com.luckyseven.backend.domain.team.entity.TeamMember;
-import java.util.List;
+import com.luckyseven.backend.domain.team.dto.TeamMemberDto
+import com.luckyseven.backend.domain.team.entity.TeamMember
 
-public class TeamMemberMapper {
+object TeamMemberMapper {
+    /**
+     * TeamMember 엔티티를 TeamMemberDto로 변환합니다.
+     *
+     * @param teamMember 변환할 팀멤버 엔티티
+     * @return 변환된 팀멤버 DTO
+     */
+    fun toTeamMemberDto(teamMember: TeamMember?): TeamMemberDto? {
+        if (teamMember == null) return null
 
-  /**
-   * TeamMember 엔티티를 TeamMemberDto로 변환합니다.
-   *
-   * @param teamMember 변환할 팀멤버 엔티티
-   * @return 변환된 팀멤버 DTO
-   */
-  public static TeamMemberDto toDto(TeamMember teamMember) {
-    if (teamMember == null) {
-      return null;
+        val team = teamMember.team
+        val member = teamMember.member
+        val leader = team?.leader
+        val role = if (leader?.id == member?.id) "Leader" else "Member"
+
+        return TeamMemberDto(
+            id = teamMember.id,
+            teamId = team?.id,
+            teamName = team?.name,
+            memberId = member?.id,
+            memberNickName = member?.nickname,
+            memberEmail = member?.email,
+            role = role
+        )
     }
 
-    Member leader = teamMember.getTeam().getLeader();
-    Member currentDtoMember = teamMember.getMember();
-    String role = leader.getId().equals(currentDtoMember.getId()) ? "Leader" : "Member";
-
-    return TeamMemberDto.builder()
-        .id(teamMember.getId())
-        .teamId(teamMember.getTeam().getId())
-        .teamName(teamMember.getTeam().getName())
-        .memberId(teamMember.getMember().getId())
-        .memberNickName(teamMember.getMember().getNickname())
-        .memberEmail(teamMember.getMember().getEmail())
-        .role(role)
-        .build();
-  }
-
-  /**
-   * TeamMember 엔티티 리스트를 TeamMemberDto 리스트로 변환합니다.
-   *
-   * @param teamMembers 변환할 팀멤버 엔티티 리스트
-   * @return 변환된 팀멤버 DTO 리스트
-   */
-  public static List<TeamMemberDto> toDtoList(List<TeamMember> teamMembers) {
-    if (teamMembers == null) {
-      return List.of();
-    }
-
-    return teamMembers.stream()
-        .map(TeamMemberMapper::toDto)
-        .toList();
-  }
-
+    /**
+     * TeamMember 엔티티 리스트를 TeamMemberDto 리스트로 변환합니다.
+     *
+     * @param teamMembers 변환할 팀멤버 엔티티 리스트
+     * @return 변환된 팀멤버 DTO 리스트
+     */
+    fun toDtoList(teamMembers: List<TeamMember>?): List<TeamMemberDto> =
+        teamMembers?.mapNotNull{ toTeamMemberDto(it)} ?: emptyList()
 }

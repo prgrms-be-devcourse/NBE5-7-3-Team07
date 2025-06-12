@@ -85,18 +85,7 @@ class Team(
      * @return Team 엔티티
      */
     companion object {
-        fun toEntity(
-            request: TeamCreateRequest,
-            leader: Member,
-            teamCode: String,
-        ): Team {
-            return Team(
-                name = request.name,
-                teamCode = teamCode,
-                teamPassword = request.teamPassword,
-                leader = leader,
-            )
-        }
+
     }
 
 

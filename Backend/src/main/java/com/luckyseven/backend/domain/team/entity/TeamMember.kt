@@ -41,14 +41,4 @@ class TeamMember(
     )
     var member: Member? = null,
 
-    ) : BaseEntity() {
-        companion object {
-            fun toTeamMemberEntity(team: Team, member: Member): TeamMember {
-                return TeamMember(
-                    team = team,
-                    member = member
-                )
-            }
-        }
-
-}
+    ) : BaseEntity()

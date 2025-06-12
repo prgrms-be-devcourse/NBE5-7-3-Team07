@@ -55,49 +55,4 @@ data class TeamDashboardResponse(
         var date: LocalDateTime? = null,
         var payerNickname: String? = null
     )
-
-    companion object{
-        fun toTeamDashboardResponse(
-            team: Team?,
-            budget: Budget?,
-            expenses: List<Expense>?,
-            categoryExpenseSums: List<CategoryExpenseSum>?
-        ): TeamDashboardResponse?{
-            if(team == null) return null
-
-            val expenseDtoList = expenses?.map { expense ->
-                ExpenseDto(
-                    id = expense.id,
-                    description = expense.description,
-                    amount = expense.amount,
-                    paymentMethod = expense.paymentMethod,
-                    category = expense.category,
-                    date = expense.createdAt,
-                    payerNickname = expense.payer?.nickname
-                )
-            } ?: emptyList()
-            
-            val categorySumDtos = categoryExpenseSums?.map { sum ->
-                CategoryExpenseSumDto(
-                    category = sum.category,
-                    totalAmount = sum.totalAmount
-                )
-            } ?: emptyList()
-
-            return TeamDashboardResponse(
-                teamId = team.id,
-                teamCode = team.teamCode,
-                teamName = team.name,
-                teamPassword = team.teamPassword,
-                foreignCurrency = budget?.foreignCurrency,
-                balance = budget?.balance ?: BigDecimal.ZERO,
-                foreignBalance = budget?.foreignBalance ?: BigDecimal.ZERO,
-                totalAmount = budget?.totalAmount ?: BigDecimal.ZERO,
-                avgExchangeRate = budget?.avgExchangeRate ?: BigDecimal.ZERO,
-                updatedAt = budget?.updatedAt,
-                expenseList = expenseDtoList,
-                categoryExpenseSumList = categorySumDtos
-            )
-        }
-    }
 }
