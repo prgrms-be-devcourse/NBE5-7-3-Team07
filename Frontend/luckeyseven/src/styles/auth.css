@@ -156,4 +156,84 @@
   margin-bottom: 15px;
   border-radius: 4px;
   text-align: center;
+}
+
+/* 회원가입 완료 체크마크 애니메이션 */
+.checkmark-container {
+  display: inline-block;
+}
+
+.checkmark {
+  animation: checkmark-scale 0.6s ease-in-out;
+}
+
+.checkmark-path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: checkmark-draw 0.8s ease-in-out 0.3s forwards;
+}
+
+@keyframes checkmark-scale {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes checkmark-draw {
+  0% {
+    stroke-dashoffset: 20;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 성공 화면 추가 애니메이션 */
+.success-bounce {
+  animation: bounce-in 0.8s ease-out;
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 배경 그라데이션 효과 */
+.completion-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+/* 카드 그림자 효과 강화 */
+.completion-card {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(0);
+  transition: transform 0.3s ease;
+}
+
+.completion-card:hover {
+  transform: translateY(-2px);
 } 

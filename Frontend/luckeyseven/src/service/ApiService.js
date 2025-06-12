@@ -8,7 +8,8 @@ axios.defaults.withCredentials = true;
 export const publicApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json; charset=utf-8',
+    'Accept': 'application/json; charset=utf-8',
   },
   withCredentials: true, // 쿠키 포함
 });
@@ -17,7 +18,8 @@ export const publicApi = axios.create({
 export const privateApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json; charset=utf-8',
+    'Accept': 'application/json; charset=utf-8',
   },
   withCredentials: true, // 쿠키 포함
 });

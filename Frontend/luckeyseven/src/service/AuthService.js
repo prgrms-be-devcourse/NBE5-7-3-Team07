@@ -2,6 +2,12 @@ import { privateApi, publicApi } from "./ApiService";
 import axios from 'axios';
 import { postRefreshToken } from "./ApiService";
 
+// axios 기본 설정에 UTF-8 인코딩 추가
+axios.defaults.headers.common['Accept'] = 'application/json; charset=utf-8';
+axios.defaults.headers.post['Content-Type'] = 'application/json; charset=utf-8';
+axios.defaults.headers.put['Content-Type'] = 'application/json; charset=utf-8';
+axios.defaults.headers.patch['Content-Type'] = 'application/json; charset=utf-8';
+
 // 사용자 정보 저장
 let currentUser = null;
 
@@ -49,7 +55,17 @@ const UserManager = {
         if (user) {
             console.log("사용자 정보 저장:", user);
             currentUser = user;
-            localStorage.setItem('currentUser', JSON.stringify(user));
+            
+            // 한글 인코딩 문제를 방지하기 위해 Base64로 인코딩하여 저장
+            try {
+                const userString = JSON.stringify(user);
+                const encodedUser = btoa(encodeURIComponent(userString));
+                localStorage.setItem('currentUser', encodedUser);
+            } catch (error) {
+                console.error("사용자 정보 저장 오류:", error);
+                // 기본 방식으로 폴백
+                localStorage.setItem('currentUser', JSON.stringify(user));
+            }
         }
     },
     
@@ -59,10 +75,20 @@ const UserManager = {
             try {
                 const storedUser = localStorage.getItem('currentUser');
                 if (storedUser) {
-                    currentUser = JSON.parse(storedUser);
+                    try {
+                        // Base64 디코딩을 시도
+                        const decodedUserString = decodeURIComponent(atob(storedUser));
+                        currentUser = JSON.parse(decodedUserString);
+                    } catch (decodeError) {
+                        // Base64 디코딩 실패 시 기본 JSON.parse 시도
+                        console.warn("Base64 디코딩 실패, 기본 파싱 시도:", decodeError);
+                        currentUser = JSON.parse(storedUser);
+                    }
                 }
             } catch (error) {
                 console.error("로컬 스토리지 사용자 데이터 로드 오류:", error);
+                // 오류 발생 시 localStorage에서 해당 데이터 제거
+                localStorage.removeItem('currentUser');
             }
         }
         return currentUser;
@@ -73,6 +99,27 @@ const UserManager = {
         currentUser = null;
         localStorage.removeItem('currentUser');
         console.log("사용자 정보가 제거되었습니다.");
+    },
+    
+    // 깨진 사용자 정보 복구 (한 번만 실행)
+    repairCorruptedUserData: () => {
+        const repairKey = 'userDataRepaired_v1';
+        if (localStorage.getItem(repairKey)) {
+            return; // 이미 복구됨
+        }
+        
+        try {
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser && currentUser) {
+                // 현재 메모리의 사용자 정보를 다시 저장하여 인코딩 문제 해결
+                console.log("사용자 정보 인코딩 복구 중...");
+                UserManager.setUser(currentUser);
+                localStorage.setItem(repairKey, 'true');
+                console.log("사용자 정보 인코딩 복구 완료");
+            }
+        } catch (error) {
+            console.error("사용자 정보 복구 중 오류:", error);
+        }
     }
 };
 
@@ -80,6 +127,9 @@ const UserManager = {
 try {
     // 사용자 정보 불러오기
     UserManager.getUser();
+    
+    // 깨진 사용자 정보 복구 시도
+    UserManager.repairCorruptedUserData();
     
     // accessToken 불러오기 및 헤더에 설정
     TokenManager.restoreToken();
@@ -131,10 +181,14 @@ export const login = async (req) => {
             TokenManager.setToken(accessToken);
             console.log("토큰 설정 완료, localStorage 확인:", localStorage.getItem('accessToken') ? "저장됨" : "저장안됨");
             
-            // 사용자 정보가 없으면 토큰에서 추출 시도 (간단한 JWT 디코딩)
+            // 사용자 정보가 없으면 토큰에서 추출 시도 (한글 지원 JWT 디코딩)
             if (!user && accessToken) {
                 try {
-                    const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                    // JWT payload 추출 시 한글 인코딩 고려
+                    const base64Payload = accessToken.split('.')[1];
+                    // Base64 디코딩 시 한글 문자를 위한 처리
+                    const decodedPayload = decodeURIComponent(escape(atob(base64Payload)));
+                    const payload = JSON.parse(decodedPayload);
                     console.log("토큰에서 추출한 payload:", payload);
                     
                     // JWT payload에서 사용자 정보 구성
@@ -149,7 +203,21 @@ export const login = async (req) => {
                         UserManager.setUser(userFromToken);
                     }
                 } catch (tokenError) {
-                    console.warn("토큰 디코딩 실패:", tokenError);
+                    console.warn("토큰 디코딩 실패, 기본 방식 시도:", tokenError);
+                    // 기본 방식으로 폴백
+                    try {
+                        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                        const userFromToken = {
+                            id: payload.sub,
+                            email: payload.email,
+                            nickname: payload.nickname
+                        };
+                        if (userFromToken.id || userFromToken.email) {
+                            UserManager.setUser(userFromToken);
+                        }
+                    } catch (fallbackError) {
+                        console.error("토큰 디코딩 완전 실패:", fallbackError);
+                    }
                 }
             }
         } else {
@@ -298,3 +366,40 @@ export const verifyEmailToken = async (token) => {
 
 // 유틸리티 함수들을 외부에서 사용할 수 있도록 export
 export { TokenManager, UserManager };
+
+// 한글 인코딩 테스트 함수 (개발용)
+export const testKoreanEncoding = () => {
+    const testUser = {
+        id: "test123",
+        email: "test@example.com",
+        nickname: "테스트닉네임한글"
+    };
+    
+    console.log("=== 한글 인코딩 테스트 시작 ===");
+    console.log("원본 사용자 정보:", testUser);
+    
+    // 저장 테스트
+    UserManager.setUser(testUser);
+    
+    // 현재 메모리 사용자 정보 제거
+    currentUser = null;
+    
+    // 복원 테스트
+    const restoredUser = UserManager.getUser();
+    console.log("복원된 사용자 정보:", restoredUser);
+    
+    // 닉네임 비교
+    const isNicknameMatch = testUser.nickname === restoredUser?.nickname;
+    console.log("닉네임 일치 여부:", isNicknameMatch);
+    console.log("원본 닉네임:", testUser.nickname);
+    console.log("복원된 닉네임:", restoredUser?.nickname);
+    
+    if (isNicknameMatch) {
+        console.log("✅ 한글 인코딩 테스트 성공!");
+    } else {
+        console.log("❌ 한글 인코딩 테스트 실패!");
+    }
+    
+    console.log("=== 한글 인코딩 테스트 완료 ===");
+    return isNicknameMatch;
+}

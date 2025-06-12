@@ -14,8 +14,8 @@ export default function Signup() {
   const [nickname, setNickname] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [verificationSent, setVerificationSent] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: 이메일 입력, 2: 인증 대기, 3: 인증 완료, 4: 회원정보 입력
+  const [currentStep, setCurrentStep] = useState(1); // 1: 이메일 입력, 2: 인증 대기, 3: 인증 완료, 4: 회원정보 입력, 5: 가입 완료
+  const [countdown, setCountdown] = useState(3); // 회원가입 완료 후 카운트다운
   
   // 비밀번호 표시/숨김 상태
   const [showPassword, setShowPassword] = useState(false);
@@ -168,11 +168,33 @@ export default function Signup() {
     };
   }, [currentStep]);
 
+  // 5단계 완료 시 카운트다운 타이머
+  useEffect(() => {
+    if (currentStep === 5) {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            localStorage.removeItem('verifiedEmail');
+            localStorage.removeItem('emailVerified');
+            navigate('/login');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    } else {
+      // 5단계가 아닐 때는 카운트다운 리셋
+      setCountdown(3);
+    }
+  }, [currentStep, navigate]);
+
   const changeEmail = (e) => {
     setEmail(e.target.value);
     // 이메일이 변경되면 인증 상태 초기화
     setIsEmailVerified(false);
-    setVerificationSent(false);
     setCurrentStep(1);
   };
 
@@ -233,7 +255,6 @@ export default function Signup() {
     setIsLoading(true);
     try {
       await requestEmailVerification(email);
-      setVerificationSent(true);
       setCurrentStep(2); // 인증 대기 단계로 이동
       // 인증 이메일 주소를 로컬 스토리지에 저장
       localStorage.setItem('verifiedEmail', email);
@@ -261,11 +282,10 @@ export default function Signup() {
         nickname: nickname
       };
       await join(req);
-      alert("회원가입이 완료되었습니다.");
-      // 인증 이메일 정보 삭제
-      localStorage.removeItem('verifiedEmail');
-      localStorage.removeItem('emailVerified');
-      navigate('/login');
+      
+      // alert 대신 5단계로 이동
+      setCurrentStep(5);
+      
     } catch (err) {
       setError(err.response?.data?.message || "회원가입 중 오류가 발생했습니다.");
     } finally {
@@ -273,50 +293,57 @@ export default function Signup() {
     }
   };
 
-  // 4단계 프로그레스 표시기 컴포넌트
+  // 5단계 프로그레스 표시기 컴포넌트
   const ProgressIndicator = ({ currentStep }) => {
     const steps = [
       { id: 1, title: "이메일 입력" },
       { id: 2, title: "인증 대기" },
       { id: 3, title: "인증 완료" },
-      { id: 4, title: "정보 입력" }
+      { id: 4, title: "정보 입력" },
+      { id: 5, title: "가입 완료" }
     ];
 
     return (
       <div className="mb-8">
-        <div className="flex justify-between items-center">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
-                currentStep > step.id 
-                  ? 'bg-green-600 text-white' 
-                  : currentStep === step.id 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-200 text-gray-600'
-              }`}>
-                {currentStep > step.id ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                ) : step.id}
+        <div className="relative">
+          {/* 연결선 배경 */}
+          <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200"></div>
+          
+          {/* 진행된 연결선 */}
+          <div 
+            className="absolute top-5 left-0 h-0.5 bg-green-600 transition-all duration-500"
+            style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+          ></div>
+          
+          {/* 단계들 */}
+          <div className="flex justify-between relative">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex flex-col items-center z-10">
+                {/* 숫자/체크마크 원 */}
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
+                  currentStep > step.id 
+                    ? 'bg-green-600 text-white' 
+                    : currentStep === step.id 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {currentStep > step.id ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                  ) : step.id}
+                </div>
+                
+                {/* 단계 제목 */}
+                <span className={`mt-3 text-xs text-center transition-all duration-300 max-w-20 ${
+                  currentStep === step.id ? 'text-blue-600 font-medium' : 'text-gray-600'
+                }`}>
+                  {step.title}
+                </span>
               </div>
-              {index < steps.length - 1 && (
-                <div className={`w-16 h-0.5 mx-2 transition-all duration-300 ${
-                  currentStep > step.id ? 'bg-green-600' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-between mt-3 text-xs text-gray-600">
-          {steps.map((step) => (
-            <span key={step.id} className={`transition-all duration-300 ${
-              currentStep === step.id ? 'text-blue-600 font-medium' : ''
-            }`}>
-              {step.title}
-            </span>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -327,7 +354,7 @@ export default function Signup() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          {/* 4단계 프로그레스 표시기 */}
+          {/* 5단계 프로그레스 표시기 */}
           <ProgressIndicator currentStep={currentStep} />
 
           {currentStep === 1 ? (
@@ -649,7 +676,6 @@ export default function Signup() {
                     type="button"
                     className="w-full py-3 px-4 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium"
                     onClick={() => {
-                      setVerificationSent(false);
                       setCurrentStep(1);
                     }}
                   >
@@ -935,6 +961,69 @@ export default function Signup() {
     );
   };
 
+  // 5단계: 회원가입 완료 화면
+  const renderCompletionStep = () => {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* 5단계 프로그레스 표시기 */}
+          <ProgressIndicator currentStep={currentStep} />
+
+          <div className="auth-card completion-card rounded-lg shadow-md border border-gray-100 text-center success-bounce">
+            <div className="p-8">
+              {/* 성공 애니메이션 */}
+              <div className="mb-6">
+                <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <div className="checkmark-container">
+                    <svg className="checkmark w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path className="checkmark-path" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* 완료 메시지 */}
+              <h1 className="text-3xl font-bold text-gray-800 mb-3">
+                🎉 회원가입이 완료되셨습니다!
+              </h1>
+              
+              <p className="text-gray-600 mb-6 text-lg">
+                <span className="font-semibold text-green-600 block mb-2">{nickname}님</span>
+                환영합니다! 곧 로그인 페이지로 이동합니다.
+              </p>
+
+              {/* 자동 이동 카운트다운 */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                                     <span className="text-blue-600 font-medium">{countdown}초 후 로그인 페이지로 이동합니다</span>
+                </div>
+              </div>
+
+              {/* 즉시 이동 버튼 */}
+              <button
+                onClick={() => {
+                  localStorage.removeItem('verifiedEmail');
+                  localStorage.removeItem('emailVerified');
+                  navigate('/login');
+                }}
+                className="w-full py-3 px-6 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium"
+              >
+                지금 로그인하기 →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // 현재 단계에 따라 렌더링
+  if (currentStep === 5) {
+    return renderCompletionStep();
+  }
   return isEmailVerified ? renderUserInfoStep() : renderEmailVerificationStep();
 } 
