@@ -1,6 +1,7 @@
 package com.luckyseven.backend.domain.settlement.api
 
 import com.luckyseven.backend.domain.settlement.app.SettlementService
+import com.luckyseven.backend.domain.settlement.dto.SettlementAggregationResponse
 import com.luckyseven.backend.domain.settlement.dto.SettlementResponse
 import com.luckyseven.backend.domain.settlement.dto.SettlementSearchCondition
 import com.luckyseven.backend.domain.settlement.dto.SettlementUpdateRequest
@@ -64,5 +65,14 @@ class SettlementController(
         } else {
             settlementService.updateSettlement(settlementId, request)
         }
+    }
+
+    @Operation(summary = "Aggregate calculated settlements of each Members in the team")
+    @ApiResponse(responseCode = "200", description = "Settlement aggregated successfully")
+    @ApiResponse(responseCode = "404", description = "Team Not Found")
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/teams/{teamId}/settlements/aggregation")
+    fun aggregateSettlements(@PathVariable @Positive teamId: Long): SettlementAggregationResponse {
+        return settlementService.getSettlementsAggregation(teamId)
     }
 }
