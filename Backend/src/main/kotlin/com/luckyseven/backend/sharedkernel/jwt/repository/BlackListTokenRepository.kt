@@ -8,5 +8,5 @@ interface BlackListTokenRepository : JpaRepository<BlackListToken, Long> {
     
     fun existsByTokenValue(tokenValue: String): Boolean
     
-    fun findByTokenValue(tokenValue: String): Optional<BlackListToken>
+    fun findByTokenValue(tokenValue: String): BlackListToken?
 } 
