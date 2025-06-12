@@ -32,12 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request){
-//    if (HttpMethod.GET.matches(request.getMethod()) && pathMatcher.match("/api/teams/**",
-//        request.getRequestURI())) {
-//      return true;
-//    }
+
     String path = request.getRequestURI();
-    return path.startsWith("/api/users/");
+    return path.startsWith("/api/users/") || path.startsWith("/api/email/");
   }
 
 

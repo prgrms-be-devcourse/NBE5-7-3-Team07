@@ -50,7 +50,7 @@ public class SecurityConfig {
                 "/swagger-resources/**",
                 "/webjars/**",
                 "api/refresh",
-                "/**").permitAll()
+                "/api/email/**").permitAll()
 
             .anyRequest().authenticated())
         .addFilterBefore(new JwtAuthenticationFilter(jwtTokenizer, customAuthenticationEntryPoint,
