@@ -24,7 +24,6 @@ import java.util.*
 import java.util.function.Supplier
 
 @Service
-@RequiredArgsConstructor
 abstract class TeamService(
     val teamRepository: TeamRepository,
     val teamMemberRepository: TeamMemberRepository,

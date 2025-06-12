@@ -1,16 +1,11 @@
 package com.luckyseven.backend.domain.team.dto
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.luckyseven.backend.domain.budget.entity.Budget
 import com.luckyseven.backend.domain.budget.entity.CurrencyCode
-import com.luckyseven.backend.domain.expense.entity.Expense
 import com.luckyseven.backend.domain.expense.enums.ExpenseCategory
 import com.luckyseven.backend.domain.expense.enums.PaymentMethod
-import com.luckyseven.backend.domain.expense.repository.CategoryExpenseSum
-import com.luckyseven.backend.domain.team.entity.Team
 import java.math.BigDecimal
 import java.time.LocalDateTime
-import kotlin.math.exp
 
 
 data class TeamDashboardResponse(
