@@ -126,8 +126,9 @@ class SettlementService(
     @Transactional(readOnly = true)
     fun getSettlementsAggregation(teamId: Long): SettlementAggregationResponse {
         // TODO:집계 쿼리로 가져오기 or Stream 사용하기
-        val settlements = settlementRepository.findAllByTeamId(teamId)
-        val memberIds = teamMemberService.getTeamMemberByTeamId(teamId).map { dto -> dto.id }
+        val settlements = settlementRepository
+            .findAllByTeamId(teamId).filter { it.isSettled == false }
+        val memberIds = teamMemberService.getTeamMemberByTeamId(teamId).map { it -> it.id }
         val amountSum = Array(memberIds.size) { Array(memberIds.size) { BigDecimal.ZERO } }
         for (s in settlements) {
             val settlerIndex = memberIds.indexOf(s.settler.id)
@@ -157,6 +158,15 @@ class SettlementService(
             }
         }
         return SettlementAggregationResponse(sumList)
+    }
+
+    @Transactional
+    fun settleBetweenMembers(teamId: Long, from: Long, to: Long) {
+        //TODO: 쿼리튜닝으로 개선하기
+        val settlements = settlementRepository.findAllByTeamId(teamId).filter { it ->
+            (it.settler.id == from || it.payer.id == to) && (it.payer.id == from || it.settler.id == to)
+        }.forEach { it.isSettled = true }
+
     }
 }
 
