@@ -52,7 +52,6 @@ class TeamDashboardCacheService(
 //            cacheMissCounter.increment()
             null
         }
-        return null
     }
 
 
