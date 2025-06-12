@@ -75,4 +75,16 @@ class SettlementController(
     fun aggregateSettlements(@PathVariable @Positive teamId: Long): SettlementAggregationResponse {
         return settlementService.getSettlementsAggregation(teamId)
     }
+
+    @Operation(summary = "settle all settlements between two members of the team")
+    @ApiResponse(responseCode = "200", description = "successfully settled")
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/teams/{teamId}/settlements")
+    fun settleBetweenMembers(
+        @PathVariable @Positive teamId: Long,
+        @RequestBody @Positive from: Long,
+        @RequestBody @Positive to: Long
+    ) {
+        settlementService.settleBetweenMembers(teamId, from, to)
+    }
 }
