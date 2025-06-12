@@ -18,11 +18,11 @@ import java.util.function.Supplier
 
 @Service
 class BudgetService(
-    val teamRepository: TeamRepository,
-    val expenseRepository: ExpenseRepository,
-    val budgetRepository: BudgetRepository,
-    val budgetMapper: BudgetMapper,
-    val budgetValidator: BudgetValidator,
+    private val teamRepository: TeamRepository,
+    private val expenseRepository: ExpenseRepository,
+    private val budgetRepository: BudgetRepository,
+    private val budgetMapper: BudgetMapper,
+    private val budgetValidator: BudgetValidator,
 ) {
 
     @Transactional

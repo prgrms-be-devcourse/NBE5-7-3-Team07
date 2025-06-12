@@ -15,7 +15,7 @@ import java.util.*
 
 @Component
 class BudgetValidator(
-    val budgetRepository: BudgetRepository
+    private val budgetRepository: BudgetRepository
 ) {
 
     fun validateBudgetNotExist(teamId: Long) {
