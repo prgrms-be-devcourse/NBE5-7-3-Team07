@@ -75,9 +75,9 @@ class BudgetServiceTests {
 
     BudgetCreateResponse actualResp = budgetService.save(team.getId(), leader.getId(), req);
 
-    assertThat(actualResp.balance()).isEqualTo(expectedResp.balance());
-    assertThat(actualResp.avgExchangeRate()).isEqualTo(expectedResp.avgExchangeRate());
-    assertThat(actualResp.foreignBalance()).isEqualTo(expectedResp.foreignBalance());
+    assertThat(actualResp.balance).isEqualTo(expectedResp.balance);
+    assertThat(actualResp.avgExchangeRate).isEqualTo(expectedResp.avgExchangeRate);
+    assertThat(actualResp.foreignBalance).isEqualTo(expectedResp.foreignBalance);
     verify(budgetValidator, times(1)).validateBudgetNotExist(team.getId());
     verify(budgetRepository, times(1)).save(budget);
   }
@@ -95,9 +95,9 @@ class BudgetServiceTests {
 
     BudgetReadResponse actualResp = budgetService.getByTeamId(teamId);
 
-    assertThat(actualResp.totalAmount()).isEqualTo(expectedResp.totalAmount());
-    assertThat(actualResp.balance()).isEqualTo(expectedResp.balance());
-    assertThat(actualResp.foreignCurrency()).isEqualTo(expectedResp.foreignCurrency());
+    assertThat(actualResp.totalAmount).isEqualTo(expectedResp.totalAmount);
+    assertThat(actualResp.balance).isEqualTo(expectedResp.balance);
+    assertThat(actualResp.foreignCurrency).isEqualTo(expectedResp.foreignCurrency);
 
   }
 
@@ -118,9 +118,9 @@ class BudgetServiceTests {
     BudgetUpdateResponse actualResp = budgetService.updateByTeamId(teamId, loginMemberId, req);
 
     // 예산이 수정되었는지 확인
-    assertThat(budget.getTotalAmount()).isEqualTo(req.totalAmount());
-    assertThat(actualResp.balance()).isEqualTo(expectedResp.balance());
-    assertThat(actualResp.foreignCurrency()).isEqualTo(expectedResp.foreignCurrency());
+    assertThat(budget.getTotalAmount()).isEqualTo(req.totalAmount);
+    assertThat(actualResp.balance).isEqualTo(expectedResp.balance);
+    assertThat(actualResp.foreignCurrency).isEqualTo(expectedResp.foreignCurrency);
 
   }
 
@@ -140,9 +140,9 @@ class BudgetServiceTests {
 
     BudgetUpdateResponse actualResp = budgetService.addBudgetByTeamId(teamId, loginMemberId, req);
 
-    assertThat(budget.getTotalAmount()).isEqualTo(expectedResp.balance());
-    assertThat(actualResp.balance()).isEqualTo(expectedResp.balance());
-    assertThat(actualResp.foreignCurrency()).isEqualTo(expectedResp.foreignCurrency());
+    assertThat(budget.getTotalAmount()).isEqualTo(expectedResp.balance);
+    assertThat(actualResp.balance).isEqualTo(expectedResp.balance);
+    assertThat(actualResp.foreignCurrency).isEqualTo(expectedResp.foreignCurrency);
   }
 
   @Test
