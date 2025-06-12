@@ -7,11 +7,10 @@ import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.service.MemberService
 import com.luckyseven.backend.domain.settlement.dao.SettlementRepository
 import com.luckyseven.backend.domain.settlement.dao.SettlementSpecification
-import com.luckyseven.backend.domain.settlement.dto.SettlementResponse
-import com.luckyseven.backend.domain.settlement.dto.SettlementSearchCondition
-import com.luckyseven.backend.domain.settlement.dto.SettlementUpdateRequest
+import com.luckyseven.backend.domain.settlement.dto.*
 import com.luckyseven.backend.domain.settlement.entity.Settlement
 import com.luckyseven.backend.domain.settlement.util.SettlementMapper
+import com.luckyseven.backend.domain.team.service.TeamMemberService
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import org.springframework.data.domain.Page
@@ -26,7 +25,8 @@ import java.math.RoundingMode
 class SettlementService(
     private val settlementRepository: SettlementRepository,
     private val memberService: MemberService,
-    private val expenseRepository: ExpenseRepository
+    private val teamMemberService: TeamMemberService,
+    private val expenseRepository: ExpenseRepository,
 ) {
     fun createAllSettlements(request: ExpenseRequest, payer: Member, expense: Expense) {
         val settlerIds = request.settlerId()
@@ -119,8 +119,44 @@ class SettlementService(
         return SettlementMapper.toSettlementResponse(settlementRepository.save(settlement))
     }
 
-    fun findSettlementOrThrow(id: Long): Settlement =
+    private fun findSettlementOrThrow(id: Long): Settlement =
         settlementRepository.findWithSettlerAndPayerById(id)
             ?: throw CustomLogicException(ExceptionCode.SETTLEMENT_NOT_FOUND)
+
+    @Transactional(readOnly = true)
+    fun getSettlementsAggregation(teamId: Long): SettlementAggregationResponse {
+        // TODO:집계 쿼리로 가져오기 or Stream 사용하기
+        val settlements = settlementRepository.findAllByTeamId(teamId)
+        val memberIds = teamMemberService.getTeamMemberByTeamId(teamId).map { dto -> dto.id }
+        val amountSum = Array(memberIds.size) { Array(memberIds.size) { BigDecimal.ZERO } }
+        for (s in settlements) {
+            val settlerIndex = memberIds.indexOf(s.settler.id)
+            val payerIndex = memberIds.indexOf(s.payer.id)
+            amountSum[settlerIndex][payerIndex] += s.amount
+        }
+        val sumList = mutableListOf<SettlementMemberAggregationResponse>()
+        for (i in 0 until memberIds.size) {
+            for (j in i + 1 until memberIds.size) {
+                if (amountSum[i][j] < amountSum[j][i]) {
+                    sumList.add(
+                        SettlementMemberAggregationResponse(
+                            from = memberIds[j],
+                            to = memberIds[i],
+                            amount = amountSum[j][i] - amountSum[i][j]
+                        )
+                    )
+                } else if (amountSum[i][j] > amountSum[j][i]) {
+                    sumList.add(
+                        SettlementMemberAggregationResponse(
+                            from = memberIds[i],
+                            to = memberIds[j],
+                            amount = amountSum[i][j] - amountSum[j][i]
+                        )
+                    )
+                }
+            }
+        }
+        return SettlementAggregationResponse(sumList)
+    }
 }
 
