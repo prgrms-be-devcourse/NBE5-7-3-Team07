@@ -11,7 +11,6 @@ import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.sharedkernel.dto.PageResponse
 import org.springframework.data.domain.Page
 
-// Todo: get 메서드는 나중에 통합 후 리팩토링
 object ExpenseMapper {
 
     fun fromExpenseRequest(request: ExpenseRequest, team: Team, payer: Member): Expense =
@@ -26,7 +25,7 @@ object ExpenseMapper {
 
     fun toCreateExpenseResponse(expense: Expense, budget: Budget): CreateExpenseResponse =
         CreateExpenseResponse(
-            id = expense.id!!,
+            id = expense.id,
             amount = expense.amount,
             balance = budget.balance,
             foreignBalance = budget.foreignBalance,
