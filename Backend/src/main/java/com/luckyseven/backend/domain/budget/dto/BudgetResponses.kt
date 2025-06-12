@@ -12,8 +12,8 @@ data class BudgetCreateResponse(
     val setBy: Long,
     val balance: BigDecimal,
 
-    val avgExchangeRate: BigDecimal,
-    val foreignBalance: BigDecimal
+    val avgExchangeRate: BigDecimal?,
+    val foreignBalance: BigDecimal?
 
 )
 
@@ -33,13 +33,13 @@ data class BudgetReadResponse(
 )
 
 data class BudgetUpdateResponse(
-  val id: Long,
-  val updatedAt: LocalDateTime,
+    val id: Long,
+    val updatedAt: LocalDateTime,
 
-  val setBy: Long,
-  val balance: BigDecimal,
-  val foreignCurrency: CurrencyCode,
+    val setBy: Long,
+    val balance: BigDecimal,
+    val foreignCurrency: CurrencyCode,
 
-  val avgExchangeRate: BigDecimal,
-  val foreignBalance: BigDecimal
+    val avgExchangeRate: BigDecimal?,
+    val foreignBalance: BigDecimal?
 )

@@ -55,7 +55,7 @@ class BudgetController(
     @PatchMapping("/{teamId}/budgets")
     @ResponseStatus(HttpStatus.OK)
     fun update(
-        @PathVariable @Positive teamId:  Long,
+        @PathVariable @Positive teamId: Long,
         @AuthenticationPrincipal memberDetails: MemberDetails,
         @Valid @RequestBody request: BudgetUpdateRequest
     ): BudgetUpdateResponse {
