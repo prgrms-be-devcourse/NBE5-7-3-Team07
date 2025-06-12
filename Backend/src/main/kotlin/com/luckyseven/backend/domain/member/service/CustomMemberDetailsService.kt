@@ -22,13 +22,13 @@ class CustomMemberDetailsService(
     @Throws(UsernameNotFoundException::class)
     override fun loadUserByUsername(email: String): MemberDetails {
         val member = memberRepository.findByEmail(email)
-            .orElseThrow { CustomLogicException(ExceptionCode.MEMBER_EMAIL_NOTFOUND, email) }
+            ?: throw CustomLogicException(ExceptionCode.MEMBER_EMAIL_NOTFOUND, email)
         return MemberDetails(member)
     }
     
     fun loadUserById(id: Long): MemberDetails {
-        val member = memberRepository.findById(id)
-            .orElseThrow { CustomLogicException(ExceptionCode.MEMBER_ID_NOTFOUND, id) }
+        val member = memberRepository.findById(id).orElse(null)
+            ?: throw CustomLogicException(ExceptionCode.MEMBER_ID_NOTFOUND, id)
         return MemberDetails(member)
     }
 } 

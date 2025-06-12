@@ -38,7 +38,7 @@ class EmailVerificationService(
     fun validateToken(token: String): String? {
         return try {
             val emailToken = emailVerificationTokenRepository.findByToken(token)
-                .orElse(null) ?: return null
+                ?: return null
             
             if (emailToken.expireTime.isBefore(LocalDateTime.now())) {
                 emailVerificationTokenRepository.delete(emailToken)

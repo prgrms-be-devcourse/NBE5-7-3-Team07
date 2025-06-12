@@ -6,7 +6,7 @@ import java.util.*
 
 interface RefreshTokenRepository : JpaRepository<RefreshToken, Long> {
     
-    fun findByUserId(id: Long): Optional<RefreshToken>
+    fun findByUserId(id: Long): RefreshToken?
     
     fun deleteByTokenValue(refreshToken: String)
 } 

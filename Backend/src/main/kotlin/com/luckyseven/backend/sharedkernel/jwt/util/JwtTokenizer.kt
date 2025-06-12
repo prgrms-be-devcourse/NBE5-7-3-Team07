@@ -53,11 +53,9 @@ class JwtTokenizer(
         )
         
         val refreshTokenEntity = refreshTokenRepository.findByUserId(memberDetails.id)
-            .orElse(
-                RefreshToken(
-                    userId = memberDetails.id,
-                    tokenValue = refreshToken
-                )
+            ?: RefreshToken(
+                userId = memberDetails.id,
+                tokenValue = refreshToken
             )
         
         refreshTokenRepository.save(refreshTokenEntity)

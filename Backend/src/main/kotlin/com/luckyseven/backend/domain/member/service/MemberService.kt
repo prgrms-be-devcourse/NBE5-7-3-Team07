@@ -78,9 +78,8 @@ class MemberService(
     }
     
     fun findMemberOrThrow(id: Long): Member {
-        return memberRepository.findById(id).orElseThrow {
-            CustomLogicException(ExceptionCode.MEMBER_ID_NOTFOUND, id)
-        }
+        return memberRepository.findById(id).orElse(null)
+            ?: throw CustomLogicException(ExceptionCode.MEMBER_ID_NOTFOUND, id)
     }
     
     fun findMembersByIds(ids: List<Long>): List<Member> {
