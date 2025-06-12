@@ -1,77 +1,27 @@
-import React, { useEffect } from "react"
-import {
-  BrowserRouter as Router,
-  Navigate,
-  Route,
-  Routes,
-  useLocation
-} from "react-router-dom"
-import Login from "./pages/Login/Login"
-import Signup from "./pages/Login/Signup"
-import EmailVerification from "./pages/Login/EmailVerification"
-import EmailVerificationHandler from "./pages/Login/EmailVerificationHandler"
-import Home from "./pages/Home"
-import {TeamSettlementsPage} from "./pages/Settlement/TeamSettlementsPage"
-import {SettlementNewPage} from "./pages/Settlement/SettlementNewPage"
-import {SettlementEditPage} from "./pages/Settlement/SettlementEditPage"
-import {SettlementDetailPage} from "./pages/Settlement/SettlementDetailPage"
-import ExpenseList from "./pages/ExpenseDialog/ExpenseList"
-import "./styles/auth.css"
-import {getCurrentUser} from "./service/AuthService"
-import TeamDashBoard from "./pages/TeamDashBoard";
-import TeamSetup from "./pages/TeamSetup"
-import {ToastProvider} from "./context/ToastContext"
-import { verifyEmailToken } from "./service/AuthService"
+import React, { useEffect, useState } from "react";
+import { verifyEmailToken } from "../../service/AuthService";
 
-// 보호된 라우트 컴포넌트
-const ProtectedRoute = ({children}) => {
-  const user = getCurrentUser();
-
-  if (!user) {
-    // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
-    return <Navigate to="/login" replace/>;
-  } 
-
-  return children;
-};
-
-// 전역 중복 요청 방지
-let globalVerificationInProgress = false;
-
-// 이메일 인증 URL 처리를 위한 리다이렉트 컴포넌트
-const EmailRedirect = () => {
-  const location = useLocation();
-  const [status, setStatus] = React.useState("processing"); // processing, success, error
-  const verificationInProgress = React.useRef(false); // 중복 요청 방지용 ref
-  const hasVerified = React.useRef(false); // 검증 완료 여부
+/**
+ * 이메일 인증 링크를 처리하는 컴포넌트
+ * 백엔드에서 생성한 링크(/api/email/verify?token=xxx)가 이 컴포넌트로 라우팅됨
+ */
+export default function EmailVerificationHandler() {
+  const [status, setStatus] = useState("processing"); // processing, success, error
+  const [message, setMessage] = useState("이메일 인증 처리 중입니다...");
   
   useEffect(() => {
-    // 이미 검증했거나 진행 중인 경우 중복 요청 방지
-    if (hasVerified.current || verificationInProgress.current || globalVerificationInProgress) return;
-    
     const verifyToken = async () => {
       try {
-        const queryParams = new URLSearchParams(location.search);
+        const queryParams = new URLSearchParams(window.location.search);
         const token = queryParams.get('token');
         
         if (!token) {
           setStatus("error");
+          setMessage("유효하지 않은 인증 링크입니다.");
           return;
         }
         
-        // 같은 토큰으로 이미 처리된 경우 중복 요청 방지
-        const processedTokens = JSON.parse(localStorage.getItem('processedTokens') || '[]');
-        if (processedTokens.includes(token)) {
-          setStatus("success");
-          hasVerified.current = true;
-          return;
-        }
-        
-        // 전역 및 로컬 진행 중 플래그 설정 (중복 요청 방지)
-        globalVerificationInProgress = true;
-        verificationInProgress.current = true;
-        
-        // 백엔드 API 직접 호출하여 토큰 검증
+        // 백엔드 API 호출하여 토큰 검증
         const response = await verifyEmailToken(token);
         
         if (response.status === 200) {
@@ -87,30 +37,22 @@ const EmailRedirect = () => {
           // 기존 창에서 감지할 수 있도록 완료 플래그 설정
           localStorage.setItem('emailVerificationCompleted', 'true');
           
-          // 처리된 토큰 목록에 추가 (중복 요청 방지)
-          const processedTokens = JSON.parse(localStorage.getItem('processedTokens') || '[]');
-          processedTokens.push(token);
-          localStorage.setItem('processedTokens', JSON.stringify(processedTokens));
-          
           setStatus("success");
-          hasVerified.current = true;
+          setMessage("이메일 인증이 성공적으로 완료되었습니다!");
           
         } else {
           setStatus("error");
-          hasVerified.current = true;
+          setMessage("이메일 인증에 실패했습니다.");
         }
       } catch (err) {
+        console.error("인증 처리 중 오류 발생:", err);
         setStatus("error");
-        hasVerified.current = true;
-      } finally {
-        // 진행 중 플래그 해제
-        globalVerificationInProgress = false;
-        verificationInProgress.current = false;
+        setMessage(err.response?.data?.message || "이메일 인증 처리 중 오류가 발생했습니다.");
       }
     };
     
     verifyToken();
-  }, [location.search]); // location.search만 의존성으로 설정
+  }, []);
   
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -148,8 +90,8 @@ const EmailRedirect = () => {
                 <div className="absolute inset-0 rounded-full border-4 border-green-300 animate-ping opacity-30"></div>
               </div>
               
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">🎉 인증이 완료되었습니다!</h2>
-              <p className="text-lg text-gray-600 mb-8">이메일 인증이 성공적으로 완료되었습니다</p>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">🎉 인증 완료!</h2>
+              <p className="text-lg text-gray-600 mb-8">{message}</p>
               
               <div className="max-w-sm mx-auto p-6 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 mb-6">
                 <div className="flex items-center justify-center mb-3">
@@ -186,20 +128,18 @@ const EmailRedirect = () => {
               </div>
               
               {/* 창 닫기 버튼 */}
-              <div className="flex justify-center">
-                <button 
-                  onClick={() => {
-                    try {
-                      window.close();
-                    } catch (e) {
-                      alert("이 창을 닫고 회원가입 창으로 돌아가세요.");
-                    }
-                  }}
-                  className="py-3 px-8 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium transition-all duration-200 shadow-md"
-                >
-                  창 닫기
-                </button>
-              </div>
+              <button 
+                onClick={() => {
+                  try {
+                    window.close();
+                  } catch (e) {
+                    alert("이 창을 닫고 회원가입 창으로 돌아가세요.");
+                  }
+                }}
+                className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium transition-all duration-200 shadow-md"
+              >
+                창 닫기
+              </button>
               
               <p className="text-xs text-gray-500 mt-4">
                 창이 자동으로 닫히지 않으면 수동으로 닫아주세요
@@ -217,7 +157,7 @@ const EmailRedirect = () => {
                 </div>
               </div>
               <h2 className="text-2xl font-semibold text-gray-800 mb-3">인증 오류</h2>
-              <p className="text-gray-600 mb-6">이메일 인증에 실패했습니다. 다시 시도해주세요.</p>
+              <p className="text-gray-600 mb-6">{message}</p>
               <div className="flex flex-col items-center space-y-4">
                 <button 
                   onClick={() => window.location.reload()}
@@ -244,84 +184,4 @@ const EmailRedirect = () => {
       </div>
     </div>
   );
-};
-
-function App() {
-  return (
-      <ToastProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login/>}/>
-            <Route path="/signup" element={<Signup/>}/>
-            <Route path="/verify-email" element={<EmailVerification />} />
-            <Route path="/email-verification-handler" element={<EmailVerificationHandler />} />
-            <Route path="/email-verify" element={<EmailRedirect />} />
-            <Route path="/TeamDashBoard" element={<TeamDashBoard/>}/>
-            <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Home/>
-                  </ProtectedRoute>
-                }
-            />
-            <Route path="/team-setup" element={<TeamSetup/>}/>
-
-            {/* Settlement 관련 라우트 */}
-            <Route
-                path="/teams/:teamId/settlements"
-                element={
-                  <ProtectedRoute>
-                    <TeamSettlementsPage/>
-                  </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/teams/:teamId/settlements/new"
-                element={
-                  <ProtectedRoute>
-                    <SettlementNewPage/>
-                  </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/settlements/:settlementId"
-                element={
-                  <ProtectedRoute>
-                    <SettlementDetailPage/>
-                  </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/teams/:teamId/settlements/:settlementId/edit"
-                element={
-                  <ProtectedRoute>
-                    <SettlementEditPage/>
-                  </ProtectedRoute>
-                }
-            />
-
-            {/* Expense 관련 라우트 */}
-            <Route
-                path="/expenses"
-                element={
-                  <ProtectedRoute>
-                    <ExpenseList/>
-                  </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/teams/:teamId/expenses"
-                element={
-                  <ProtectedRoute>
-                    <ExpenseList/>
-                  </ProtectedRoute>
-                }
-            />
-          </Routes>
-        </Router>
-      </ToastProvider>
-  )
-}
-
-export default App
+} 

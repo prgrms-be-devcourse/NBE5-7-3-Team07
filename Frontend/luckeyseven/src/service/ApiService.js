@@ -132,11 +132,11 @@ export async function postRefreshToken() {
       response.data.accessToken = newToken;
       console.log('응답 데이터에 accessToken 추가됨:', newToken.substring(0, 10) + "...");
       
-      // 새 토큰으로 헤더 즉시 업데이트
+      // 새 토큰으로 헤더 즉시 업데이트 (기존 방식 유지 - 순환 참조 방지)
       axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       console.log('axios 기본 헤더에 새 토큰 설정됨');
       
-      // localStorage에 accessToken 저장
+      // localStorage에 accessToken 저장 (기존 방식 유지 - 순환 참조 방지)
       localStorage.setItem('accessToken', newToken);
       console.log('localStorage에 accessToken 저장됨');
     } else {
