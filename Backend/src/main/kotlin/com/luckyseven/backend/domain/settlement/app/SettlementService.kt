@@ -164,7 +164,7 @@ class SettlementService(
     fun settleBetweenMembers(teamId: Long, from: Long, to: Long) {
         //TODO: 쿼리튜닝으로 개선하기
         val settlements = settlementRepository.findAllByTeamId(teamId).filter { it ->
-            (it.settler.id == from || it.payer.id == to) && (it.payer.id == from || it.settler.id == to)
+            (it.settler.id == from && it.payer.id == to) || (it.settler.id == to && it.payer.id == from)
         }.forEach { it.isSettled = true }
 
     }
