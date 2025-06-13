@@ -106,13 +106,13 @@ class Budget(
 
     fun setTeam(team: Team?): Budget {
         // 기존 연결 해제
-        this.team?.setBudget(null)
+        this.team?.budget = null
 
         this.team = team
 
         // 새로운 연결 설정 (Team이 null이 아닌 경우)
-        if (team != null && team.getBudget() !== this) {
-            team.setBudget(this)
+        if (team != null && team.budget !== this) {
+            team.budget = this
         }
 
         return this
