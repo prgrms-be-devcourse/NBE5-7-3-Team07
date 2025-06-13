@@ -46,7 +46,7 @@ const PageHeaderControls = ({ pageHeaderData, onBudgetDelete }) => {
     }
 
     try {
-      const response = await axios.delete(`/api/teams/${teamId}/budget`);
+      const response = await axios.delete(`/api/teams/${teamId}/budgets`);
       
       if (response.status === 204) {
         console.log('예산 삭제 완료');
