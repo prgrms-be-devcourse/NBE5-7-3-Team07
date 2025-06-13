@@ -9,6 +9,7 @@ import com.luckyseven.backend.domain.budget.validator.BudgetValidator
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import io.mockk.every
+import io.mockk.impl.annotations.MockK
 import io.mockk.verify
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
@@ -40,10 +41,10 @@ class BudgetControllerTests {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
-    @MockitoBean
+    @MockK
     private lateinit var budgetService: BudgetService
 
-    @MockitoBean
+    @MockK
     private lateinit var budgetValidator: BudgetValidator
 
     // SecurityContext 정리
