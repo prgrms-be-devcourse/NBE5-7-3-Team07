@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import lombok.RequiredArgsConstructor
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.ErrorResponse
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/teams")
-@RequiredArgsConstructor
 @Tag(name = "팀 관리", description = "팀 도메인 API")
 class TeamController(
     val teamService: TeamService,
@@ -28,7 +26,7 @@ class TeamController(
 
     @Operation(summary = "팀 생성", description = "새로운 팀을 생성합니다")
     @ApiResponse(
-        responseCode = "201",
+        responseCode = "200",
         description = "팀 생성 성공",
         content = [Content(schema = Schema(implementation = TeamCreateResponse::class))]
     )
@@ -51,9 +49,9 @@ class TeamController(
     fun createTeam(
         @Parameter(hidden = true) @AuthenticationPrincipal memberDetails: MemberDetails,
         @Parameter(description = "팀 생성 요청 정보") @RequestBody request: @Valid TeamCreateRequest
-    ): ResponseEntity<TeamCreateResponse?> {
+    ): ResponseEntity<TeamCreateResponse> {
         val response = teamService.createTeam(memberDetails, request)
-        return ResponseEntity.ok<TeamCreateResponse?>(response)
+        return ResponseEntity.ok<TeamCreateResponse>(response)
     }
 
     @Operation(summary = "팀 참가", description = "유저가 존재하는 팀에 참가합니다")
@@ -86,14 +84,14 @@ class TeamController(
     fun joinTeam(
         @AuthenticationPrincipal memberDetails: MemberDetails,
         @Parameter(description = "팀 참가 요청 정보") @RequestBody request: @Valid TeamJoinRequest
-    ): ResponseEntity<TeamJoinResponse?> {
+    ): ResponseEntity<TeamJoinResponse> {
         // Service
         val response = teamService.joinTeam(
-            memberDetails, request.teamCode!!,
+            memberDetails, request.teamCode,
             request.teamPassword
         )
 
-        return ResponseEntity.ok<TeamJoinResponse?>(response)
+        return ResponseEntity.ok<TeamJoinResponse>(response)
     }
 
     @GetMapping("/myTeams")
@@ -208,7 +206,7 @@ class TeamController(
         content = [Content(schema = Schema(implementation = ErrorResponse::class))]
     )
     @GetMapping("/{teamId}/dashboard")
-    fun getTeamDashboard(@PathVariable teamId: Long): ResponseEntity<TeamDashboardResponse?> {
+    fun getTeamDashboard(@PathVariable teamId: Long): ResponseEntity<TeamDashboardResponse> {
         val dashboardResponse = teamService.getTeamDashboard(teamId)
 
         return ResponseEntity.ok(dashboardResponse)

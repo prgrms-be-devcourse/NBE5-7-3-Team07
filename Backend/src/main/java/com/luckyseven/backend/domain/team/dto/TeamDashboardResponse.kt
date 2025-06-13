@@ -9,24 +9,25 @@ import java.time.LocalDateTime
 
 
 data class TeamDashboardResponse(
-    var teamId: Long? = null,
+    val teamId: Long,
 
-    var teamName: String? = null,
+    val teamName: String,
 
-    var teamCode: String? = null,
+    val teamCode: String,
 
-    var teamPassword: String? = null,
+    val teamPassword: String,
 
-    var foreignCurrency: CurrencyCode? = null,
+    val foreignCurrency: CurrencyCode? = null,
 
-    var balance: BigDecimal? = null,
+    val balance: BigDecimal? = null,
 
-    var foreignBalance: BigDecimal? = null,
-    var totalAmount: BigDecimal? = null,
+    val foreignBalance: BigDecimal? = null,
 
-    var avgExchangeRate: BigDecimal? = null,
+    val totalAmount: BigDecimal? = null,
 
-    var updatedAt: LocalDateTime? = null,
+    val avgExchangeRate: BigDecimal? = null,
+
+    val updatedAt: LocalDateTime,
 
     val expenseList: List<ExpenseDto?> = emptyList(),
 
@@ -35,19 +36,19 @@ data class TeamDashboardResponse(
 
 
     data class CategoryExpenseSumDto(
-        var category: ExpenseCategory? = null,
-        var totalAmount: BigDecimal? = null
+        val category: ExpenseCategory? = null,
+        val totalAmount: BigDecimal? = null
     )
 
     data class ExpenseDto(
-        var id: Long? = null,
-        var description: String? = null,
-        var amount: BigDecimal? = null,
-        var category: ExpenseCategory? = null,
-        var paymentMethod: PaymentMethod? = null,
+        val id: Long,
+        val description: String? = null,
+        val amount: BigDecimal,
+        val category: ExpenseCategory,
+        val paymentMethod: PaymentMethod,
 
         @field:JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        var date: LocalDateTime? = null,
-        var payerNickname: String? = null
+        val date: LocalDateTime,
+        val payerNickname: String
     )
 }

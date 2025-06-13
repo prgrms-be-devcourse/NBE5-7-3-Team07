@@ -3,7 +3,6 @@ package com.luckyseven.backend.domain.team.entity
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.sharedkernel.entity.BaseEntity
 import jakarta.persistence.*
-import lombok.*
 
 @Entity
 @Table(
@@ -13,16 +12,11 @@ import lombok.*
         columnList = "team_id"
     )]
 )
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @AttributeOverride(name = "id", column = Column(name = "team_member_id"))
 class TeamMember(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(

@@ -25,16 +25,16 @@ import jakarta.persistence.*
 class Team(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null,
 
     @Column(nullable = false)
-    var name: String? = null,
+    var name: String,
 
     @Column(nullable = false, unique = true)
-    var teamCode: String? = null,
+    var teamCode: String,
 
     @Column(nullable = false)
-    var teamPassword: String? = null,
+    var teamPassword: String,
 
     /**
      * 팀장 ID
@@ -45,7 +45,7 @@ class Team(
         nullable = false,
         foreignKey = ForeignKey(value = ConstraintMode.NO_CONSTRAINT)
     )
-    var leader: Member? = null,
+    var leader: Member,
 
     /**
      * 팀의 예산 정보
