@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff;
 }
 
 .auth-card {
@@ -17,7 +17,7 @@
 }
 
 .auth-header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #ffffff !important;
   padding: 2rem;
   text-align: center;
   border-bottom: 1px solid #e2e8f0;
@@ -542,6 +542,18 @@
   .auth-subtitle {
     color: #d1d5db;
   }
+  
+  .auth-form input {
+    color: #f9fafb !important;
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+  }
+  
+  .auth-form input:disabled,
+  .auth-form input[readonly] {
+    background-color: #4b5563 !important;
+    color: #9ca3af !important;
+  }
 }
 
 /* 접근성 개선 */
@@ -553,6 +565,22 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Input 스타일 - 텍스트 색상 명시 */
+.auth-form input {
+  color: #1f2937 !important;
+  background-color: #ffffff !important;
+}
+
+.auth-form input:disabled {
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
+}
+
+.auth-form input[readonly] {
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
 }
 
 /* 포커스 스타일 */
