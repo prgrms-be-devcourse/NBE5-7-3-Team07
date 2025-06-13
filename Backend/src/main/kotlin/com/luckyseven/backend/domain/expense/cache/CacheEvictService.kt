@@ -1,4 +1,4 @@
-package com.luckyseven.backend.sharedkernel.cache
+package com.luckyseven.backend.domain.expense.cache
 
 import org.slf4j.LoggerFactory
 import org.springframework.cache.CacheManager

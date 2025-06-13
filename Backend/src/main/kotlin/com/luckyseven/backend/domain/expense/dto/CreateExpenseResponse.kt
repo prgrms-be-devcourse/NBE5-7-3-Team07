@@ -8,6 +8,6 @@ data class CreateExpenseResponse(
     val amount: BigDecimal,
     val foreignBalance: BigDecimal?,
     val balance: BigDecimal?,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
 )

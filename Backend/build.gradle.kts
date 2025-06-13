@@ -36,9 +36,11 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.21")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.21")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 
     compileOnly("org.projectlombok:lombok")
-    // runtimeOnly("com.h2database:h2")
+    runtimeOnly("com.h2database:h2")
     annotationProcessor("org.projectlombok:lombok")
     runtimeOnly("com.mysql:mysql-connector-j")
 
@@ -65,6 +67,9 @@ dependencies {
 
     implementation("com.github.ben-manes.caffeine:caffeine")
     implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
 }
 
 tasks.test {

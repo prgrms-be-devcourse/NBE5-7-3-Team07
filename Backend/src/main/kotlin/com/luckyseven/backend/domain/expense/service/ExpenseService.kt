@@ -1,6 +1,7 @@
 package com.luckyseven.backend.domain.expense.service
 
 import com.luckyseven.backend.domain.budget.entity.Budget
+import com.luckyseven.backend.domain.expense.cache.CacheEvictService
 import com.luckyseven.backend.domain.expense.dto.*
 import com.luckyseven.backend.domain.expense.entity.Expense
 import com.luckyseven.backend.domain.expense.enums.PaymentMethod
@@ -10,7 +11,6 @@ import com.luckyseven.backend.domain.member.service.MemberService
 import com.luckyseven.backend.domain.settlement.app.SettlementService
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.repository.TeamRepository
-import com.luckyseven.backend.sharedkernel.cache.CacheEvictService
 import com.luckyseven.backend.sharedkernel.dto.PageResponse
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
@@ -92,7 +92,6 @@ class ExpenseService(
         return ExpenseMapper.toExpenseBalanceResponse(budget)
     }
 
-    // TODO: Optional 제거, Kotlin Nullable + Elvis 연산자로 변경
     private fun findExpenseWithPayer(expenseId: Long): Expense =
         expenseRepository.findByIdWithPayer(expenseId)
             ?: throw CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND)
@@ -104,11 +103,9 @@ class ExpenseService(
         expenseRepository.findWithTeamAndBudgetById(expenseId)
             ?: throw CustomLogicException(ExceptionCode.EXPENSE_NOT_FOUND)
 
-    // Todo: 병합 후 코틀린 스럽게 변경
     private fun findTeamWithBudget(teamId: Long): Team =
-        teamRepository
-            .findTeamWithBudget(teamId)
-            .orElseThrow { CustomLogicException(ExceptionCode.TEAM_NOT_FOUND) }
+        teamRepository.findTeamWithBudget(teamId)
+            ?: throw CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
 
     private fun evictCache(teamId: Long) {
         cacheEvictService.evictByPrefix("recentExpenses", "team:$teamId:")
