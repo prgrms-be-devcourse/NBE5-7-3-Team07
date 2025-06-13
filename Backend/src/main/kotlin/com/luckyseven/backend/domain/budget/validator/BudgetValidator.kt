@@ -7,11 +7,8 @@ import com.luckyseven.backend.domain.budget.dto.BudgetUpdateRequest
 import com.luckyseven.backend.domain.budget.entity.Budget
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
-import jakarta.persistence.EntityNotFoundException
-import lombok.RequiredArgsConstructor
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
-import java.util.*
 
 @Component
 class BudgetValidator(
