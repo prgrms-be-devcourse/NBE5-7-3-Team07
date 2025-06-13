@@ -21,7 +21,7 @@ class BudgetValidator(
     fun validateBudgetNotExist(teamId: Long) {
         val budgetOptional: Budget? = budgetRepository.findByTeamId(teamId)
 
-        if (budgetOptional != null) {
+        budgetOptional?.let {
             throw CustomLogicException(
                 ExceptionCode.BUDGET_CONFLICT,
                 "budgetId: " + budgetOptional.id
