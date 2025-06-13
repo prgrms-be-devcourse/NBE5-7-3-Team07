@@ -130,7 +130,7 @@ class JwtTokenizer(
     
     @Transactional
     fun validateRefreshToken(refreshToken: String, response: HttpServletResponse): String {
-        if (blackListTokenRepository.existsByTokenValue(refreshToken)) {
+        if (blackListTokenRepository.findByTokenValue(refreshToken) != null) {
             throw CustomLogicException(ExceptionCode.JWT_BLACKLISTED_TOKEN)
         }
         
