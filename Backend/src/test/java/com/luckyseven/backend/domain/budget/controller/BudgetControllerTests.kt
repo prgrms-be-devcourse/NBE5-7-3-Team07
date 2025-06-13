@@ -162,7 +162,7 @@ class BudgetControllerTests {
             print()
         }
 
-        verify(exactly = 1) { budgetValidator.validateRequest(req)}
+        verify(exactly = 1) { budgetValidator.validateRequest(req) }
     }
 
     @Test
