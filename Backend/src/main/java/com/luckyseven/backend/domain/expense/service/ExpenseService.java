@@ -15,7 +15,7 @@ import com.luckyseven.backend.domain.expense.mapper.ExpenseMapper;
 import com.luckyseven.backend.domain.expense.repository.ExpenseRepository;
 import com.luckyseven.backend.domain.member.entity.Member;
 import com.luckyseven.backend.domain.member.service.MemberService;
-import com.luckyseven.backend.domain.settlements.app.SettlementService;
+import com.luckyseven.backend.domain.settlement.app.SettlementService;
 import com.luckyseven.backend.domain.team.entity.Team;
 import com.luckyseven.backend.domain.team.repository.TeamRepository;
 import com.luckyseven.backend.sharedkernel.cache.CacheEvictService;
