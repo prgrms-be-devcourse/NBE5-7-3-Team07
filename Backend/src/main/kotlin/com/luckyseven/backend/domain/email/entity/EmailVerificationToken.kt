@@ -5,10 +5,10 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(
-    name = "email_verfication_tokens",
+    name = "email_verification_tokens",
     indexes = [Index(columnList = "token", unique = true)]
 )
-data class EmailVerificationToken(
+ class EmailVerificationToken(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
