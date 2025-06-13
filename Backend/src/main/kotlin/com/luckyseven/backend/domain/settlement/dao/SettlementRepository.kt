@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface SettlementRepository : JpaRepository<Settlement, Long>,
-    JpaSpecificationExecutor<Settlement?> {
+    JpaSpecificationExecutor<Settlement> {
 
     @EntityGraph(attributePaths = ["settler", "payer"])
     fun findWithSettlerAndPayerById(id: Long): Settlement?
