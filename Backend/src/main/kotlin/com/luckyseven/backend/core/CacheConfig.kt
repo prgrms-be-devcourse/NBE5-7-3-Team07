@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 @EnableCaching
 class CacheConfig {
     @Bean
-    fun cacheManager(): CacheManager = CustomCaffeineCacheManager().apply{
+    fun cacheManager(): CacheManager = CustomCaffeineCacheManager().apply {
         setCacheConfig(
             "recentExpenses", Caffeine.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
