@@ -1,143 +1,258 @@
-import { privateApi, publicApi } from "./ApiService";
 import axios from 'axios';
-import { postRefreshToken } from "./ApiService";
+import { postRefreshToken, publicApi, privateApi } from "./ApiService";
+
+// axios 기본 설정에 UTF-8 인코딩 추가
+axios.defaults.headers.common['Accept'] = 'application/json; charset=utf-8';
+axios.defaults.headers.post['Content-Type'] = 'application/json; charset=utf-8';
+axios.defaults.headers.put['Content-Type'] = 'application/json; charset=utf-8';
+axios.defaults.headers.patch['Content-Type'] = 'application/json; charset=utf-8';
 
 // 사용자 정보 저장
 let currentUser = null;
 
+// 토큰 관리 유틸리티 함수들
+const TokenManager = {
+    // 토큰 설정 (localStorage + axios 헤더)
+    setToken: (token) => {
+        if (token) {
+            console.log("토큰 설정:", token.substring(0, 10) + "...");
+            localStorage.setItem('accessToken', token);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            console.log("Authorization 헤더 설정됨:", axios.defaults.headers.common['Authorization']);
+        }
+    },
+    
+    // 토큰 가져오기
+    getToken: () => {
+        return localStorage.getItem('accessToken');
+    },
+    
+    // 토큰 제거
+    removeToken: () => {
+        localStorage.removeItem('accessToken');
+        delete axios.defaults.headers.common['Authorization'];
+        console.log("토큰이 제거되었습니다.");
+    },
+    
+    // localStorage에서 토큰 복원
+    restoreToken: () => {
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken) {
+            console.log("로컬 스토리지에서 accessToken 복원:", accessToken.substring(0, 10) + "...");
+            axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            console.log("로컬 스토리지의 accessToken으로 Authorization 헤더 설정됨");
+            return true;
+        }
+        return false;
+    }
+};
+
+// 사용자 정보 관리 유틸리티 함수들 (한글 인코딩 지원)
+const UserManager = {
+    // 사용자 정보 설정 (한글 안전 저장)
+    setUser: (user) => {
+        if (user) {
+            console.log("사용자 정보 저장:", user);
+            currentUser = user;
+            
+            // 한글 인코딩 문제를 방지하기 위해 Base64로 인코딩하여 저장
+            try {
+                const userString = JSON.stringify(user);
+                // encodeURIComponent로 한글을 URL 인코딩한 후 Base64로 인코딩
+                const encodedUser = btoa(encodeURIComponent(userString));
+                localStorage.setItem('currentUser', encodedUser);
+                console.log("사용자 정보 Base64 인코딩 저장 완료");
+            } catch (error) {
+                console.error("사용자 정보 저장 오류:", error);
+                // 기본 방식으로 폴백
+                localStorage.setItem('currentUser', JSON.stringify(user));
+            }
+        }
+    },
+    
+    // 사용자 정보 가져오기 (한글 안전 복원)
+    getUser: () => {
+        if (!currentUser) {
+            try {
+                const storedUser = localStorage.getItem('currentUser');
+                if (storedUser) {
+                    try {
+                        // Base64 디코딩 후 URL 디코딩으로 한글 복원
+                        const decodedUserString = decodeURIComponent(atob(storedUser));
+                        currentUser = JSON.parse(decodedUserString);
+                        console.log("사용자 정보 Base64 디코딩 성공:", currentUser);
+                    } catch (decodeError) {
+                        // Base64 디코딩 실패 시 기본 JSON.parse 시도
+                        console.warn("Base64 디코딩 실패, 기본 파싱 시도:", decodeError);
+                        currentUser = JSON.parse(storedUser);
+                    }
+                }
+            } catch (error) {
+                console.error("로컬 스토리지 사용자 데이터 로드 오류:", error);
+                // 오류 발생 시 localStorage에서 해당 데이터 제거
+                localStorage.removeItem('currentUser');
+            }
+        }
+        return currentUser;
+    },
+    
+    // 사용자 정보 제거
+    removeUser: () => {
+        currentUser = null;
+        localStorage.removeItem('currentUser');
+        console.log("사용자 정보가 제거되었습니다.");
+    },
+    
+    // 깨진 사용자 정보 복구 (한 번만 실행)
+    repairCorruptedUserData: () => {
+        const repairKey = 'userDataRepaired_v2'; // 버전 업데이트
+        if (localStorage.getItem(repairKey)) {
+            return; // 이미 복구됨
+        }
+        
+        try {
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser && currentUser) {
+                // 현재 메모리의 사용자 정보를 다시 저장하여 인코딩 문제 해결
+                console.log("사용자 정보 인코딩 복구 중...");
+                UserManager.setUser(currentUser);
+                localStorage.setItem(repairKey, 'true');
+                console.log("사용자 정보 인코딩 복구 완료");
+            }
+        } catch (error) {
+            console.error("사용자 정보 복구 중 오류:", error);
+        }
+    }
+};
+
 // 로컬 스토리지에서 사용자 정보와 토큰 복원
 try {
     // 사용자 정보 불러오기
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-        currentUser = JSON.parse(storedUser);
-    }
+    UserManager.getUser();
+    
+    // 깨진 사용자 정보 복구 시도
+    UserManager.repairCorruptedUserData();
     
     // accessToken 불러오기 및 헤더에 설정
-    const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
-        console.log("로컬 스토리지에서 accessToken 복원:", accessToken.substring(0, 10) + "...");
-        axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-        console.log("로컬 스토리지의 accessToken으로 Authorization 헤더 설정됨");
-    }
+    TokenManager.restoreToken();
 } catch (error) {
     console.error("로컬 스토리지 데이터 로드 오류:", error);
 }
 
-export const join = async (req) =>{
-    try{
-        const resp = await publicApi.post("/api/users/register", req);
-        return resp.data;
-    }catch(err){
-        console.error("회원가입 오류:", err);
-        throw err;
-    }
+// 이메일 인증 요청 함수
+export const requestEmailVerification = async (email) => {
+    return await publicApi.post(`/api/email/request-email`, { email });
 }
 
-export const login = async(req) => {
-    try {
-        console.log("로그인 요청 데이터:", req);
+export const join = async (req) => {
+    return await publicApi.post(`/api/users/register`, req);
+}
+
+export const login = async (req) => {
+    const response = await publicApi.post(`/api/users/login`, req);
+    
+    console.log("=== 로그인 응답 디버깅 ===");
+    console.log("응답 상태:", response.status);
+    console.log("응답 전체:", response);
+    console.log("응답 데이터:", response.data);
+    console.log("응답 헤더:", response.headers);
+    
+    // 로그인 성공 시 토큰과 사용자 정보 처리
+    if (response.status === 200) {
+        console.log("로그인 성공, 데이터 파싱 시작");
+        console.log("response.data 내용:", JSON.stringify(response.data, null, 2));
         
-        // withCredentials를 명시적으로 설정하여 쿠키를 받을 수 있도록 함
-        const resp = await privateApi.post("/api/users/login", req, {
-            withCredentials: true
-        });
+        // 헤더에서 토큰 추출
+        const accessToken = response.headers?.authorization?.replace('Bearer ', '') ||
+                          response.headers?.Authorization?.replace('Bearer ', '') ||
+                          response.data?.accessToken || 
+                          response.data?.access_token || 
+                          response.data?.token;
+                          
+        // 사용자 정보는 보통 response body에 있거나, 토큰에서 디코딩해야 함
+        const user = response.data?.user || 
+                    response.data?.userInfo || 
+                    response.data?.userData;
         
-        console.log("[1]로그인 응답 데이터:", resp.data);
-        console.log("로그인 응답 헤더:", resp.headers);
+        console.log("추출된 accessToken:", accessToken ? accessToken.substring(0, 10) + "..." : "없음");
+        console.log("추출된 user:", user);
         
-        
-        // 쿠키 확인 (HttpOnly 쿠키는 보이지 않음)
-        console.log("로그인 후 쿠키 (HttpOnly 제외):", document.cookie);
-        
-        // 토큰 설정 - 응답 헤더에서 가져옴
-        let authHeader = null;
-        
-        // 다양한 방식으로 헤더 접근 시도
-        if (resp.headers.get) {
-            authHeader = resp.headers.get('authorization');
-        }
-        
-        if (!authHeader && resp.headers.authorization) {
-            authHeader = resp.headers.authorization;
-        }
-        
-        if (!authHeader && resp.headers['authorization']) {
-            authHeader = resp.headers['authorization'];
-        }
-        
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const accessToken = authHeader.substring(7);
-            console.log("액세스 토큰 발견:", accessToken.substring(0, 10) + "...");
+        // 토큰 설정 (통합된 함수 사용)
+        if (accessToken) {
+            console.log("토큰 설정 중...");
+            TokenManager.setToken(accessToken);
+            console.log("토큰 설정 완료, localStorage 확인:", localStorage.getItem('accessToken') ? "저장됨" : "저장안됨");
             
-            // Authorization 헤더 설정
-            axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-            console.log("Authorization 헤더 설정 완료");
-            
-            // 헤더 설정 확인 로그 추가
-            console.log("설정된 Authorization 헤더:", axios.defaults.headers.common['Authorization']);
-            
-            // localStorage에 accessToken 저장 (이전에는 저장하지 않았지만, 이제 저장함)
-            localStorage.setItem('accessToken', accessToken);
-            console.log("accessToken을 localStorage에 저장했습니다.");
+            // 사용자 정보가 없으면 토큰에서 추출 시도 (한글 지원 JWT 디코딩)
+            if (!user && accessToken) {
+                try {
+                    // JWT payload 추출 시 한글 인코딩 고려
+                    const base64Payload = accessToken.split('.')[1];
+                    // Base64 디코딩 시 한글 문자를 위한 처리
+                    const decodedPayload = decodeURIComponent(escape(atob(base64Payload)));
+                    const payload = JSON.parse(decodedPayload);
+                    console.log("토큰에서 추출한 payload:", payload);
+                    
+                    // JWT payload에서 사용자 정보 구성
+                    const userFromToken = {
+                        id: payload.sub,
+                        email: payload.email,
+                        nickname: payload.nickname
+                    };
+                    
+                    if (userFromToken.id || userFromToken.email) {
+                        console.log("토큰에서 추출한 사용자 정보:", userFromToken);
+                        UserManager.setUser(userFromToken);
+                    }
+                } catch (tokenError) {
+                    console.warn("토큰 디코딩 실패, 기본 방식 시도:", tokenError);
+                    // 기본 방식으로 폴백
+                    try {
+                        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                        const userFromToken = {
+                            id: payload.sub,
+                            email: payload.email,
+                            nickname: payload.nickname
+                        };
+                        if (userFromToken.id || userFromToken.email) {
+                            UserManager.setUser(userFromToken);
+                        }
+                    } catch (fallbackError) {
+                        console.error("토큰 디코딩 완전 실패:", fallbackError);
+                    }
+                }
+            }
         } else {
-            console.log("응답 헤더에서 액세스 토큰을 찾을 수 없습니다.");
+            console.warn("⚠️ 응답에서 accessToken을 찾을 수 없습니다!");
+            console.log("헤더 내용:", JSON.stringify(response.headers, null, 2));
+            if (response.data && typeof response.data === 'object') {
+                console.log("가능한 데이터 필드들:");
+                Object.keys(response.data).forEach(key => {
+                    console.log(`- ${key}:`, response.data[key]);
+                });
+            }
         }
         
-        // 사용자 정보 저장
-        const email = resp.data.email || req.email;
-        const nickname = resp.data.nickname || req.email.split('@')[0];
-        
-        currentUser = { email, nickname };
-        console.log("저장된 사용자 정보:", currentUser);
-        
-        // 로컬 스토리지에 사용자 정보 저장 (토큰은 저장하지 않음)
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        
-        // refreshToken은 HttpOnly 쿠키로 설정되어 있어 접근 불가능
-        console.log("refreshToken은 HttpOnly 쿠키로 설정되어 있어 자바스크립트에서 접근할 수 없습니다.");
-        console.log("로그아웃 시 쿠키가 자동으로 전송됩니다.");
-        
-        // 인증 상태 최종 확인
-        console.log("=== 로그인 후 인증 상태 확인 ===");
-        console.log("메모리의 currentUser:", currentUser);
-        console.log("Authorization 헤더:", axios.defaults.headers.common['Authorization']);
-        console.log("privateApi 기본 헤더:", privateApi.defaults.headers);
-        
-        return resp.data;
-    } catch(err) {
-        console.error("로그인 API 오류:", err);
-        throw err;
+        // 별도로 전달된 사용자 정보 설정 (한글 안전 저장)
+        if (user) {
+            console.log("응답에서 받은 사용자 정보 설정 중...");
+            UserManager.setUser(user);
+        }
+    } else {
+        console.warn("로그인 실패:", response.status, response.data);
     }
+    
+    console.log("=== 로그인 처리 완료 ===");
+    return response;
 }
-
 
 export const getCurrentUser = () => {
     console.log("getCurrentUser 호출됨");
-    console.log("현재 메모리의 currentUser:", currentUser);
+    const user = UserManager.getUser();
+    console.log("현재 사용자:", user);
     console.log("현재 Authorization 헤더:", axios.defaults.headers.common['Authorization'] || "없음");
-    
-    // 현재 메모리에 사용자 정보가 없는 경우 로컬 스토리지에서 확인
-    if (!currentUser) {
-        console.log("메모리에 currentUser가 없음, localStorage 확인 중...");
-        try {
-            const storedUser = localStorage.getItem('currentUser');
-            if (storedUser) {
-                console.log("localStorage에서 사용자 정보 발견:", storedUser);
-                currentUser = JSON.parse(storedUser);
-                // accessToken은 localStorage에 저장하지 않으므로 확인하지 않음
-            } else {
-                console.log("localStorage에 사용자 정보 없음");
-            }
-        } catch (error) {
-            console.error("로컬 스토리지 데이터 로드 오류:", error);
-        }
-    }
-    
-    console.log("최종 반환되는 currentUser:", currentUser);
-    return currentUser;
+    return user;
 }
-
 
 export const checkEmailDuplicate = async(email) => {
     try{
@@ -159,15 +274,9 @@ export const logout = async() => {
         console.log("- currentUser:", currentUser);
         console.log("- Authorization 헤더:", axios.defaults.headers.common['Authorization'] || "없음");
         
-        // HttpOnly 쿠키는 자바스크립트에서 접근할 수 없지만,
-        // withCredentials: true 설정으로 쿠키가 자동으로 요청에 포함됨
         try {
-            // 쿠키가 자동으로 포함되도록 명시적으로 withCredentials 설정
             const response = await privateApi.post("/api/users/logout", {}, {
                 withCredentials: true,
-                // 백엔드에서 올바른 CORS 설정이 필요함:
-                // - Access-Control-Allow-Origin: http://localhost:3000 (프론트엔드 도메인)
-                // - Access-Control-Allow-Credentials: true
             });
             
             console.log("로그아웃 성공:", response.data);
@@ -175,28 +284,11 @@ export const logout = async() => {
             console.error("로그아웃 API 오류:", 
                 apiError.response?.status, 
                 apiError.response?.data || apiError.message);
-                
-            if (apiError.response?.status === 400) {
-                console.error("로그아웃 실패 - 쿠키가 전송되지 않았을 가능성이 있습니다.");
-                console.error("백엔드 CORS 설정과 쿠키 설정을 확인하세요.");
-            }
-            
-            // API 오류가 발생해도 클라이언트 상태 정리는 진행
         }
         
-        // 항상 실행되는 클라이언트 상태 정리
-        // 현재 사용자 정보 초기화
-        currentUser = null;
-        
-        // 로컬 스토리지에서 사용자 정보 제거
-        localStorage.removeItem('currentUser');
-        
-        // localStorage에서 accessToken 제거
-        localStorage.removeItem('accessToken');
-        console.log("localStorage에서 accessToken 제거됨");
-        
-        // Authorization 헤더 제거
-        delete axios.defaults.headers.common['Authorization'];
+        // 클라이언트 상태 정리 (통합된 함수 사용)
+        TokenManager.removeToken();
+        UserManager.removeUser();
         
         console.log("로그아웃 후 인증 상태:");
         console.log("- currentUser:", currentUser);
@@ -204,16 +296,13 @@ export const logout = async() => {
         
         console.log("로그아웃 완료: 사용자 정보 및 토큰 제거됨");
         
-        // 서버 로그아웃에 실패해도 클라이언트 로그아웃은 성공으로 처리
         return { success: true };
     } catch (err) {
         console.error("로그아웃 처리 중 오류:", err);
         
         // 오류가 발생해도 클라이언트 상태 정리
-        currentUser = null;
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('accessToken'); // accessToken도 제거
-        delete axios.defaults.headers.common['Authorization'];
+        TokenManager.removeToken();
+        UserManager.removeUser();
         
         return { success: false, error: err.message };
     }
@@ -227,21 +316,15 @@ export const refreshAccessToken = async () => {
         console.log("- currentUser:", currentUser);
         console.log("- Authorization 헤더:", axios.defaults.headers.common['Authorization']);
         
-        // 쿠키에 refreshToken이 있는지 확인할 수 없음 (HttpOnly)
-        console.log("refreshToken은 HttpOnly 쿠키로 설정되어 있어 확인 불가능");
-        
         // refreshToken을 사용하여 accessToken 갱신 요청
         const response = await postRefreshToken();
         console.log("토큰 갱신 응답:", response.data);
         
-        // 새 액세스 토큰 설정
+        // 새 액세스 토큰 설정 (통합된 함수 사용)
         const newAccessToken = response.data.accessToken;
         if (newAccessToken) {
             console.log("새 액세스 토큰 설정:", newAccessToken.substring(0, 10) + "...");
-            axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-            
-            // 갱신 후 인증 상태 확인
-            console.log("갱신 후 Authorization 헤더:", axios.defaults.headers.common['Authorization']);
+            TokenManager.setToken(newAccessToken); // 통합된 함수 사용
             
             return { 
                 success: true, 
@@ -266,9 +349,8 @@ export const refreshAccessToken = async () => {
         // 에러 발생 시 인증 상태 초기화 여부 결정
         if (error.response && error.response.status === 401) {
             console.warn("인증 만료: 사용자 정보 초기화");
-            currentUser = null;
-            localStorage.removeItem('currentUser');
-            delete axios.defaults.headers.common['Authorization'];
+            TokenManager.removeToken();
+            UserManager.removeUser();
         }
         
         return { 
@@ -278,3 +360,48 @@ export const refreshAccessToken = async () => {
         };
     }
 };
+
+// 이메일 인증 상태 확인 함수
+export const verifyEmailToken = async (token) => {
+    return await publicApi.get(`/api/email/verify?token=${token}`);
+}
+
+// 유틸리티 함수들을 외부에서 사용할 수 있도록 export
+export { TokenManager, UserManager };
+
+// 한글 인코딩 테스트 함수 (개발용)
+export const testKoreanEncoding = () => {
+    const testUser = {
+        id: "test123",
+        email: "test@example.com",
+        nickname: "테스트닉네임한글"
+    };
+    
+    console.log("=== 한글 인코딩 테스트 시작 ===");
+    console.log("원본 사용자 정보:", testUser);
+    
+    // 저장 테스트
+    UserManager.setUser(testUser);
+    
+    // 현재 메모리 사용자 정보 제거
+    currentUser = null;
+    
+    // 복원 테스트
+    const restoredUser = UserManager.getUser();
+    console.log("복원된 사용자 정보:", restoredUser);
+    
+    // 닉네임 비교
+    const isNicknameMatch = testUser.nickname === restoredUser?.nickname;
+    console.log("닉네임 일치 여부:", isNicknameMatch);
+    console.log("원본 닉네임:", testUser.nickname);
+    console.log("복원된 닉네임:", restoredUser?.nickname);
+    
+    if (isNicknameMatch) {
+        console.log("✅ 한글 인코딩 테스트 성공!");
+    } else {
+        console.log("❌ 한글 인코딩 테스트 실패!");
+    }
+    
+    console.log("=== 한글 인코딩 테스트 완료 ===");
+    return isNicknameMatch;
+}
