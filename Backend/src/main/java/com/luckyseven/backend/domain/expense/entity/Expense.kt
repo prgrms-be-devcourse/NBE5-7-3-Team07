@@ -21,7 +21,7 @@ class Expense(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "expense_id", nullable = false)
-    var id: Long? = null,
+    val id: Long? = null,
 
     @Column(nullable = false)
     var description: String,
