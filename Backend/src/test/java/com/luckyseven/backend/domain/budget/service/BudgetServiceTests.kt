@@ -27,8 +27,7 @@ import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import java.util.*
 
-@ExtendWith(MockitoExtension::class)
-internal class BudgetServiceTests {
+class BudgetServiceTests {
 
     val budgetRepository = mockk<BudgetRepository>()
     val teamRepository = mockk<TeamRepository>()
