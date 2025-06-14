@@ -1,343 +1,279 @@
-package com.luckyseven.backend.domain.team.service;
+import com.luckyseven.backend.domain.member.entity.Member
+import com.luckyseven.backend.domain.member.repository.MemberRepository
+import com.luckyseven.backend.domain.member.service.utill.MemberDetails
+import com.luckyseven.backend.domain.team.entity.Team
+import com.luckyseven.backend.domain.team.entity.TeamMember
+import com.luckyseven.backend.domain.team.repository.TeamMemberRepository
+import com.luckyseven.backend.domain.team.repository.TeamRepository
+import com.luckyseven.backend.domain.team.service.TeamMemberService
+import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
+import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import java.util.*
 
-import com.luckyseven.backend.domain.member.entity.Member;
-import com.luckyseven.backend.domain.member.repository.MemberRepository;
-import com.luckyseven.backend.domain.member.service.utill.MemberDetails;
-import com.luckyseven.backend.domain.team.dto.TeamMemberDto;
-import com.luckyseven.backend.domain.team.entity.Team;
-import com.luckyseven.backend.domain.team.entity.TeamMember;
-import com.luckyseven.backend.domain.team.repository.TeamMemberRepository;
-import com.luckyseven.backend.domain.team.repository.TeamRepository;
-import com.luckyseven.backend.domain.team.util.TeamMemberMapper;
-import com.luckyseven.backend.domain.team.util.TestEntityBuilder;
-import com.luckyseven.backend.sharedkernel.exception.CustomLogicException;
-import com.luckyseven.backend.sharedkernel.exception.ExceptionCode;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+class TeamMemberServiceTest : FunSpec({
+    // 의존성 모킹
+    val teamRepository = mockk<TeamRepository>(relaxed = true)
+    val teamMemberRepository = mockk<TeamMemberRepository>(relaxed = true)
+    val memberRepository = mockk<MemberRepository>(relaxed = true)
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+    // 테스트 대상 서비스
+    val teamMemberService = TeamMemberService(
+        teamRepository,
+        teamMemberRepository,
+        memberRepository
+    )
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+    // 테스트에 사용할 객체들
+    lateinit var leader: Member
+    lateinit var member: Member
+    lateinit var team: Team
+    lateinit var teamMember: TeamMember
+    lateinit var leaderTeamMember: TeamMember
+    lateinit var leaderDetails: MemberDetails
 
-@ExtendWith(MockitoExtension.class)
-public class TeamMemberServiceTest {
+    beforeTest {
+        // 팀 리더 생성
+        leader = Member(
+            id = 1L,
+            email = "leader@example.com",
+            nickname = "리더",
+            password = "password123"
+        )
 
-  @Mock
-  private TeamRepository teamRepository;
+        // 일반 멤버 생성
+        member = Member(
+            id = 2L,
+            email = "member@example.com",
+            nickname = "멤버",
+            password = "password123"
+        )
 
-  @Mock
-  private TeamMemberRepository teamMemberRepository;
+        // 팀 생성
+        team = Team(
+            id = 1L,
+            name = "테스트 팀",
+            teamCode = "ABCDEF",
+            leader = leader,
+            teamPassword = "password123"
+        )
 
-  @Mock
-  private MemberRepository memberRepository; // Added MemberRepository mock
+        // 팀 멤버 생성 (일반 멤버)
+        teamMember = TeamMember(
+            id = 2L,
+            member = member,
+            team = team
+        )
 
-  @InjectMocks
-  private TeamMemberService teamMemberService;
+        // 팀 멤버 생성 (리더)
+        leaderTeamMember = TeamMember(
+            id = 1L,
+            member = leader,
+            team = team
+        )
 
-  private MemberDetails mockMemberDetails;
-  private Member actingMember;
-  private Member regularMember;
-  private Member teamLeaderMember;
+        // 리더의 MemberDetails 생성
+        leaderDetails = MemberDetails(leader)
 
-  @BeforeEach
-  void setUp() {
-    mockMemberDetails = mock(MemberDetails.class);
-    actingMember = TestEntityBuilder.createMemberWithId(1L, "acting@example.com", "Acting User");
-    teamLeaderMember = TestEntityBuilder.createMemberWithId(2L, "leader@example.com",
-        "Team Leader");
-    regularMember = TestEntityBuilder.createMemberWithId(3L, "member@example.com",
-        "Regular Member");
+        // 팀에 멤버 추가
+        team.addTeamMember(teamMember)
+        team.addTeamMember(leaderTeamMember)
+    }
 
-  }
+    // getTeamMemberByTeamId 테스트
+    test("getTeamMemberByTeamId는 존재하는 팀 ID로 조회 시 팀 멤버 목록을 반환해야 한다") {
+        // Given
+        val teamId = 1L
+        val teamMembers = listOf(leaderTeamMember, teamMember)
 
-  /**
-   * 팀 ID로 팀 멤버 목록을 조회하는 기능 테스트 - 팀이 존재할 경우 TeamMemberDto 리스트를 반환하는지 확인 - DTO 변환이 제대로 이루어지는지 검증
-   */
-  @Test
-  void getTeamMemberByTeamId_팀이존재하면_멤버목록반환() {
-    // 준비
-    Long teamId = 1L;
-    Long memberId = 2L; // 체크할 유저
-    Long teamMemberId = 101L;
+        // Mock repository calls
+        every { teamRepository.existsById(teamId) } returns true
+        every { teamMemberRepository.findByTeamId(teamId) } returns teamMembers
 
-    Team team = TestEntityBuilder.createTeamWithId(teamId, "테스트 팀", "TEST-001", "pass123");
-    team.setLeader(teamLeaderMember);
-    Member memberInTeam = TestEntityBuilder.createMemberWithId(memberId, "test@example.com", "홍길동");
-    TeamMember teamMember = TestEntityBuilder.createTeamMemberWithId(teamMemberId, team,
-        memberInTeam);
+        // When
+        val result = teamMemberService.getTeamMemberByTeamId(teamId)
 
-    List<TeamMember> teamMembers = Arrays.asList(teamMember);
+        // Then
+        assertSoftly {
+            result.size shouldBe 2
 
-    // DTO 설정 TeamMemberMapper.toDtoList -> static
-    // 정적 메서드의 실제 반환값과 비교하여 검증
-    List<TeamMemberDto> expectedDtos = TeamMemberMapper.toDtoList(teamMembers);
+            // 첫 번째 멤버 (리더) 검증
+            result[0].memberId shouldBe leader.id
+            result[0].memberNickName shouldBe leader.nickname
+            result[0].memberEmail shouldBe leader.email
+            result[0].teamId shouldBe team.id
+            result[0].teamName shouldBe team.name
+            result[0].role shouldBe "Leader"
 
-    // Mock 설정
-    when(teamRepository.existsById(teamId)).thenReturn(true);
-    when(teamMemberRepository.findByTeamId(teamId)).thenReturn(teamMembers);
+            // 두 번째 멤버 검증
+            result[1].memberId shouldBe member.id
+            result[1].memberNickName shouldBe member.nickname
+            result[1].memberEmail shouldBe member.email
+            result[1].teamId shouldBe team.id
+            result[1].teamName shouldBe team.name
+            result[1].role shouldBe "Member"
+        }
 
-    // 실행
-    List<TeamMemberDto> result = teamMemberService.getTeamMemberByTeamId(teamId);
+        verify { teamRepository.existsById(teamId) }
+        verify { teamMemberRepository.findByTeamId(teamId) }
+    }
 
-    // 검증
-    assertEquals(1, result.size());
-    assertEquals(expectedDtos.getFirst().id, result.getFirst().id);
-    assertEquals(expectedDtos.getFirst().teamId, result.getFirst().teamId);
-    assertEquals(expectedDtos.getFirst().teamName, result.getFirst().teamName);
-    verify(teamRepository).existsById(teamId);
-    verify(teamMemberRepository).findByTeamId(teamId);
-  }
+    test("getTeamMemberByTeamId는 존재하지 않는 팀 ID로 조회 시 예외를 발생시켜야 한다") {
+        // Given
+        val nonExistentTeamId = 999L
 
-  /**
-   * 팀 ID로 팀 멤버 목록을 조회할 때 팀이 존재하지 않는 경우 테스트 - 예외가 발생하는지 확인
-   */
-  @Test
-  void getTeamMemberByTeamId_팀이없으면_예외발생() {
-    // 준비
-    Long teamId = 1L;
-    when(teamRepository.existsById(teamId)).thenReturn(false);
+        // Mock repository calls
+        every { teamRepository.existsById(nonExistentTeamId) } returns false
 
-    // 실행 및 검증
-    CustomLogicException exception = assertThrows(CustomLogicException.class, () -> {
-      teamMemberService.getTeamMemberByTeamId(teamId);
-    });
-    assertEquals(ExceptionCode.TEAM_NOT_FOUND, exception.getExceptionCode());
+        // When/Then
+        val exception = shouldThrow<CustomLogicException> {
+            teamMemberService.getTeamMemberByTeamId(nonExistentTeamId)
+        }
 
-    verify(teamRepository).existsById(teamId);
-    verifyNoInteractions(teamMemberRepository); // Mapper -> static
-  }
+        exception.exceptionCode shouldBe ExceptionCode.TEAM_NOT_FOUND
+    }
 
-  /**
-   * 팀 멤버 삭제 기능 테스트 - 유효한 요청일 경우 (팀 리더가 다른 멤버 삭제) 멤버가 삭제되는지 확인
-   */
-  @Test
-  void removeTeamMember_유효한요청_리더가멤버삭제_성공() {
-    // 준비
-    Long teamId = 1L;
-    Long teamMemberIdToRemove = 101L; // ID of TeamMember entity to remove
+    // removeTeamMember 테스트
+    test("removeTeamMember는 팀 리더가 일반 멤버를 삭제할 때 성공해야 한다") {
+        // Given
+        val teamId = 1L
+        val teamMemberId = 2L
 
-    // Acting member is the team leader
-    when(mockMemberDetails.getId()).thenReturn(teamLeaderMember.getId());
-    when(memberRepository.findById(teamLeaderMember.getId())).thenReturn(
-        Optional.of(teamLeaderMember));
+        every { memberRepository.findById(leader.id!!) } returns Optional.of(leader)
+        every { teamRepository.findById(teamId) } returns Optional.of(team)
+        every { teamMemberRepository.findById(teamMemberId) } returns Optional.of(teamMember)
 
-    Team team = TestEntityBuilder.createTeamWithId(teamId, "테스트 팀", "TEST-001", "pass123");
-    team.setLeader(teamLeaderMember); // actingMember == leader
+        // When
+        teamMemberService.removeTeamMember(leaderDetails, teamId, teamMemberId)
 
-    // Member to be removed (regularMember)
-    TeamMember teamMemberToRemove = TestEntityBuilder.createTeamMemberWithId(teamMemberIdToRemove,
-        team, regularMember);
+        // Then
+        verify { memberRepository.findById(leader.id!!) }
+        verify { teamRepository.findById(teamId) }
+        verify { teamMemberRepository.findById(teamMemberId) }
+        verify { teamMemberRepository.deleteById(teamMemberId) }
+    }
 
-    when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-    when(teamMemberRepository.findById(teamMemberIdToRemove)).thenReturn(
-        Optional.of(teamMemberToRemove));
+    test("removeTeamMember는 존재하지 않는 멤버 ID로 시도 시 예외를 발생시켜야 한다") {
+        // Given
+        val teamId = 1L
+        val teamMemberId = 2L
+        val nonExistentMemberId = 999L
+        val invalidMemberDetails = MemberDetails(nonExistentMemberId, "password", "invalid@example.com", "Invalid")
 
-    // 실행
-    teamMemberService.removeTeamMember(mockMemberDetails, teamId, teamMemberIdToRemove);
+        every { memberRepository.findById(nonExistentMemberId) } returns Optional.empty()
 
-    // 검증
-    verify(memberRepository).findById(teamLeaderMember.getId());
-    verify(teamRepository).findById(teamId);
-    verify(teamMemberRepository).findById(teamMemberIdToRemove);
-    verify(teamMemberRepository).deleteById(teamMemberIdToRemove);
-  }
+        // When/Then
+        val exception = shouldThrow<CustomLogicException> {
+            teamMemberService.removeTeamMember(invalidMemberDetails, teamId, teamMemberId)
+        }
 
-  /**
-   * 팀 멤버 삭제 시 팀이 존재하지 않는 경우 테스트 - 예외가 발생하는지 확인
-   */
-  @Test
-  void removeTeamMember_팀이없으면_예외발생() {
-    // 준비
-    Long teamId = 1L;
-    Long teamMemberId = 101L;
+        exception.exceptionCode shouldBe ExceptionCode.MEMBER_ID_NOTFOUND
+    }
 
-    // Acting member setup
-    when(mockMemberDetails.getId()).thenReturn(actingMember.getId());
-    when(memberRepository.findById(actingMember.getId())).thenReturn(Optional.of(actingMember));
-    when(teamRepository.findById(teamId)).thenReturn(Optional.empty()); // Team not found
+    test("removeTeamMember는 존재하지 않는 팀 ID로 시도 시 예외를 발생시켜야 한다") {
+        // Given
+        val nonExistentTeamId = 999L
+        val teamMemberId = 2L
 
-    // 실행 및 검증
-    CustomLogicException exception = assertThrows(CustomLogicException.class, () -> {
-      teamMemberService.removeTeamMember(mockMemberDetails, teamId, teamMemberId);
-    });
-    assertEquals(ExceptionCode.TEAM_NOT_FOUND, exception.getExceptionCode());
+        every { memberRepository.findById(leader.id!!) } returns Optional.of(leader)
+        every { teamRepository.findById(nonExistentTeamId) } returns Optional.empty()
 
-    verify(memberRepository).findById(actingMember.getId());
-    verify(teamRepository).findById(teamId);
-    verifyNoInteractions(teamMemberRepository);
-  }
+        // When/Then
+        val exception = shouldThrow<CustomLogicException> {
+            teamMemberService.removeTeamMember(leaderDetails, nonExistentTeamId, teamMemberId)
+        }
 
-  /**
-   * 팀 멤버 삭제 시 해당 팀멤버가 존재하지 않는 경우 테스트 - 예외가 발생하는지 확인
-   */
-  @Test
-  void removeTeamMember_삭제할팀멤버가없으면_예외발생() {
-    // 준비
-    Long teamId = 1L;
-    Long teamMemberId = 101L;
+        exception.exceptionCode shouldBe ExceptionCode.TEAM_NOT_FOUND
+    }
 
-    Team team = TestEntityBuilder.createTeamWithId(teamId, "테스트 팀", "TEST-001", "pass123");
-    team.setLeader(actingMember); // acting member == leader
+    test("removeTeamMember는 존재하지 않는 팀 멤버 ID로 시도 시 예외를 발생시켜야 한다") {
+        // Given
+        val teamId = 1L
+        val nonExistentTeamMemberId = 999L
 
-    when(mockMemberDetails.getId()).thenReturn(actingMember.getId());
-    when(memberRepository.findById(actingMember.getId())).thenReturn(Optional.of(actingMember));
-    when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-    when(teamMemberRepository.findById(teamMemberId)).thenReturn(
-        Optional.empty()); // TㄴeamMember not found
+        every { memberRepository.findById(leader.id!!) } returns Optional.of(leader)
+        every { teamRepository.findById(teamId) } returns Optional.of(team)
+        every { teamMemberRepository.findById(nonExistentTeamMemberId) } returns Optional.empty()
 
-    // 실행 및 검증
-    CustomLogicException exception = assertThrows(CustomLogicException.class, () -> {
-      teamMemberService.removeTeamMember(mockMemberDetails, teamId, teamMemberId);
-    });
-    assertEquals(ExceptionCode.TEAM_MEMBER_NOT_FOUND, exception.getExceptionCode());
+        // When/Then
+        val exception = shouldThrow<CustomLogicException> {
+            teamMemberService.removeTeamMember(leaderDetails, teamId, nonExistentTeamMemberId)
+        }
 
-    verify(memberRepository).findById(actingMember.getId());
-    verify(teamRepository).findById(teamId);
-    verify(teamMemberRepository).findById(teamMemberId);
-  }
+        exception.exceptionCode shouldBe ExceptionCode.TEAM_MEMBER_NOT_FOUND
+    }
 
-  /**
-   * ㅇ 팀 멤버 삭제 시 해당 멤버가 다른 팀에 속한 경우 테스트 - 예외가 발생하는지 확인
-   */
-  @Test
-  void removeTeamMember_다른팀멤버면_예외발생() {
-    // 준비
-    Long targetTeamId = 1L;
-    Long actualTeamIdOfMember = 2L;
-    Long teamMemberId = 101L;
+    test("removeTeamMember는 다른 팀의 멤버를 삭제하려고 할 때 예외를 발생시켜야 한다") {
+        // Given
+        val teamId = 1L
+        val otherTeamId = 2L
+        val teamMemberId = 2L
 
-    // Acting member == 타겟 팀 리더
-    when(mockMemberDetails.getId()).thenReturn(teamLeaderMember.getId());
-    when(memberRepository.findById(teamLeaderMember.getId())).thenReturn(
-        Optional.of(teamLeaderMember));
+        val otherTeam = Team(
+            id = otherTeamId,
+            name = "다른 팀",
+            teamCode = "GHIJKL",
+            leader = leader,
+            teamPassword = "password123"
+        )
 
-    Team targetTeam = TestEntityBuilder.createTeamWithId(targetTeamId, "타겟 팀", "TARGET-001",
-        "pass123");
-    targetTeam.setLeader(teamLeaderMember);
+        val otherTeamMember = TeamMember(
+            id = teamMemberId,
+            member = member,
+            team = otherTeam
+        )
 
-    Team actualTeam = TestEntityBuilder.createTeamWithId(actualTeamIdOfMember, "실제 팀", "ACTUAL-001",
-        "pass456");
-    // 제거하려는 멤버는 'targetTeam'이 아닌 'actualTeam'에 속해 있습니다.
-    TeamMember teamMemberInWrongTeam = TestEntityBuilder.createTeamMemberWithId(teamMemberId,
-        actualTeam, regularMember);
+        every { memberRepository.findById(leader.id!!) } returns Optional.of(leader)
+        every { teamRepository.findById(teamId) } returns Optional.of(team)
+        every { teamMemberRepository.findById(teamMemberId) } returns Optional.of(otherTeamMember)
 
-    when(teamRepository.findById(targetTeamId)).thenReturn(Optional.of(targetTeam));
-    when(teamMemberRepository.findById(teamMemberId)).thenReturn(
-        Optional.of(teamMemberInWrongTeam));
+        // When/Then
+        val exception = shouldThrow<CustomLogicException> {
+            teamMemberService.removeTeamMember(leaderDetails, teamId, teamMemberId)
+        }
 
-    // 실행 및 검증
-    CustomLogicException exception = assertThrows(CustomLogicException.class, () -> {
-      teamMemberService.removeTeamMember(mockMemberDetails, targetTeamId, teamMemberId);
-    });
-    assertEquals(ExceptionCode.NOT_TEAM_MEMBER, exception.getExceptionCode());
+        exception.exceptionCode shouldBe ExceptionCode.NOT_TEAM_MEMBER
+    }
 
-    verify(memberRepository).findById(teamLeaderMember.getId());
-    verify(teamRepository).findById(targetTeamId);
-    verify(teamMemberRepository).findById(teamMemberId);
-  }
+    test("removeTeamMember는 팀 리더가 아닌 멤버가 삭제를 시도할 때 예외를 발생시켜야 한다") {
+        // Given
+        val teamId = 1L
+        val teamMemberId = 2L
+        val memberDetails = MemberDetails(member)
 
-  /**
-   * 팀 멤버 삭제 시 요청자가 팀 리더가 아닌 경우 테스트 - 예외 발생 (ROLE_FORBIDDEN)
-   */
-  @Test
-  void removeTeamMember_요청자가리더아니면_예외발생() {
-    // 준비
-    Long teamId = 1L;
-    Long teamMemberIdToRemove = 101L;
+        every { memberRepository.findById(member.id!!) } returns Optional.of(member)
+        every { teamRepository.findById(teamId) } returns Optional.of(team)
+        every { teamMemberRepository.findById(teamMemberId) } returns Optional.of(teamMember)
 
-    // Acting member != team leader
-    // teamLeaderMember (ID 2L) == leader, actingMember (ID 1L) 가 delete 하려고 하는 상황
-    when(mockMemberDetails.getId()).thenReturn(actingMember.getId()); // actingMember == 1L
-    when(memberRepository.findById(actingMember.getId())).thenReturn(Optional.of(actingMember));
+        // When/Then
+        val exception = shouldThrow<CustomLogicException> {
+            teamMemberService.removeTeamMember(memberDetails, teamId, teamMemberId)
+        }
 
-    Team team = TestEntityBuilder.createTeamWithId(teamId, "테스트 팀", "TEST-001", "pass123");
-    team.setLeader(teamLeaderMember); // Leader == teamLeaderMember (2L)
+        exception.exceptionCode shouldBe ExceptionCode.ROLE_FORBIDDEN
+    }
 
-    TeamMember teamMemberToRemove = TestEntityBuilder.createTeamMemberWithId(teamMemberIdToRemove,
-        team, regularMember);
+    test("removeTeamMember는 팀 리더를 삭제하려고 할 때 예외를 발생시켜야 한다") {
+        // Given
+        val teamId = 1L
+        val leaderTeamMemberId = 1L
 
-    when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-    when(teamMemberRepository.findById(teamMemberIdToRemove)).thenReturn(
-        Optional.of(teamMemberToRemove));
+        every { memberRepository.findById(leader.id!!) } returns Optional.of(leader)
+        every { teamRepository.findById(teamId) } returns Optional.of(team)
+        every { teamMemberRepository.findById(leaderTeamMemberId) } returns Optional.of(leaderTeamMember)
 
-    // 실행 및 검증
-    CustomLogicException exception = assertThrows(CustomLogicException.class, () -> {
-      teamMemberService.removeTeamMember(mockMemberDetails, teamId, teamMemberIdToRemove);
-    });
-    assertEquals(ExceptionCode.ROLE_FORBIDDEN, exception.getExceptionCode());
+        // When/Then
+        val exception = shouldThrow<CustomLogicException> {
+            teamMemberService.removeTeamMember(leaderDetails, teamId, leaderTeamMemberId)
+        }
 
-    verify(memberRepository).findById(actingMember.getId());
-    verify(teamRepository).findById(teamId);
-    verify(teamMemberRepository).findById(teamMemberIdToRemove);
-    verify(teamMemberRepository, never()).deleteById(anyLong());
-  }
-
-  /**
-   * 팀 멤버 삭제 시 팀 리더 자신을 삭제하려는 경우 테스트 - 예외 발생 (METHOD_NOT_ALLOWED)
-   */
-  @Test
-  void removeTeamMember_리더가자신을삭제하려하면_예외발생() {
-    // 준비
-    Long teamId = 1L;
-    Long teamMemberIdOfLeader = 101L;
-
-    // Acting member == team leader
-    when(mockMemberDetails.getId()).thenReturn(teamLeaderMember.getId());
-    when(memberRepository.findById(teamLeaderMember.getId())).thenReturn(
-        Optional.of(teamLeaderMember));
-
-    Team team = TestEntityBuilder.createTeamWithId(teamId, "테스트 팀", "TEST-001", "pass123");
-    team.setLeader(teamLeaderMember);
-
-    // 리더가 자신을 삭제
-    TeamMember leaderAsTeamMember = TestEntityBuilder.createTeamMemberWithId(teamMemberIdOfLeader,
-        team, teamLeaderMember);
-
-    when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-    when(teamMemberRepository.findById(teamMemberIdOfLeader)).thenReturn(
-        Optional.of(leaderAsTeamMember));
-
-    // 실행 및 검증
-    CustomLogicException exception = assertThrows(CustomLogicException.class, () -> {
-      teamMemberService.removeTeamMember(mockMemberDetails, teamId, teamMemberIdOfLeader);
-    });
-    assertEquals(ExceptionCode.METHOD_NOT_ALLOWED, exception.getExceptionCode());
-
-    verify(memberRepository).findById(teamLeaderMember.getId());
-    verify(teamRepository).findById(teamId);
-    verify(teamMemberRepository).findById(teamMemberIdOfLeader);
-    verify(teamMemberRepository, never()).deleteById(anyLong());
-  }
-
-  /**
-   * 팀 멤버 삭제 시 요청한 사용자가 존재하지 않는 경우 테스트 - 예외 발생 (MEMBER_ID_NOTFOUND)
-   */
-  @Test
-  void removeTeamMember_요청멤버가없으면_예외발생() {
-    // 준비
-    Long teamId = 1L;
-    Long teamMemberId = 101L;
-    Long nonExistentMemberId = 999L;
-
-    when(mockMemberDetails.getId()).thenReturn(nonExistentMemberId);
-    when(memberRepository.findById(nonExistentMemberId)).thenReturn(Optional.empty()); // 요청 멤버가 없음
-
-    // 실행 및 검증
-    CustomLogicException exception = assertThrows(CustomLogicException.class, () -> {
-      teamMemberService.removeTeamMember(mockMemberDetails, teamId, teamMemberId);
-    });
-    assertEquals(ExceptionCode.MEMBER_ID_NOTFOUND, exception.getExceptionCode());
-
-    verify(memberRepository).findById(nonExistentMemberId);
-    verifyNoInteractions(teamRepository);
-    verifyNoInteractions(teamMemberRepository);
-  }
-}
+        exception.exceptionCode shouldBe ExceptionCode.METHOD_NOT_ALLOWED
+        exception.message shouldBe "허용되지 않은 메서드입니다."
+    }
+})
