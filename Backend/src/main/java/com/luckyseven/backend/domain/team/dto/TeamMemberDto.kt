@@ -4,13 +4,14 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.Size
 
 data class TeamMemberDto(
-    val id: Long,
-    val teamId: Long,
+    val id: Long?,
+
+    val teamId: Long?,
 
     @field:Size(min = 2, max = 30, message = "팀 이름은 2자 이상 30자 이하여야 합니다")
     val teamName: String,
 
-    val memberId: Long,
+    val memberId: Long?,
 
     @field:Size(
         min = 2,

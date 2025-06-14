@@ -15,7 +15,7 @@ public class CustomExceptionHandler {
       final CustomLogicException e
   ) {
     // 1) ErrorResponse 생성
-    ErrorResponse error = ErrorResponse.of(e);
+    ErrorResponse error = ErrorResponse.Companion.from(e);
 
     // 2) 콘솔(혹은 파일)에 딱 한 줄로 요약된 로그를 남깁니다
     log.error(

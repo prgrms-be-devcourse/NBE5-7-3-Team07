@@ -13,7 +13,6 @@ import com.luckyseven.backend.domain.team.repository.TeamRepository
 import com.luckyseven.backend.domain.team.util.TeamMapper
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
-import lombok.RequiredArgsConstructor
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -21,17 +20,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
-import java.util.function.Supplier
 
 @Service
-abstract class TeamService(
+class TeamService(
     val teamRepository: TeamRepository,
     val teamMemberRepository: TeamMemberRepository,
     val memberRepository: MemberRepository,
     val budgetRepository: BudgetRepository,
     val expenseRepository: ExpenseRepository,
-    val passwordEncoder: BCryptPasswordEncoder
-
+    val passwordEncoder: BCryptPasswordEncoder,
+    val teamDashboardCacheService: TeamDashboardCacheService
 ) {
 
 
@@ -47,13 +45,12 @@ abstract class TeamService(
         request: TeamCreateRequest
     ): TeamCreateResponse {
         val memberId = memberDetails.id
-        val creator = memberRepository.findById(memberId)
-            .orElseThrow {
-                CustomLogicException(
-                    ExceptionCode.MEMBER_ID_NOTFOUND,
-                    memberId
-                )
-            }
+        val creator = memberRepository.findById(memberId).orElseThrow {
+            CustomLogicException(
+                ExceptionCode.MEMBER_ID_NOTFOUND,
+                memberId
+            )
+        }
 
         val teamCode = generateTeamCode()
         val team = TeamMapper.toTeamEntity(request, creator, teamCode)
@@ -84,29 +81,27 @@ abstract class TeamService(
         teamPassword: String?
     ): TeamJoinResponse {
         val memberId = memberDetails.id
-        val member = memberRepository.findById(memberId)
-            .orElseThrow {
-                CustomLogicException(
-                    ExceptionCode.MEMBER_ID_NOTFOUND,
-                    memberId
-                )
-            }
+        val member = memberRepository.findById(memberId).orElseThrow {
+            CustomLogicException(
+                ExceptionCode.MEMBER_ID_NOTFOUND,
+                memberId
+            )
+        }
 
-        val team = teamRepository.findByTeamCode(teamCode)
-            .orElseThrow {
-                CustomLogicException(
-                    ExceptionCode.TEAM_NOT_FOUND,
-                    "팀 코드가 [%s]인 팀을 찾을 수 없습니다", teamCode
-                )
-            }
 
-        require(team.teamPassword == teamPassword) { "비밀번호 일치 실패." }
+        val team = teamRepository.findByTeamCode(teamCode) ?: throw CustomLogicException(
+            ExceptionCode.TEAM_NOT_FOUND,
+            "팀 코드가 [%s]인 팀을 찾을 수 없습니다", teamCode
+        )
+
+
+        require(team.teamPassword == teamPassword) { "비밀번호 일치 실패" }
 
         val isAlreadyJoined = teamMemberRepository.existsByTeamAndMember(team, member)
         if (isAlreadyJoined) {
             throw CustomLogicException(
                 ExceptionCode.ALREADY_TEAM_MEMBER,
-                "회원 ID [%d]는 이미 팀 ID [%d]에 가입되어 있습니다", member.id, team.id
+                "회원 ID [%d]는 이미 팀 ID [%d]에 가입되어 있습니다", member.id ?: -1L, team.id?: -1L
             )
         }
 
@@ -136,7 +131,7 @@ abstract class TeamService(
     @Transactional(readOnly = true)
     fun getTeamsByMemberId(memberId: Long): List<TeamListResponse> {
         memberRepository.findById(memberId)
-            .orElseThrow{
+            .orElseThrow {
                 CustomLogicException(
                     ExceptionCode.MEMBER_ID_NOTFOUND,
                     memberId
@@ -148,8 +143,6 @@ abstract class TeamService(
             .map { TeamMapper.toTeamListResponse(it) }
     }
 
-
-    abstract val teamDashboardCacheService: TeamDashboardCacheService
 
     /**
      * 팀 대시보드를 조회합니다.
@@ -169,8 +162,8 @@ abstract class TeamService(
             val latestBudgetUpdate = budgetRepository.findUpdatedAtByTeamId(teamId)
 
             // 3. Budget의 updatedAt이 있고 캐시의 updatedAt과 일치하면 캐시 사용
-            if (latestBudgetUpdate.isPresent && cachedDashboard.updatedAt != null &&
-                latestBudgetUpdate.get() == cachedDashboard.updatedAt
+            if (latestBudgetUpdate != null && cachedDashboard.updatedAt != null &&
+                latestBudgetUpdate == cachedDashboard.updatedAt
             ) {
                 return cachedDashboard
             }
@@ -198,7 +191,7 @@ abstract class TeamService(
             }
 
         // 예산 조회 (없으면 null)
-        val budget = budgetRepository.findByTeamId(teamId).orElse(null)
+        val budget = budgetRepository.findByTeamId(teamId)
 
         // 최근 지출 내역 조회
         val pageable: Pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending())
@@ -206,7 +199,7 @@ abstract class TeamService(
 
         // 카테고리별 지출 합계 조회
         val categoryExpenseSums =
-            expenseRepository.findCategoryExpenseSumsByTeamId(teamId).orElse(null)
+            expenseRepository.findCategoryExpenseSumsByTeamId(teamId)
 
         // 대시보드 응답 생성
         val dashboard = TeamMapper.toTeamDashboardResponse(

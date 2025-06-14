@@ -10,6 +10,7 @@ import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.sharedkernel.dto.PageResponse
 import org.springframework.data.domain.Page
+import java.time.LocalDateTime
 
 object ExpenseMapper {
 
@@ -29,8 +30,8 @@ object ExpenseMapper {
             amount = expense.amount,
             balance = budget.balance,
             foreignBalance = budget.foreignBalance,
-            createdAt = expense.createdAt,
-            updatedAt = expense.updatedAt
+            createdAt = expense.createdAt ?: LocalDateTime.now(),
+            updatedAt = expense.updatedAt ?: LocalDateTime.now(),
         )
 
     fun toExpenseBalanceResponse(budget: Budget): ExpenseBalanceResponse =
@@ -47,8 +48,8 @@ object ExpenseMapper {
             category = expense.category,
             payerId = expense.payer.id,
             payerNickname = expense.payer.nickname,
-            createdAt = expense.createdAt,
-            updatedAt = expense.updatedAt,
+            createdAt = expense.createdAt ?: LocalDateTime.now(),
+            updatedAt = expense.updatedAt ?: LocalDateTime.now(),
             paymentMethod = expense.paymentMethod
         )
 

@@ -6,15 +6,12 @@ import com.luckyseven.backend.domain.budget.entity.Budget
 import com.luckyseven.backend.domain.budget.mapper.BudgetMapper
 import com.luckyseven.backend.domain.budget.validator.BudgetValidator
 import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
-import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.repository.TeamRepository
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import jakarta.persistence.EntityNotFoundException
-import lombok.RequiredArgsConstructor
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.function.Supplier
 
 @Service
 class BudgetService(
@@ -44,7 +41,7 @@ class BudgetService(
         )
 
         budgetRepository.save(budget)
-        team.setBudget(budget)
+        team.budget = budget
 
         return budgetMapper.toCreateResponse(budget)
     }
@@ -95,7 +92,7 @@ class BudgetService(
 
         val budget = budgetValidator.validateBudgetExist(teamId)
 
-        team.setBudget(null)
+        team.budget = null
         teamRepository.save(team)
         budgetRepository.delete(budget)
     }
@@ -109,12 +106,12 @@ class BudgetService(
                 request.exchangeRate
             )
             val sum = budget.totalAmount.add(request.additionalBudget)
-            budget.setTotalAmount(sum)
+            budget.totalAmount = sum
         }
 
         private fun updateTotalAmountOrExchangeRate(request: BudgetUpdateRequest, budget: Budget) {
             // totalAmount, Balance update
-            budget.setTotalAmount(request.totalAmount)
+            budget.totalAmount = request.totalAmount
 
             // avgExchange, foreignBalance update
             budget.setExchangeInfo(

@@ -38,7 +38,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         authException.getMessage()
     );
 
-    ErrorResponse error = ErrorResponse.of(ex);
+    ErrorResponse error = ErrorResponse.Companion.from(ex);
     response.setContentType("application/json;charset=UTF-8");
     response.setStatus(ex.getExceptionCode().getHttpStatus().value());
     try (PrintWriter w = response.getWriter()) {

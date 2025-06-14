@@ -10,13 +10,14 @@ import com.luckyseven.backend.domain.team.dto.TeamDashboardResponse.ExpenseDto
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.entity.TeamMember
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 object TeamMapper {
-    fun toTeamListResponse(team: Team?): TeamListResponse {
+    fun toTeamListResponse(team: Team): TeamListResponse {
         return TeamListResponse(
-            id = team?.id,
-            name = team?.name,
-            teamCode = team?.teamCode
+            id = team.id,
+            name = team.name,
+            teamCode = team.teamCode
         )
     }
 
@@ -68,7 +69,7 @@ object TeamMapper {
                 id = it.id,
                 name = it.name,
                 teamCode = it.teamCode,
-                leaderId = it.leader?.id
+                leaderId = it.leader.id
             )
         }
     }
@@ -85,7 +86,7 @@ object TeamMapper {
                 id = it.id,
                 teamName = it.name,
                 teamCode = it.teamCode,
-                leaderId = it.leader?.id
+                leaderId = it.leader.id
             )
         }
     }
@@ -113,8 +114,8 @@ object TeamMapper {
                 amount = expense.amount,
                 paymentMethod = expense.paymentMethod,
                 category = expense.category,
-                date = expense.createdAt,
-                payerNickname = expense.payer?.nickname
+                date = expense.createdAt ?: LocalDateTime.now(),
+                payerNickname = expense.payer.nickname
             )
         } ?: emptyList()
 
@@ -131,11 +132,11 @@ object TeamMapper {
             teamName = team.name,
             teamPassword = team.teamPassword,
             foreignCurrency = budget?.foreignCurrency,
-            balance = budget?.balance ?: BigDecimal.ZERO,
+            balance = budget?.balance,
             foreignBalance = budget?.foreignBalance ?: BigDecimal.ZERO,
-            totalAmount = budget?.totalAmount ?: BigDecimal.ZERO,
+            totalAmount = budget?.totalAmount,
             avgExchangeRate = budget?.avgExchangeRate ?: BigDecimal.ZERO,
-            updatedAt = budget?.updatedAt,
+            updatedAt = budget?.updatedAt ?: LocalDateTime.now(),
             expenseList = expenseDtoList,
             categoryExpenseSumList = categorySumDtos
         )
