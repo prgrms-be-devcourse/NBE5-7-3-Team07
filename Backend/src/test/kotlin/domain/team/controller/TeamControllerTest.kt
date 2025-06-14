@@ -1,4 +1,5 @@
-import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
+package domain.team.controller
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.luckyseven.backend.domain.budget.entity.CurrencyCode
 import com.luckyseven.backend.domain.expense.enums.ExpenseCategory
@@ -7,7 +8,13 @@ import com.luckyseven.backend.domain.expense.repository.CategoryExpenseSum
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails
 import com.luckyseven.backend.domain.team.controller.TeamController
-import com.luckyseven.backend.domain.team.dto.*
+import com.luckyseven.backend.domain.team.dto.TeamCreateRequest
+import com.luckyseven.backend.domain.team.dto.TeamCreateResponse
+import com.luckyseven.backend.domain.team.dto.TeamDashboardResponse
+import com.luckyseven.backend.domain.team.dto.TeamJoinRequest
+import com.luckyseven.backend.domain.team.dto.TeamJoinResponse
+import com.luckyseven.backend.domain.team.dto.TeamListResponse
+import com.luckyseven.backend.domain.team.dto.TeamMemberDto
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.entity.TeamMember
 import com.luckyseven.backend.domain.team.service.TeamMemberService
@@ -16,14 +23,19 @@ import com.luckyseven.backend.sharedkernel.exception.CustomExceptionHandler
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import io.kotest.core.spec.style.FunSpec
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.runs
+import io.mockk.verify
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -109,15 +121,16 @@ class TeamControllerTest : FunSpec({
         every { teamService.createTeam(any(), any()) } returns response
 
         // When & Then
-        mockMvc.perform(post("/api/teams")
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/api/teams")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.name").value("새로운팀"))
-            .andExpect(jsonPath("$.teamCode").value("ABCDEF"))
-            .andExpect(jsonPath("$.leaderId").value(1))
-            .andDo(print())
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("새로운팀"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.teamCode").value("ABCDEF"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.leaderId").value(1))
+            .andDo(MockMvcResultHandlers.print())
 
         verify { teamService.createTeam(any(), any()) }
     }
@@ -140,15 +153,16 @@ class TeamControllerTest : FunSpec({
         every { teamService.joinTeam(any(), any(), any()) } returns response
 
         // When & Then
-        mockMvc.perform(post("/api/teams/members")
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/api/teams/members")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.teamName").value("테스트팀"))
-            .andExpect(jsonPath("$.teamCode").value("ABCDEF"))
-            .andExpect(jsonPath("$.leaderId").value(1))
-            .andDo(print())
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.teamName").value("테스트팀"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.teamCode").value("ABCDEF"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.leaderId").value(1))
+            .andDo(MockMvcResultHandlers.print())
 
         verify { teamService.joinTeam(any(), eq("ABCDEF"), eq("password123")) }
     }
@@ -172,15 +186,15 @@ class TeamControllerTest : FunSpec({
         every { teamService.getTeamsByMemberId(testMember.id!!) } returns teams
 
         // When & Then
-        mockMvc.perform(get("/api/teams/myTeams"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$").isArray)
-            .andExpect(jsonPath("$.length()").value(2))
-            .andExpect(jsonPath("$[0].id").value(1))
-            .andExpect(jsonPath("$[0].name").value("테스트팀1"))
-            .andExpect(jsonPath("$[1].id").value(2))
-            .andExpect(jsonPath("$[1].name").value("테스트팀2"))
-            .andDo(print())
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/teams/myTeams"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$").isArray)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(1))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].name").value("테스트팀1"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value(2))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[1].name").value("테스트팀2"))
+            .andDo(MockMvcResultHandlers.print())
 
         verify { teamService.getTeamsByMemberId(testMember.id!!) }
     }
@@ -213,16 +227,16 @@ class TeamControllerTest : FunSpec({
         every { teamMemberService.getTeamMemberByTeamId(teamId) } returns teamMembers
 
         // When & Then
-        mockMvc.perform(get("/api/teams/$teamId/members"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$").isArray)
-            .andExpect(jsonPath("$.length()").value(2))
-            .andExpect(jsonPath("$[0].id").value(1))
-            .andExpect(jsonPath("$[0].teamName").value("테스트팀"))
-            .andExpect(jsonPath("$[0].role").value("Leader"))
-            .andExpect(jsonPath("$[1].id").value(2))
-            .andExpect(jsonPath("$[1].role").value("Member"))
-            .andDo(print())
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/teams/$teamId/members"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$").isArray)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(1))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].teamName").value("테스트팀"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].role").value("Leader"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value(2))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[1].role").value("Member"))
+            .andDo(MockMvcResultHandlers.print())
 
         verify { teamMemberService.getTeamMemberByTeamId(teamId) }
     }
@@ -236,9 +250,9 @@ class TeamControllerTest : FunSpec({
         every { teamMemberService.removeTeamMember(any(), teamId, teamMemberId) } just runs
 
         // When & Then
-        mockMvc.perform(delete("/api/teams/$teamId/members/$teamMemberId"))
-            .andExpect(status().isNoContent)
-            .andDo(print())
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/teams/$teamId/members/$teamMemberId"))
+            .andExpect(MockMvcResultMatchers.status().isNoContent)
+            .andDo(MockMvcResultHandlers.print())
 
         verify { teamMemberService.removeTeamMember(any(), teamId, teamMemberId) }
     }
@@ -288,19 +302,19 @@ class TeamControllerTest : FunSpec({
         every { teamService.getTeamDashboard(teamId) } returns dashboardResponse
 
         // When & Then
-        mockMvc.perform(get("/api/teams/$teamId/dashboard"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.teamId").value(teamId))
-            .andExpect(jsonPath("$.teamName").value("테스트팀"))
-            .andExpect(jsonPath("$.foreignCurrency").value("USD"))
-            .andExpect(jsonPath("$.balance").value(1000.00))
-            .andExpect(jsonPath("$.expenseList").isArray)
-            .andExpect(jsonPath("$.expenseList.length()").value(1))
-            .andExpect(jsonPath("$.expenseList[0].description").value("점심 식사"))
-            .andExpect(jsonPath("$.categoryExpenseSumList").isArray)
-            .andExpect(jsonPath("$.categoryExpenseSumList.length()").value(1))
-            .andExpect(jsonPath("$.categoryExpenseSumList[0].category").value("MEAL"))
-            .andDo(print())
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/teams/$teamId/dashboard"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.teamId").value(teamId))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.teamName").value("테스트팀"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.foreignCurrency").value("USD"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.balance").value(1000.00))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.expenseList").isArray)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.expenseList.length()").value(1))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.expenseList[0].description").value("점심 식사"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.categoryExpenseSumList").isArray)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.categoryExpenseSumList.length()").value(1))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.categoryExpenseSumList[0].category").value("MEAL"))
+            .andDo(MockMvcResultHandlers.print())
 
         verify { teamService.getTeamDashboard(teamId) }
     }
@@ -314,9 +328,9 @@ class TeamControllerTest : FunSpec({
                 CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
 
         // When & Then
-        mockMvc.perform(get("/api/teams/$nonExistentTeamId/members"))
-            .andExpect(status().isNotFound)
-            .andDo(print())
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/teams/$nonExistentTeamId/members"))
+            .andExpect(MockMvcResultMatchers.status().isNotFound)
+            .andDo(MockMvcResultHandlers.print())
 
         verify { teamMemberService.getTeamMemberByTeamId(nonExistentTeamId) }
     }
@@ -333,11 +347,12 @@ class TeamControllerTest : FunSpec({
                 CustomLogicException(ExceptionCode.ALREADY_TEAM_MEMBER)
 
         // When & Then
-        mockMvc.perform(post("/api/teams/members")
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/api/teams/members")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest)
-            .andDo(print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andDo(MockMvcResultHandlers.print())
 
         verify { teamService.joinTeam(any(), any(), any()) }
     }
@@ -354,11 +369,12 @@ class TeamControllerTest : FunSpec({
                 CustomLogicException(ExceptionCode.TEAM_PASSWORD_MISMATCH)
 
         // When & Then
-        mockMvc.perform(post("/api/teams/members")
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/api/teams/members")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest)
-            .andDo(print())
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andDo(MockMvcResultHandlers.print())
 
         verify { teamService.joinTeam(any(), any(), any()) }
     }

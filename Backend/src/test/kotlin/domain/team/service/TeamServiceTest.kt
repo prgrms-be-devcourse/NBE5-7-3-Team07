@@ -1,3 +1,5 @@
+package domain.team.service
+
 import com.luckyseven.backend.domain.budget.dao.BudgetRepository
 import com.luckyseven.backend.domain.budget.entity.Budget
 import com.luckyseven.backend.domain.budget.entity.CurrencyCode

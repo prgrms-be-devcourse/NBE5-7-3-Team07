@@ -1,3 +1,5 @@
+package domain.team.service
+
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.repository.MemberRepository
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails
