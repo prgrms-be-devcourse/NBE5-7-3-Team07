@@ -1,321 +1,365 @@
-package com.luckyseven.backend.domain.team.controller;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.luckyseven.backend.domain.budget.entity.CurrencyCode
+import com.luckyseven.backend.domain.expense.enums.ExpenseCategory
+import com.luckyseven.backend.domain.expense.enums.PaymentMethod
+import com.luckyseven.backend.domain.expense.repository.CategoryExpenseSum
+import com.luckyseven.backend.domain.member.entity.Member
+import com.luckyseven.backend.domain.member.service.utill.MemberDetails
+import com.luckyseven.backend.domain.team.controller.TeamController
+import com.luckyseven.backend.domain.team.dto.*
+import com.luckyseven.backend.domain.team.entity.Team
+import com.luckyseven.backend.domain.team.entity.TeamMember
+import com.luckyseven.backend.domain.team.service.TeamMemberService
+import com.luckyseven.backend.domain.team.service.TeamService
+import com.luckyseven.backend.sharedkernel.exception.CustomExceptionHandler
+import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
+import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
+import io.kotest.core.spec.style.FunSpec
+import io.mockk.*
+import org.springframework.http.MediaType
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import java.math.BigDecimal
+import java.time.LocalDateTime
 
+class TeamControllerTest : FunSpec({
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.luckyseven.backend.domain.budget.dao.BudgetRepository;
-import com.luckyseven.backend.domain.budget.entity.Budget;
-import com.luckyseven.backend.domain.budget.entity.CurrencyCode;
-import com.luckyseven.backend.domain.expense.entity.Expense;
-import com.luckyseven.backend.domain.expense.enums.ExpenseCategory;
-import com.luckyseven.backend.domain.expense.enums.PaymentMethod;
-import com.luckyseven.backend.domain.expense.repository.ExpenseRepository;
-import com.luckyseven.backend.domain.member.entity.Member;
-import com.luckyseven.backend.domain.member.repository.MemberRepository;
-import com.luckyseven.backend.domain.team.dto.TeamCreateRequest;
-import com.luckyseven.backend.domain.team.dto.TeamJoinRequest;
-import com.luckyseven.backend.domain.team.entity.Team;
-import com.luckyseven.backend.domain.team.entity.TeamMember;
-import com.luckyseven.backend.domain.team.repository.TeamMemberRepository;
-import com.luckyseven.backend.domain.team.repository.TeamRepository;
-import com.luckyseven.backend.sharedkernel.jwt.utill.JwtTokenizer;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.UUID;
-import javax.crypto.SecretKey;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.springframework.transaction.annotation.Transactional;
+    // 의존성 모킹
+    val teamService = mockk<TeamService>(relaxed = true)
+    val teamMemberService = mockk<TeamMemberService>(relaxed = true)
+    val objectMapper = ObjectMapper()
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@Transactional
-class TeamControllerTest {
+    // 컨트롤러 생성
+    val teamController = TeamController(teamService, teamMemberService)
 
-    @Autowired
-    private TeamMemberRepository teamMemberRepository;
+    // MockMvc 설정
+    val mockMvc = MockMvcBuilders.standaloneSetup(teamController)
+        .setControllerAdvice(CustomExceptionHandler())
+        .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
+        .build()
 
-    @Autowired
-    private BudgetRepository budgetRepository;
+    // 테스트에 사용할 객체들
+    lateinit var testMember: Member
+    lateinit var memberDetails: MemberDetails
+    lateinit var testTeam: Team
+    lateinit var teamMember: TeamMember
 
-    @Autowired
-    private ExpenseRepository expenseRepository;
+    beforeTest {
+        // 테스트 멤버 생성
+        testMember = Member(
+            id = 1L,
+            email = "test@example.com",
+            nickname = "테스터",
+            password = "password123"
+        )
 
-    @Autowired
-    private MockMvc mockMvc;
+        // MemberDetails 생성
+        memberDetails = MemberDetails(testMember)
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        // 인증 설정
+        val auth = UsernamePasswordAuthenticationToken(
+            memberDetails, null, memberDetails.authorities
+        )
+        SecurityContextHolder.getContext().authentication = auth
 
-    @Autowired
-    private MemberRepository memberRepository;
+        // 테스트 팀 생성
+        testTeam = Team(
+            id = 1L,
+            name = "테스트팀",
+            teamCode = "ABCDEF",
+            teamPassword = "password123",
+            leader = testMember
+        )
 
-    @Autowired
-    private TeamRepository teamRepository;
-
-    @MockitoBean
-    private JwtTokenizer jwtTokenizer; // Mock JwtTokenizer
-
-    private Member testMember;
-    private Team testTeam;
-    private String mockToken;
-
-    @BeforeEach
-    void setUp() {
-        testMember = createTestMember("test@example.com", "테스트사용자");
-        testTeam = createTestTeam("테스트팀", "test123", testMember);
-        
-        // Create mock token
-        mockToken = createMockToken(testMember);
-        
-        // Set up the mock JwtTokenizer
-        Claims mockClaims = Jwts.claims()
-                .subject(testMember.getId().toString())
-                .add("email", testMember.getEmail())
-                .add("nickname", testMember.getNickname())
-                .build();
-        
-        Mockito.when(jwtTokenizer.parseAccessToken(Mockito.anyString())).thenReturn(mockClaims);
-    }
-    
-    private String createMockToken(Member member) {
-        // This is just for testing, not for production use
-        SecretKey key = Keys.hmacShaKeyFor("test-secret-key-for-testing-purposes-only".getBytes());
-        return Jwts.builder()
-                .subject(member.getId().toString())
-                .claim("email", member.getEmail())
-                .claim("nickname", member.getNickname())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 3600000)) // 1 hour
-                .signWith(key)
-                .compact();
+        // 팀 멤버 생성
+        teamMember = TeamMember(
+            id = 1L,
+            member = testMember,
+            team = testTeam
+        )
     }
 
-    private Member createTestMember(String email, String nickname) {
-        Member member = Member.builder()
-                .email(email)
-                .nickname(nickname)
-                .password("password")
-                .build();
-        return memberRepository.save(member);
+    afterTest {
+        // 인증 정보 초기화
+        SecurityContextHolder.clearContext()
+        clearAllMocks()
     }
 
-    private Team createTestTeam(String name, String password, Member leader) {
-        String teamCode = UUID.randomUUID().toString().substring(0, 8);
-        
-        Team team = Team.builder()
-                .name(name)
-                .teamPassword(password)
-                .leader(leader)
-                .teamCode(teamCode)
-                .build();
-        
-        Team savedTeam = teamRepository.save(team);
-        
-        // Create a budget for the team with a non-null foreignCurrency
-        Budget budget = Budget.builder()
-                .team(savedTeam)
-                .totalAmount(new BigDecimal("0"))
-                .balance(new BigDecimal("0"))
-                .foreignBalance(new BigDecimal("0"))
-                .foreignCurrency(CurrencyCode.KRW)
-                .avgExchangeRate(new BigDecimal("1"))
-                .setBy(leader.getId())
-                .build();
-        
-        Budget savedBudget = budgetRepository.save(budget);
-        savedTeam.setBudget(savedBudget);
-        
-        return savedTeam;
-    }
+    // 팀 생성 테스트
+    test("createTeam은 유효한 요청으로 팀 생성 시 200 OK를 응답해야 한다") {
+        // Given
+        val request = TeamCreateRequest(
+            name = "새로운팀",
+            teamPassword = "password123"
+        )
 
-    @Test
-    @DisplayName("팀 생성 테스트")
-    void createTeamTest() throws Exception {
-        // given
-        TeamCreateRequest teamCreateRequest = TeamCreateRequest.builder()
-                .name("테스트팀")
-                .teamPassword("test123")
-                .build();
+        val response = TeamCreateResponse(
+            id = 1L,
+            name = "새로운팀",
+            teamCode = "ABCDEF",
+            leaderId = testMember.id
+        )
 
-        // when & then
+        every { teamService.createTeam(any(), any()) } returns response
+
+        // When & Then
         mockMvc.perform(post("/api/teams")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(teamCreateRequest))
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + mockToken)
-                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("테스트팀"))
-                .andExpect(jsonPath("$.leaderId").value(testMember.getId()));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.name").value("새로운팀"))
+            .andExpect(jsonPath("$.teamCode").value("ABCDEF"))
+            .andExpect(jsonPath("$.leaderId").value(1))
+            .andDo(print())
+
+        verify { teamService.createTeam(any(), any()) }
     }
 
-    @Test
-    @DisplayName("팀 참가 테스트")
-    void joinTeamTest() throws Exception {
-        // given
-        Member leader = createTestMember("leader@example.com", "팀장");
-        Team createdTeam = createTestTeam("참가할팀", "join123", leader); // Use helper method
+    // 팀 참가 테스트
+    test("joinTeam은 유효한 요청으로 팀 참가 시 200 OK를 응답해야 한다") {
+        // Given
+        val request = TeamJoinRequest(
+            teamCode = "ABCDEF",
+            teamPassword = "password123"
+        )
 
-        TeamJoinRequest teamJoinRequest = new TeamJoinRequest(createdTeam.getTeamCode(), "join123");
+        val response = TeamJoinResponse(
+            id = 1L,
+            teamName = "테스트팀",
+            teamCode = "ABCDEF",
+            leaderId = testMember.id
+        )
 
-        // when & then
+        every { teamService.joinTeam(any(), any(), any()) } returns response
+
+        // When & Then
         mockMvc.perform(post("/api/teams/members")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(teamJoinRequest))
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + mockToken)
-                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.teamName").value("참가할팀"))
-                .andExpect(jsonPath("$.teamCode").value(createdTeam.getTeamCode()));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.teamName").value("테스트팀"))
+            .andExpect(jsonPath("$.teamCode").value("ABCDEF"))
+            .andExpect(jsonPath("$.leaderId").value(1))
+            .andDo(print())
+
+        verify { teamService.joinTeam(any(), eq("ABCDEF"), eq("password123")) }
     }
 
-    @Test
-    @DisplayName("팀 멤버 조회 테스트")
-    void getTeamMembersTest() throws Exception {
-        // given
-        Member leader = createTestMember("leader2@example.com", "팀장2");
-        Team createdTeam = createTestTeam("멤버조회팀", "member123", leader); // Use helper method
-        teamMemberRepository.save(TeamMember.builder().team(createdTeam).member(testMember).build());
-        teamMemberRepository.save(TeamMember.builder().team(createdTeam).member(leader).build());
+    // 내 팀 목록 조회 테스트
+    test("getMyTeams은 로그인한 사용자의 팀 목록을 조회하고 200 OK를 응답해야 한다") {
+        // Given
+        val teams = listOf(
+            TeamListResponse(
+                id = 1L,
+                name = "테스트팀1",
+                teamCode = "ABCDEF"
+            ),
+            TeamListResponse(
+                id = 2L,
+                name = "테스트팀2",
+                teamCode = "GHIJKL"
+            )
+        )
 
+        every { teamService.getTeamsByMemberId(testMember.id!!) } returns teams
 
-        // when & then
-        mockMvc.perform(get("/api/teams/" + createdTeam.getId() + "/members")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + mockToken)
-                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].memberNickName").exists())
-                .andExpect(jsonPath("$[1].memberNickName").exists());
+        // When & Then
+        mockMvc.perform(get("/api/teams/myTeams"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").isArray)
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].id").value(1))
+            .andExpect(jsonPath("$[0].name").value("테스트팀1"))
+            .andExpect(jsonPath("$[1].id").value(2))
+            .andExpect(jsonPath("$[1].name").value("테스트팀2"))
+            .andDo(print())
+
+        verify { teamService.getTeamsByMemberId(testMember.id!!) }
     }
 
-    @Test
-    @DisplayName("팀 멤버 삭제 테스트")
-    void removeTeamMemberTest() throws Exception {
-        // given
-        Member leader = createTestMember("leader3@example.com", "팀장3");
-        Team createdTeam = createTestTeam("멤버삭제팀", "remove123", leader); // Use helper method
-        
-        // Add testMember to the team
-        TeamMember testMemberTeam = TeamMember.builder().team(createdTeam).member(testMember).build();
-        teamMemberRepository.save(testMemberTeam);
-        createdTeam.addTeamMember(testMemberTeam);
-        testMember.addTeamMember(testMemberTeam);
-        
-        // Add memberToRemove to the team
-        Member memberToRemove = createTestMember("remove@example.com", "삭제될멤버");
-        TeamMember memberToRemoveTeam = TeamMember.builder().team(createdTeam).member(memberToRemove).build();
-        teamMemberRepository.save(memberToRemoveTeam);
-        createdTeam.addTeamMember(memberToRemoveTeam);
-        memberToRemove.addTeamMember(memberToRemoveTeam);
+    // 팀 멤버 조회 테스트
+    test("getTeamMembers는 팀 ID로 멤버 목록을 조회하고 200 OK를 응답해야 한다") {
+        // Given
+        val teamId = 1L
+        val teamMembers = listOf(
+            TeamMemberDto(
+                id = 1L,
+                teamId = teamId,
+                teamName = "테스트팀",
+                memberId = 1L,
+                memberNickName = "테스터",
+                memberEmail = "test@example.com",
+                role = "Leader"
+            ),
+            TeamMemberDto(
+                id = 2L,
+                teamId = teamId,
+                teamName = "테스트팀",
+                memberId = 2L,
+                memberNickName = "멤버1",
+                memberEmail = "member1@example.com",
+                role = "Member"
+            )
+        )
 
-        // when & then
-        // Create a mock token for the leader
-        String leaderToken = createMockToken(leader);
-        
-        // Set up mock JwtTokenizer
-        Claims leaderMockClaims = Jwts.claims()
-                .subject(leader.getId().toString())
-                .add("email", leader.getEmail())
-                .add("nickname", leader.getNickname())
-                .build();
-        
-        Mockito.when(jwtTokenizer.parseAccessToken(Mockito.anyString())).thenReturn(leaderMockClaims);
-        
-        mockMvc.perform(delete("/api/teams/" + createdTeam.getId() + "/members/" + memberToRemoveTeam.getId())
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + leaderToken)
-                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andExpect(status().isNoContent());
+        every { teamMemberService.getTeamMemberByTeamId(teamId) } returns teamMembers
+
+        // When & Then
+        mockMvc.perform(get("/api/teams/$teamId/members"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$").isArray)
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].id").value(1))
+            .andExpect(jsonPath("$[0].teamName").value("테스트팀"))
+            .andExpect(jsonPath("$[0].role").value("Leader"))
+            .andExpect(jsonPath("$[1].id").value(2))
+            .andExpect(jsonPath("$[1].role").value("Member"))
+            .andDo(print())
+
+        verify { teamMemberService.getTeamMemberByTeamId(teamId) }
     }
 
-    @Test
-    @DisplayName("팀 대시보드 조회 테스트")
-    void getTeamDashboardTest() throws Exception {
-        // given
-        Member leader = createTestMember("leader4@example.com", "팀장4");
-        Team createdTeam = createTestTeam("대시보드팀", "dashboard123", leader); // Use helper method
-        
-        // Add team members
-        TeamMember testMemberTeam = TeamMember.builder().team(createdTeam).member(testMember).build();
-        teamMemberRepository.save(testMemberTeam);
-        createdTeam.addTeamMember(testMemberTeam);
-        testMember.addTeamMember(testMemberTeam);
-        
-        TeamMember leaderTeam = TeamMember.builder().team(createdTeam).member(leader).build();
-        teamMemberRepository.save(leaderTeam);
-        createdTeam.addTeamMember(leaderTeam);
-        leader.addTeamMember(leaderTeam);
+    // 팀 멤버 삭제 테스트
+    test("removeTeamMember는 팀 멤버 삭제 시 204 No Content를 응답해야 한다") {
+        // Given
+        val teamId = 1L
+        val teamMemberId = 2L
 
-        // Create new budget with USD currency
-        Budget oldBudget = createdTeam.getBudget();
-        if (oldBudget != null) {
-            budgetRepository.delete(oldBudget);
-        }
-        
-        Budget newBudget = Budget.builder()
-                .team(createdTeam)
-                .totalAmount(new BigDecimal("1000000"))
-                .balance(new BigDecimal("1000000"))
-                .foreignBalance(new BigDecimal("1000"))
-                .foreignCurrency(CurrencyCode.USD)
-                .avgExchangeRate(new BigDecimal("1200"))
-                .setBy(leader.getId())
-                .build();
-        
-        Budget savedBudget = budgetRepository.save(newBudget);
-        createdTeam.setBudget(savedBudget);
+        every { teamMemberService.removeTeamMember(any(), teamId, teamMemberId) } just runs
 
-        // Add Expense data
-        expenseRepository.save(Expense.builder()
-                .team(createdTeam)
-                .payer(testMember) // Corrected method name
-                .description("점심 식사")
-                .amount(new BigDecimal("12000"))
-                .category(ExpenseCategory.MEAL)
-                .paymentMethod(PaymentMethod.CARD)
-                .build());
+        // When & Then
+        mockMvc.perform(delete("/api/teams/$teamId/members/$teamMemberId"))
+            .andExpect(status().isNoContent)
+            .andDo(print())
 
-        expenseRepository.save(Expense.builder()
-                .team(createdTeam)
-                .payer(leader) // Corrected method name
-                .description("교통비")
-                .amount(new BigDecimal("5000"))
-                .category(ExpenseCategory.TRANSPORT) // Corrected enum value
-                .paymentMethod(PaymentMethod.CASH)
-                .build());
-
-
-        // when & then
-        mockMvc.perform(get("/api/teams/" + createdTeam.getId() + "/dashboard")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + mockToken)
-                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.team_id").value(createdTeam.getId()))
-                .andExpect(jsonPath("$.foreignCurrency").value(CurrencyCode.USD.name()))
-                .andExpect(jsonPath("$.totalAmount").value(1000000))
-                .andExpect(jsonPath("$.expenseList").isArray())
-                .andExpect(jsonPath("$.expenseList.length()").value(2))
-                .andExpect(jsonPath("$.expenseList[0].description").value("교통비"))
-                .andExpect(jsonPath("$.expenseList[1].description").value("점심 식사"));
+        verify { teamMemberService.removeTeamMember(any(), teamId, teamMemberId) }
     }
-}
+
+    // 팀 대시보드 조회 테스트
+    test("getTeamDashboard는 팀 대시보드 조회 시 200 OK를 응답해야 한다") {
+        // Given
+        val teamId = 1L
+        val now = LocalDateTime.now()
+
+        // CategoryExpenseSum 인터페이스 구현 클래스
+        data class CategoryExpenseSumImpl(
+            override val category: ExpenseCategory,
+            override val totalAmount: BigDecimal
+        ) : CategoryExpenseSum
+
+        val dashboardResponse = TeamDashboardResponse(
+            teamId = teamId,
+            teamName = "테스트팀",
+            teamCode = "ABCDEF",
+            teamPassword = "password123",
+            foreignCurrency = CurrencyCode.USD,
+            balance = BigDecimal("1000.00"),
+            foreignBalance = BigDecimal("100.00"),
+            totalAmount = BigDecimal("1000.00"),
+            avgExchangeRate = BigDecimal("10.00"),
+            updatedAt = now,
+            expenseList = listOf(
+                TeamDashboardResponse.ExpenseDto(
+                    id = 1L,
+                    description = "점심 식사",
+                    amount = BigDecimal("100.00"),
+                    category = ExpenseCategory.MEAL,
+                    paymentMethod = PaymentMethod.CARD,
+                    date = now,
+                    payerNickname = "테스터"
+                )
+            ),
+            categoryExpenseSumList = listOf(
+                TeamDashboardResponse.CategoryExpenseSumDto(
+                    category = ExpenseCategory.MEAL,
+                    totalAmount = BigDecimal("100.00")
+                )
+            )
+        )
+
+        every { teamService.getTeamDashboard(teamId) } returns dashboardResponse
+
+        // When & Then
+        mockMvc.perform(get("/api/teams/$teamId/dashboard"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.teamId").value(teamId))
+            .andExpect(jsonPath("$.teamName").value("테스트팀"))
+            .andExpect(jsonPath("$.foreignCurrency").value("USD"))
+            .andExpect(jsonPath("$.balance").value(1000.00))
+            .andExpect(jsonPath("$.expenseList").isArray)
+            .andExpect(jsonPath("$.expenseList.length()").value(1))
+            .andExpect(jsonPath("$.expenseList[0].description").value("점심 식사"))
+            .andExpect(jsonPath("$.categoryExpenseSumList").isArray)
+            .andExpect(jsonPath("$.categoryExpenseSumList.length()").value(1))
+            .andExpect(jsonPath("$.categoryExpenseSumList[0].category").value("MEAL"))
+            .andDo(print())
+
+        verify { teamService.getTeamDashboard(teamId) }
+    }
+
+    // 예외 테스트 - 팀 멤버 조회 실패
+    test("getTeamMembers는 존재하지 않는 팀 ID로 조회 시 404 Not Found를 응답해야 한다") {
+        // Given
+        val nonExistentTeamId = 999L
+
+        every { teamMemberService.getTeamMemberByTeamId(nonExistentTeamId) } throws
+                CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
+
+        // When & Then
+        mockMvc.perform(get("/api/teams/$nonExistentTeamId/members"))
+            .andExpect(status().isNotFound)
+            .andDo(print())
+
+        verify { teamMemberService.getTeamMemberByTeamId(nonExistentTeamId) }
+    }
+
+    // 예외 테스트 - 팀 참가 실패 (이미 가입된 멤버)
+    test("joinTeam은 이미 가입된 멤버가 참가 시도 시 400 Bad Request를 응답해야 한다") {
+        // Given
+        val request = TeamJoinRequest(
+            teamCode = "ABCDEF",
+            teamPassword = "password123"
+        )
+
+        every { teamService.joinTeam(any(), any(), any()) } throws
+                CustomLogicException(ExceptionCode.ALREADY_TEAM_MEMBER)
+
+        // When & Then
+        mockMvc.perform(post("/api/teams/members")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest)
+            .andDo(print())
+
+        verify { teamService.joinTeam(any(), any(), any()) }
+    }
+
+    // 예외 테스트 - 팀 참가 실패 (비밀번호 불일치)
+    test("joinTeam은 잘못된 비밀번호로 참가 시도 시 400 Bad Request를 응답해야 한다") {
+        // Given
+        val request = TeamJoinRequest(
+            teamCode = "ABCDEF",
+            teamPassword = "wrongpassword"
+        )
+
+        every { teamService.joinTeam(any(), any(), any()) } throws
+                CustomLogicException(ExceptionCode.TEAM_PASSWORD_MISMATCH)
+
+        // When & Then
+        mockMvc.perform(post("/api/teams/members")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest)
+            .andDo(print())
+
+        verify { teamService.joinTeam(any(), any(), any()) }
+    }
+})

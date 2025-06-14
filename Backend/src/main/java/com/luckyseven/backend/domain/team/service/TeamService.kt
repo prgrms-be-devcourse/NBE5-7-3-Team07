@@ -95,7 +95,9 @@ class TeamService(
         )
 
 
-        require(team.teamPassword == teamPassword) { "비밀번호 일치 실패" }
+        if (team.teamPassword != teamPassword){
+            throw CustomLogicException(ExceptionCode.TEAM_PASSWORD_MISMATCH)
+        }
 
         val isAlreadyJoined = teamMemberRepository.existsByTeamAndMember(team, member)
         if (isAlreadyJoined) {

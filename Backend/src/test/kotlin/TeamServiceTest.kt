@@ -197,10 +197,10 @@ class TeamServiceTest : FunSpec({
         every { teamRepository.findByTeamCode(teamCode) } returns team
 
         // When/Then
-        val exception = shouldThrow<IllegalArgumentException> {
+        val exception = shouldThrow<CustomLogicException> {
             teamService.joinTeam(newMemberDetails, teamCode, wrongPwd)
         }
-        exception.message shouldBe "비밀번호 일치 실패"
+        exception.message shouldBe CustomLogicException(ExceptionCode.TEAM_PASSWORD_MISMATCH).message
     }
 
     test("getTeamsByMemberId는 멤버가 속한 팀 목록을 반환해야 한다.") {
