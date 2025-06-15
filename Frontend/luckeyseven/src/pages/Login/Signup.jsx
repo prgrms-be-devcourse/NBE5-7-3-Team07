@@ -15,7 +15,8 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: 이메일 입력, 2: 인증 대기, 3: 인증 완료, 4: 회원정보 입력
+  const [currentStep, setCurrentStep] = useState(1); // 1: 이메일 입력, 2: 인증 대기, 3: 인증 완료, 4: 회원정보 입력, 5: 완료
+  const [countdown, setCountdown] = useState(3); // 완료 후 자동 이동 카운트다운
   
   // 비밀번호 표시/숨김 상태
   const [showPassword, setShowPassword] = useState(false);
@@ -168,7 +169,31 @@ export default function Signup() {
     };
   }, [currentStep]);
 
-
+  // 5단계 완료 시 카운트다운 및 자동 이동
+  useEffect(() => {
+    let intervalId;
+    
+    if (currentStep === 5) {
+      setCountdown(3); // 카운트다운 초기화
+      
+      intervalId = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalId);
+            navigate('/login');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [currentStep, navigate]);
 
   const changeEmail = (e) => {
     setEmail(e.target.value);
@@ -262,11 +287,13 @@ export default function Signup() {
         nickname: nickname
       };
       await join(req);
-      alert("회원가입이 완료되었습니다.");
+      
+      // 5단계 완료 단계로 이동
+      setCurrentStep(5);
+      
       // 인증 이메일 정보 삭제
       localStorage.removeItem('verifiedEmail');
       localStorage.removeItem('emailVerified');
-      navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || "회원가입 중 오류가 발생했습니다.");
     } finally {
@@ -274,25 +301,26 @@ export default function Signup() {
     }
   };
 
-  // 4단계 프로그레스 표시기 컴포넌트
+  // 5단계 프로그레스 표시기 컴포넌트
   const ProgressIndicator = ({ currentStep }) => {
     const steps = [
       { id: 1, title: "이메일 입력" },
       { id: 2, title: "인증 대기" },
       { id: 3, title: "인증 완료" },
-      { id: 4, title: "정보 입력" }
+      { id: 4, title: "정보 입력" },
+      { id: 5, title: "가입 완료" }
     ];
 
     return (
       <div className="mb-8">
-        <div className="relative">
+        <div className="relative px-4">
           {/* 연결선 배경 */}
-          <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200"></div>
+          <div className="absolute top-5 left-8 right-8 h-0.5 bg-gray-200"></div>
           
           {/* 진행된 연결선 */}
           <div 
-            className="absolute top-5 left-0 h-0.5 bg-green-600 transition-all duration-500"
-            style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+            className="absolute top-5 left-8 h-0.5 bg-green-600 transition-all duration-500"
+            style={{ width: `${((currentStep - 1) / (steps.length - 1)) * (100 - 64)}%` }}
           ></div>
           
           {/* 단계들 */}
@@ -316,7 +344,7 @@ export default function Signup() {
                 </div>
                 
                 {/* 단계 제목 */}
-                <span className={`mt-3 text-xs text-center transition-all duration-300 max-w-20 ${
+                <span className={`mt-3 text-xs text-center transition-all duration-300 max-w-16 ${
                   currentStep === step.id ? 'text-blue-600 font-medium' : 'text-gray-600'
                 }`}>
                   {step.title}
@@ -329,18 +357,18 @@ export default function Signup() {
     );
   };
 
-  // 이메일 인증 단계 렌더링
-  const renderEmailVerificationStep = () => {
+  // 5단계 통합 렌더링 함수
+  const renderCurrentStep = () => {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {/* 5단계 프로그레스 표시기 */}
           <ProgressIndicator currentStep={currentStep} />
 
-          {currentStep === 1 ? (
+          {currentStep === 1 && (
             // 1단계: 이메일 입력 화면
             <div className="auth-card rounded-lg shadow-md border border-gray-100">
-              <div className="auth-header p-6 border-b border-gray-100">
+              <div className="auth-header" style={{backgroundColor: 'white'}}>
                 <h1 className="auth-title text-2xl font-bold text-center">회원가입</h1>
                 <p className="auth-subtitle text-center text-gray-500 mt-2">이메일 주소를 입력하여 인증을 시작하세요</p>
               </div>
@@ -420,7 +448,9 @@ export default function Signup() {
                 </div>
               </form>
             </div>
-          ) : currentStep === 2 ? (
+          )}
+
+          {currentStep === 2 && (
             // 2단계: 인증 대기 화면
             <div className="auth-card rounded-lg shadow-md border border-gray-100">
               <div className="auth-header p-6 border-b border-gray-100">
@@ -462,7 +492,9 @@ export default function Signup() {
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+
+          {currentStep === 3 && (
             // 3단계: 인증 완료 화면
             <div className="auth-card rounded-lg shadow-md border border-gray-100">
               <div className="auth-header p-6 border-b border-gray-100">
@@ -494,20 +526,9 @@ export default function Signup() {
               </div>
             </div>
           )}
-        </div>
-      </div>
-    );
-  };
 
-  // 회원정보 입력 단계 렌더링 (4단계)
-  const renderUserInfoStep = () => {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {/* 5단계 프로그레스 표시기 */}
-          <ProgressIndicator currentStep={currentStep} />
-
-          {currentStep === 4 ? (
+          {currentStep === 4 && (
+            // 4단계: 회원정보 입력 화면
             <div className="auth-card rounded-lg shadow-md border border-gray-100">
               <div className="auth-header p-6 border-b border-gray-100">
                 <h1 className="auth-title text-2xl font-bold text-center">회원 정보 입력</h1>
@@ -656,11 +677,54 @@ export default function Signup() {
               </form>
             </div>
           )}
+
+          {currentStep === 5 && (
+            // 5단계: 가입 완료 화면
+            <div className="completion-card auth-card rounded-lg shadow-md border border-gray-100 animate-fadeIn">
+              <div className="auth-header p-6 border-b border-gray-100">
+                <h1 className="auth-title text-2xl font-bold text-center text-green-600">회원가입 완료!</h1>
+                <p className="auth-subtitle text-center text-gray-500 mt-2">환영합니다! 회원가입이 완료되었습니다</p>
+              </div>
+              <div className="p-6 text-center">
+                <div className="mb-6">
+                  <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4 animate-bounce">
+                    <div className="checkmark-container">
+                      <svg className="checkmark w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path className="checkmark-path" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-gray-600 mb-6">
+                  <span className="font-semibold text-green-600">{nickname}</span>님,<br/>
+                  럭키세븐에 오신 것을 환영합니다!<br/>
+                  <span className="text-blue-600 font-medium">{countdown}초</span> 후 로그인 페이지로 이동합니다.
+                </p>
+                
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-full py-3 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium"
+                >
+                  지금 로그인하기 →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
-  // 현재 단계에 따라 렌더링
-  return isEmailVerified ? renderUserInfoStep() : renderEmailVerificationStep();
+  // 디버깅을 위한 상태 출력
+  console.log('Signup 컴포넌트 상태:', {
+    currentStep,
+    isEmailVerified,
+    email,
+    isLoading,
+    error
+  });
+
+  // 5단계 통합 렌더링
+  return renderCurrentStep();
 } 

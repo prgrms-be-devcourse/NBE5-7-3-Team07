@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service
 class MemberService(
     private val memberRepository: MemberRepository,
     private val jwtTokenizer: JwtTokenizer,
-    private val blackListTokenRepository: BlackListTokenRepository,
     private val authenticationManager: AuthenticationManager,
     private val memberValidator: MemberValidator
 ) {
@@ -33,7 +32,7 @@ class MemberService(
     private val logger = LoggerFactory.getLogger(MemberService::class.java)
     
     fun checkDuplicateNickName(nickname: String) {
-        memberValidator.checkDuplicateNicName(nickname)
+        memberValidator.checkDuplicateNickName(nickname)
     }
     
     fun checkDuplicateEmail(email: String) {
@@ -46,9 +45,9 @@ class MemberService(
     
     fun registerMember(req: RegisterMemberRequest, passwordEncoder: PasswordEncoder): String {
         memberValidator.registerRequestValidator(req)
-        checkDuplicateEmail(req.email)
-        checkDuplicateNickName(req.nickname)
-        checkEqualsPassword(req.password, req.checkPassword)
+        memberValidator.checkDuplicateEmail(req.email)
+        memberValidator.checkDuplicateNickName(req.nickname)
+        memberValidator.checkEqualsPassword(req.password, req.checkPassword)
         
         //TODO : {Mapper} : 설정
         val newMember = Member(

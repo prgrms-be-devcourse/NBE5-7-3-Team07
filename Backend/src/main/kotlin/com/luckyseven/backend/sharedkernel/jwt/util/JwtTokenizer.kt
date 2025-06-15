@@ -26,8 +26,8 @@ class JwtTokenizer(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val blackListTokenRepository: BlackListTokenRepository,
     private val customMemberDetailsService: CustomMemberDetailsService,
-    @Value("213948109238490182309481asdkasdfkajsdlf19023840921") accessSecret: String,
-    @Value("213948109238490182309asdfasdfasdf4819023840921") refreshSecret: String
+    @Value("\${spring.jwt.key.AccessKey}") accessSecret: String,
+    @Value("\${spring.jwt.key.RefreshKey}") refreshSecret: String
 ) {
     
     private val logger = LoggerFactory.getLogger(JwtTokenizer::class.java)

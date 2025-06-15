@@ -21,31 +21,6 @@ class MemberController(
     
     @PostMapping("/register")
     override fun registerMember(@RequestBody req: RegisterMemberRequest): ResponseEntity<String> {
-        /* 이걸 @Validate를 해서 Controller에서 처리를 할지 @Validate를 뺴고 Service에서 처리를 할지 고민
-        *  if (bindingResult.hasErrors()) {
-          FieldError fe = bindingResult.getFieldErrors().get(0);
-          String field = fe.getField();
-          String defaultMsg = fe.getDefaultMessage();
-
-          // 2) 필드별로 커스텀 에러코드 던지기
-          switch (field) {
-            case "email":
-              throw new CustomLogicException(
-                ExceptionCode.INVALID_EMAIL_FORMAT, defaultMsg);
-            case "password":
-              throw new CustomLogicException(
-                ExceptionCode.INVALID_PASSWORD_FORMAT, defaultMsg);
-            case "checkPassword":
-              throw new CustomLogicException(
-                ExceptionCode.INVALID_CHECKPASSWORD_FORMAT, defaultMsg);
-            case "nickname":
-              throw new CustomLogicException(
-                ExceptionCode.BAD_REQUEST, defaultMsg);
-            default:
-              throw new CustomLogicException(
-                ExceptionCode.BAD_REQUEST, defaultMsg);
-          }
-        }*/
         logger.info("==========")
         logger.info("req.email() == {}", req.email)
         logger.info("req.password() == {}", req.password)
