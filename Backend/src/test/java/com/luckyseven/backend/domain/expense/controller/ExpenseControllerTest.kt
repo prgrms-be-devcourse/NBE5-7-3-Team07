@@ -9,6 +9,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -40,7 +41,7 @@ class ExpenseControllerTest {
     }
 
     @Nested
-    @DisplayName("Create Expense")
+    @DisplayName("지출 성공")
     inner class CreateExpenseTests {
         @Test
         @DisplayName("POST /api/{teamId}/expense - Success")
@@ -64,7 +65,7 @@ class ExpenseControllerTest {
     }
 
     @Nested
-    @DisplayName("Get Expense")
+    @DisplayName("지출 조회")
     inner class GetExpenseTests {
         @Test
         @DisplayName("GET /api/expense/{expenseId} - Success")
@@ -82,17 +83,23 @@ class ExpenseControllerTest {
     }
 
     @Nested
-    @DisplayName("Update Expense")
+    @DisplayName("지출 수정")
     inner class UpdateExpenseTests {
         @Test
         @DisplayName("PATCH /api/expense/{expenseId} - Success")
         fun `update expense returns 200`() {
+            // given
             val updateRequest = ExpenseUpdateRequest(
                 description = "Updated",
                 amount = BigDecimal("2000.00"),
                 category = ExpenseCategory.MEAL
             )
-            val createResponse = ExpenseTestUtils.buildCreateResponse()
+            val createResponse = ExpenseTestUtils.buildCreateResponse(
+                id = 1L,
+                amount = BigDecimal("2000.00"),
+                balance = BigDecimal("8000.00"),
+                foreignBalance = BigDecimal("8000.00")
+            )
             every { expenseService.updateExpense(1L, updateRequest) } returns createResponse
 
             mockMvc.perform(
@@ -102,11 +109,16 @@ class ExpenseControllerTest {
             )
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.amount").value(2000.00))
+                .andExpect(jsonPath("$.balance").value(8000.00))
+                .andExpect(jsonPath("$.foreignBalance").value(8000.00))
+
+            verify(exactly = 1) { expenseService.updateExpense(1L, updateRequest) }
         }
     }
 
     @Nested
-    @DisplayName("Delete Expense")
+    @DisplayName("지출 삭제")
     inner class DeleteExpenseTests {
         @Test
         @DisplayName("DELETE /api/expense/{expenseId} - Success")
