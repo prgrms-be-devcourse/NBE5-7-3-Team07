@@ -63,7 +63,7 @@ export default function AddExpenseDialog({onClose, onSuccess}) {
         console.log('members:', members);
         setUsers(members);
         if (members.length > 0) {
-          const firstId = String(members[0].id);
+          const firstId = String(members[0].memberId);
           setForm(f => ({
             ...f,
             payerId: firstId,
