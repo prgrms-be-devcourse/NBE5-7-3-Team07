@@ -126,14 +126,16 @@ class SettlementService(
     @Transactional(readOnly = true)
     fun getSettlementsAggregation(teamId: Long): SettlementAggregationResponse {
         // TODO:집계 쿼리로 가져오기 or Stream 사용하기
-        val settlements = settlementRepository
-            .findAllByTeamId(teamId).filter { it.isSettled == false }
         val memberIds = teamMemberService.getTeamMemberByTeamId(teamId).map { it -> it.id }
         val amountSum = Array(memberIds.size) { Array(memberIds.size) { BigDecimal.ZERO } }
-        for (s in settlements) {
-            val settlerIndex = memberIds.indexOf(s.settler.id)
-            val payerIndex = memberIds.indexOf(s.payer.id)
-            amountSum[settlerIndex][payerIndex] += s.amount
+        val memberIndexMap = memberIds.withIndex().associate { it.value to it.index }
+        settlementRepository.findAllByTeamId(teamId).use { stream ->
+            stream.filter { it.settler.id != null && it.payer.id != null }
+                .forEach {
+                    val settlerIndex = memberIndexMap[it.settler.id]!!
+                    val payerIndex = memberIndexMap[it.payer.id]!!
+                    amountSum[settlerIndex][payerIndex] += it.amount
+                }
         }
         val sumList = mutableListOf<SettlementMemberAggregationResponse>()
         for (i in 0 until memberIds.size) {
