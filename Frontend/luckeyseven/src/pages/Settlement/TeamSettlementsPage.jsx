@@ -6,8 +6,10 @@ import {SettlementList} from "../../components/settlement/settlement-list"
 import {SettlementFilter} from "../../components/settlement/settlement-filter"
 import {
   getListSettlements,
+  getSettlementAggregation,
   getSettlementById,
   getUsers,
+  settleBetweenMembers,
   updateSettlement
 } from "../../service/settlementService"
 import {useToast} from "../../context/ToastContext"
@@ -37,6 +39,24 @@ export function TeamSettlementsPage() {
   const [isModalLoading, setIsModalLoading] = useState(false)
   const [modalMode, setModalMode] = useState("detail") // "detail" 또는 "edit"
   const [isActionLoading, setIsActionLoading] = useState(false)
+
+  // 화면 모드 상태 추가 (list: 정산 목록, aggregation: 정산 집계)
+  const [viewMode, setViewMode] = useState("list")
+
+  // 정산 집계 관련 상태 추가
+  const [aggregationData, setAggregationData] = useState(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  // 정산 집계 필터 및 정렬 상태 추가
+  const [filteredAggregations, setFilteredAggregations] = useState([])
+  const [aggregationFilter, setAggregationFilter] = useState({
+    payerName: "",
+    receiverName: ""
+  })
+  const [aggregationSort, setAggregationSort] = useState({
+    field: "amount",
+    direction: "desc"
+  })
 
   // 페이징 관련 상태
   const [totalPages, setTotalPages] = useState(0)
@@ -176,6 +196,148 @@ export function TeamSettlementsPage() {
     })
   }
 
+  // 사용자 ID로 닉네임 찾기
+  const getUserNickname = (userId) => {
+    const user = users.find(user => user.id === userId)
+    return user ? user.memberNickName : `사용자 ${userId}`
+  }
+
+  // 두 사용자 간 정산 처리하기
+  const handleSettlementBetweenMembers = async (fromMemberId, toMemberId) => {
+    try {
+      setIsProcessing(true);
+
+      // 정산 처리 API 호출
+      await settleBetweenMembers(teamId, fromMemberId, toMemberId);
+
+      // 정산 완료 후 데이터 다시 가져오기
+      const newAggregation = await getSettlementAggregation(teamId);
+      setAggregationData(newAggregation);
+
+      addToast({
+        title: "정산 완료",
+        description: `${getUserNickname(fromMemberId)}님과 ${getUserNickname(
+            toMemberId)}님의 정산이 완료되었습니다.`,
+      });
+    } catch (error) {
+      console.error("정산 처리 오류:", error);
+      console.error("오류 상세 정보:", error.response?.data || error.message);
+      addToast({
+        title: "오류 발생",
+        description: "정산 처리 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // 정산 집계 데이터 가져오기
+  const fetchAggregationData = async () => {
+    try {
+      setIsLoading(true);
+
+      // 집계 정보와 사용자 정보 병렬로 가져오기 (원본 SettlementAggregationPage 방식으로 수정)
+      const [aggregationResponse, usersResponse] = await Promise.all([
+        getSettlementAggregation(teamId),
+        getUsers(teamId)
+      ]);
+
+      setAggregationData(aggregationResponse);
+      setUsers(usersResponse);
+    } catch (error) {
+      console.error("정산 집계 데이터 조회 오류:", error);
+      setError(error.message);
+      addToast({
+        title: "오류 발생",
+        description: "정산 집계 데이터를 불러오는데 실패했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 정산 집계 필터링 및 정렬 함수
+  const filterAndSortAggregations = () => {
+    if (!aggregationData || !aggregationData.aggregations) {
+      return [];
+    }
+
+    // 0원 초과인 항목만 필터링
+    let result = aggregationData.aggregations.filter(agg => agg.amount > 0);
+
+    // 필터 적용
+    if (aggregationFilter.payerName) {
+      result = result.filter(agg => {
+        const nickname = getUserNickname(agg.from);
+        return nickname === aggregationFilter.payerName;
+      });
+    }
+
+    if (aggregationFilter.receiverName) {
+      result = result.filter(agg => {
+        const nickname = getUserNickname(agg.to);
+        return nickname === aggregationFilter.receiverName;
+      });
+    }
+
+    // 정렬 적용
+    result.sort((a, b) => {
+      const field = aggregationSort.field;
+      const direction = aggregationSort.direction === "asc" ? 1 : -1;
+
+      if (field === "amount") {
+        return direction * (a.amount - b.amount);
+      } else if (field === "payer") {
+        return direction * getUserNickname(a.from).localeCompare(
+            getUserNickname(b.from));
+      } else if (field === "receiver") {
+        return direction * getUserNickname(a.to).localeCompare(
+            getUserNickname(b.to));
+      }
+
+      return 0;
+    });
+
+    return result;
+  };
+
+  // 필터 변경 핸들러
+  const handleFilterChange = (e) => {
+    const {name, value} = e.target;
+    setAggregationFilter(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // 정렬 변경 핸들러
+  const handleSortChange = (field) => {
+    setAggregationSort(prev => {
+      if (prev.field === field) {
+        // 같은 필드 클릭 시 방향 전환
+        return {
+          field,
+          direction: prev.direction === "asc" ? "desc" : "asc"
+        };
+      } else {
+        // 다른 필드 클릭 시 기본 내림차순
+        return {
+          field,
+          direction: "desc"
+        };
+      }
+    });
+  };
+
+  // 정산 집계 데이터가 업데이트될 때마다 필터링된 결과도 업데이트
+  useEffect(() => {
+    if (aggregationData) {
+      setFilteredAggregations(filterAndSortAggregations());
+    }
+  }, [aggregationData, aggregationFilter, aggregationSort]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -207,6 +369,13 @@ export function TeamSettlementsPage() {
     fetchData()
   }, [teamId, page, size, sort, location.search, addToast])
 
+  // 화면 모드가 변경될 때마다 처리
+  useEffect(() => {
+    if (viewMode === "aggregation") {
+      fetchAggregationData();
+    }
+  }, [viewMode, teamId]); // teamId를 의존성 배열에 추가
+
   if (isLoading) {
     return (
         <div className="container py-8">
@@ -231,27 +400,234 @@ export function TeamSettlementsPage() {
   return (
       <div className="container py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">팀 정산 내역</h1>
+          <h1 className="text-2xl font-bold">
+            {viewMode === "list" ? "팀 정산 내역" : "정산 집계 현황"}
+          </h1>
           <div className="flex gap-2">
-            <button
-                className="btn btn-outline"
-                onClick={() => navigate(
-                    `/teams/${teamId}/settlements/aggregation`)}
-            >
-              정산 집계 보기
-            </button>
+            {viewMode === "list" ? (
+                <button
+                    className="btn btn-outline"
+                    onClick={() => setViewMode("aggregation")}
+                >
+                  정산 집계 보기
+                </button>
+            ) : (
+                <button
+                    className="btn btn-outline"
+                    onClick={() => setViewMode("list")}
+                >
+                  정산 목록 보기
+                </button>
+            )}
           </div>
         </div>
 
-        <div className="mb-6">
-          <SettlementFilter users={users} expenses={expenses}
-                            initialFilters={filters} teamId={teamId}/>
-        </div>
+        {/* 필터는 정산 목록 화면일 때만 표시 */}
+        {viewMode === "list" && (
+            <div className="mb-6">
+              <SettlementFilter users={users} expenses={expenses}
+                                initialFilters={filters} teamId={teamId}/>
+            </div>
+        )}
 
-        <SettlementList
-            settlements={settlements.content}
-            onSettlementClick={handleSettlementClick}
-        />
+        {viewMode === "list" ? (
+            <SettlementList
+                settlements={settlements.content}
+                onSettlementClick={handleSettlementClick}
+            />
+        ) : (
+            <div className="card">
+
+              {/* 정산 집계 필터 UI 추가 */}
+              <div className="card">
+                <div className="card-content">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="form-group">
+                      <label htmlFor="payer-filter" className="form-label">
+                        결제자
+                      </label>
+                      <select
+                          id="payer-filter"
+                          className="form-select"
+                          name="payerName"
+                          value={aggregationFilter.payerName}
+                          onChange={handleFilterChange}
+                      >
+                        <option value="">전체</option>
+                        {users.map((user) => (
+                            <option key={`payer-${user.id}`}
+                                    value={user.memberNickName}>
+                              {user.memberNickName}
+                            </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="receiver-filter" className="form-label">
+                        정산자
+                      </label>
+                      <select
+                          id="receiver-filter"
+                          className="form-select"
+                          name="receiverName"
+                          value={aggregationFilter.receiverName}
+                          onChange={handleFilterChange}
+                      >
+                        <option value="">전체</option>
+                        {users.map((user) => (
+                            <option key={`receiver-${user.id}`}
+                                    value={user.memberNickName}>
+                              {user.memberNickName}
+                            </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end mt-4 space-x-2">
+                    <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => setAggregationFilter({
+                          payerName: "",
+                          receiverName: ""
+                        })}
+                    >
+                      필터 초기화
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-content">
+                {aggregationData && aggregationData.aggregations
+                && aggregationData.aggregations.length > 0 ? (
+                    <div>
+                      <div
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                      </div>
+
+                      <div className="mt-4">
+                        <div className="overflow-x-auto">
+                          <table className="table w-full border-collapse">
+                            <thead>
+                            <tr className="bg-base-200">
+                              <th className="border-b-2 border-base-300 p-3">
+                                <div
+                                    className="flex items-center cursor-pointer"
+                                    onClick={() => handleSortChange("payer")}
+                                >
+                                  지불자
+                                  {aggregationSort.field === "payer" && (
+                                      <span className="ml-1">
+                                      {aggregationSort.direction === "asc" ? "↑"
+                                          : "↓"}
+                                    </span>
+                                  )}
+                                </div>
+                              </th>
+                              <th className="border-b-2 border-base-300 p-3">
+                                <div
+                                    className="flex items-center cursor-pointer"
+                                    onClick={() => handleSortChange("receiver")}
+                                >
+                                  수령자
+                                  {aggregationSort.field === "receiver" && (
+                                      <span className="ml-1">
+                                      {aggregationSort.direction === "asc" ? "↑"
+                                          : "↓"}
+                                    </span>
+                                  )}
+                                </div>
+                              </th>
+                              <th className="border-b-2 border-base-300 p-3">
+                                <div
+                                    className="flex items-center cursor-pointer"
+                                    onClick={() => handleSortChange("amount")}
+                                >
+                                  금액
+                                  {aggregationSort.field === "amount" && (
+                                      <span className="ml-1">
+                                      {aggregationSort.direction === "asc" ? "↑"
+                                          : "↓"}
+                                    </span>
+                                  )}
+                                </div>
+                              </th>
+                              <th className="border-b-2 border-base-300 p-3">작업</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {filteredAggregations.length > 0 ? (
+                                filteredAggregations.map((agg, index) => (
+                                    <tr key={`${agg.from}-${agg.to}-${index}`}
+                                        className="border-b border-base-200 hover:bg-base-100">
+                                      <td className="p-3">
+                                    <span className="font-medium text-red-500">
+                                      {getUserNickname(agg.from)}
+                                    </span>
+                                      </td>
+                                      <td className="p-3">
+                                        <div className="flex items-center">
+                                          <span
+                                              className="text-gray-500 mx-2">→</span>
+                                          <span
+                                              className="font-medium text-green-500">
+                                        {getUserNickname(agg.to)}
+                                      </span>
+                                        </div>
+                                      </td>
+                                      <td className="p-3 font-semibold">
+                                        {new Intl.NumberFormat('ko-KR', {
+                                          style: 'currency',
+                                          currency: 'KRW'
+                                        }).format(agg.amount)}
+                                      </td>
+                                      <td className="p-3">
+                                        <button
+                                            className="btn btn-sm btn-primary"
+                                            onClick={() => handleSettlementBetweenMembers(
+                                                agg.from, agg.to)}
+                                            disabled={isProcessing}
+                                        >
+                                          {isProcessing ? "처리 중..." : "정산 완료"}
+                                        </button>
+                                      </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                  <td colSpan="4" className="text-center py-6">
+                                    <p className="text-muted">필터 조건에 맞는 정산 내역이
+                                      없습니다.</p>
+                                  </td>
+                                </tr>
+                            )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                ) : (
+                    <p className="text-center text-muted py-4">집계된 정산 정보가
+                      없습니다.</p>
+                )}
+              </div>
+
+              <div className="card-footer p-4 border-t">
+                <div className="mt-4 p-4 bg-base-200 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2">정산 집계 안내</h2>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>위 표는 각 팀원 간 정산해야 할 총 금액을 보여줍니다.</li>
+                    <li><strong>지불자</strong>는 <strong>수령자</strong>에게 해당 금액을 지불해야
+                      합니다.
+                    </li>
+                    <li>테이블 헤더를 클릭하여 정렬 기준과 방향을 변경할 수 있습니다.</li>
+                    <li>"정산 완료" 버튼을 클릭하면 해당 두 사람 간의 모든 정산이 완료 처리됩니다.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+        )}
 
         {/* 페이지네이션 컴포넌트 */}
         <div className="flex justify-between items-center mt-6">
@@ -490,4 +866,3 @@ export function TeamSettlementsPage() {
       </div>
   )
 }
-
