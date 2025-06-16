@@ -6,9 +6,14 @@ import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import jakarta.persistence.*
 import java.math.BigDecimal
+import java.math.MathContext
 import java.math.RoundingMode
 
+@Cacheable
 @Entity
+@Table(indexes = [
+    Index(name = "idx_budget_team", columnList = "team_id")
+])
 class Budget(
 
     @Id
@@ -16,7 +21,7 @@ class Budget(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
 
-    @OneToOne(mappedBy = "budget")
+    @OneToOne(mappedBy = "budget", fetch = FetchType.LAZY)
     var team: Team? = null,
 
     totalAmount: BigDecimal,
@@ -40,8 +45,9 @@ class Budget(
 ) : BaseEntity() {
 
     companion object {
-        private const val SCALE = 2
         private val ROUNDING: RoundingMode = RoundingMode.HALF_UP
+        private val MATH_CONTEXT = MathContext(2, RoundingMode.HALF_UP)
+        private val ZERO = BigDecimal.ZERO
     }
 
     @Column(nullable = false)
@@ -73,7 +79,7 @@ class Budget(
 
     // 예산 추가 후 외화잔고 및 평균환율 수정
     private fun updateAvgExchangeRate(amount: BigDecimal, exchangeRate: BigDecimal) {
-        if (this.avgExchangeRate == null || this.avgExchangeRate!!.compareTo(BigDecimal.ZERO) == 0) {
+        if (this.avgExchangeRate == null || this.avgExchangeRate!!.compareTo(ZERO) == 0) {
             avgExchangeRate = exchangeRate
             return
         }
@@ -83,13 +89,13 @@ class Budget(
         ) // 외화 환산, 충분한 정밀도 확보
         val totalCost = this.foreignBalance!!.multiply(this.avgExchangeRate).add(amount)
         val totalForeign = this.foreignBalance!!.add(foreignAmount)
-        this.avgExchangeRate = totalCost.divide(totalForeign, SCALE, ROUNDING)
+        this.avgExchangeRate = totalCost.divide(totalForeign, MATH_CONTEXT)
     }
 
     private fun updateForeignBalance(amount: BigDecimal, exchangeRate: BigDecimal) {
-        val additionalBudget = amount.divide(exchangeRate, SCALE, ROUNDING)
+        val additionalBudget = amount.divide(exchangeRate, MATH_CONTEXT)
         if (this.foreignBalance == null) {
-            foreignBalance = BigDecimal.ZERO
+            foreignBalance = ZERO
         }
         this.foreignBalance = this.foreignBalance!!.add(additionalBudget)
         this.avgExchangeRate = exchangeRate
@@ -97,7 +103,7 @@ class Budget(
 
     fun setForeignBalance() {
         if (avgExchangeRate != null) {
-            this.foreignBalance = totalAmount.divide(avgExchangeRate, SCALE, ROUNDING)
+            this.foreignBalance = totalAmount.divide(avgExchangeRate, MATH_CONTEXT)
         }
     }
 
@@ -137,7 +143,7 @@ class Budget(
         this.balance = this.balance.add(krwAmount)
 
         if (this.foreignBalance == null) {
-            this.foreignBalance = BigDecimal.ZERO
+            this.foreignBalance = ZERO
         }
 
         this.foreignBalance = this.foreignBalance!!.add(foreignAmount)
@@ -145,7 +151,7 @@ class Budget(
 
 
     private fun validateSufficientBalance(amount: BigDecimal?, current: BigDecimal) {
-        if (current.compareTo(amount) < 0) {
+        if (current < amount) {
             throw CustomLogicException(ExceptionCode.INSUFFICIENT_BALANCE)
         }
     }
