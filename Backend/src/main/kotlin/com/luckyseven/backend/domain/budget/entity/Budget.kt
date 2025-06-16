@@ -19,8 +19,7 @@ class Budget(
     @OneToOne(mappedBy = "budget")
     var team: Team? = null,
 
-    @Column(nullable = false)
-    var totalAmount: BigDecimal,
+    totalAmount: BigDecimal,
 
     @Column(nullable = false)
     var setBy: Long,
@@ -45,10 +44,12 @@ class Budget(
         private val ROUNDING: RoundingMode = RoundingMode.HALF_UP
     }
 
-    fun setTotalAmount(totalAmount: BigDecimal) {
-        this.balance = this.balance.add(totalAmount.subtract(this.totalAmount))
-        this.totalAmount = totalAmount
-    }
+    @Column(nullable = false)
+    var totalAmount: BigDecimal = totalAmount
+        set(value) {
+            balance = balance.add(value.subtract(field))
+            field = value
+        }
 
     fun setExchangeInfo(isExchanged: Boolean, amount: BigDecimal, exchangeRate: BigDecimal?) {
         if (!isExchanged) {
@@ -100,19 +101,15 @@ class Budget(
         }
     }
 
-    fun setForeignBalance(amount: BigDecimal?) {
-        this.foreignBalance = amount
-    }
-
     fun setTeam(team: Team?): Budget {
         // 기존 연결 해제
-        this.team?.setBudget(null)
+        this.team?.budget = null
 
         this.team = team
 
         // 새로운 연결 설정 (Team이 null이 아닌 경우)
-        if (team != null && team.getBudget() !== this) {
-            team.setBudget(this)
+        if (team != null && team.budget !== this) {
+            team.budget = this
         }
 
         return this

@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Positive
-import lombok.RequiredArgsConstructor
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.validation.annotation.Validated
@@ -36,7 +35,7 @@ class BudgetController(
         @Valid @RequestBody request: BudgetCreateRequest
     ): BudgetCreateResponse {
         budgetValidator.validateRequest(request)
-        return budgetService.save(teamId, memberDetails.getId(), request)
+        return budgetService.save(teamId, memberDetails.id, request)
     }
 
     @Operation(summary = "팀 예산 조회")
@@ -60,7 +59,7 @@ class BudgetController(
         @Valid @RequestBody request: BudgetUpdateRequest
     ): BudgetUpdateResponse {
         budgetValidator.validateRequest(request)
-        return budgetService.updateByTeamId(teamId, memberDetails.getId(), request)
+        return budgetService.updateByTeamId(teamId, memberDetails.id, request)
     }
 
     @Operation(summary = "팀 예산 추가")
@@ -75,7 +74,7 @@ class BudgetController(
         @Valid @RequestBody request: BudgetAddRequest
     ): BudgetUpdateResponse {
         budgetValidator.validateRequest(request)
-        return budgetService.addBudgetByTeamId(teamId, memberDetails.getId(), request)
+        return budgetService.addBudgetByTeamId(teamId, memberDetails.id, request)
     }
 
     @Operation(summary = "팀 예산 삭제")
