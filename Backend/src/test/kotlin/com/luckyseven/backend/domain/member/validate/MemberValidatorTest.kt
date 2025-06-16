@@ -52,7 +52,7 @@ class MemberValidatorTest {
     @DisplayName("회원가입 요청의 DTO의 이메일 형식이 유효하지 않으면 INVAILID_EMAIL_FROMAT 얘외 발생")
     fun `registerRequestValidator 이메일 형식 실패`(){
         val request = RegisterMemberRequest("invalid-email-format", "password1234", "password1234","testuser")
-        val errorMessage = "Invalid email format"
+        val errorMessage = "올바르지 않은 이메일 형식입니다."
 
         //ConstraintViolation 무엇인가? -> 이 violation은 뭘 담는것인가?
         //ConstraintViolation 어디가 잘못되었는가? 하는 무언가 (검사결과?)
