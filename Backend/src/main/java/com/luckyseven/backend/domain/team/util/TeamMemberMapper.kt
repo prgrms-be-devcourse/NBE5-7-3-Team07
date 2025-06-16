@@ -21,10 +21,10 @@ object TeamMemberMapper {
         return TeamMemberDto(
             id = teamMember.id,
             teamId = team?.id,
-            teamName = team?.name,
+            teamName = team!!.name,
             memberId = member?.id,
-            memberNickName = member?.nickname,
-            memberEmail = member?.email,
+            memberNickName = member!!.nickname,
+            memberEmail = member.email,
             role = role
         )
     }

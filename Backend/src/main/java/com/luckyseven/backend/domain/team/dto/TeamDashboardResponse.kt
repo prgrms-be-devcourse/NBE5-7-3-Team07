@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 
 
 data class TeamDashboardResponse(
-    val teamId: Long,
+    val teamId: Long?,
 
     val teamName: String,
 
@@ -41,7 +41,7 @@ data class TeamDashboardResponse(
     )
 
     data class ExpenseDto(
-        val id: Long,
+        val id: Long?,
         val description: String? = null,
         val amount: BigDecimal,
         val category: ExpenseCategory,
