@@ -126,3 +126,39 @@ export const getAllSettlements = async (teamId, filters = {},
     throw error;
   }
 };
+/**
+ * 팀의 정산 집계 정보를 조회하는 함수
+ * @param {string|number} teamId 팀 ID
+ * @returns {Promise<Object>} 팀원 간 정산 집계 정보
+ */
+export const getSettlementAggregation = async (teamId) => {
+  try {
+    const response = await privateApi.get(
+        `/api/teams/${teamId}/settlements/aggregation`);
+    return response.data;
+  } catch (error) {
+    console.error("정산 집계 정보 조회 오류:", error);
+    throw error;
+  }
+};
+
+/**
+ * 두 팀원 간의 모든 정산을 완료 처리하는 함수
+ * @param {string|number} teamId 팀 ID
+ * @param {string|number} fromMemberId 정산 지불자 ID
+ * @param {string|number} toMemberId 정산 수령자 ID
+ * @returns {Promise<void>}
+ */
+export const settleBetweenMembers = async (teamId, fromMemberId,
+    toMemberId) => {
+  try {
+    await privateApi.post(`/api/teams/${teamId}/settlements`, {
+      from: fromMemberId,
+      to: toMemberId
+    });
+  } catch (error) {
+    console.error(`두 사용자(${fromMemberId}, ${toMemberId}) 간 정산 완료 처리 오류:`,
+        error);
+    throw error;
+  }
+};

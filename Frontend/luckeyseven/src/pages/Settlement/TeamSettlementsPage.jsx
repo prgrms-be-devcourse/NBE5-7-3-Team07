@@ -232,6 +232,15 @@ export function TeamSettlementsPage() {
       <div className="container py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">팀 정산 내역</h1>
+          <div className="flex gap-2">
+            <button
+                className="btn btn-outline"
+                onClick={() => navigate(
+                    `/teams/${teamId}/settlements/aggregation`)}
+            >
+              정산 집계 보기
+            </button>
+          </div>
         </div>
 
         <div className="mb-6">
@@ -481,3 +490,4 @@ export function TeamSettlementsPage() {
       </div>
   )
 }
+
