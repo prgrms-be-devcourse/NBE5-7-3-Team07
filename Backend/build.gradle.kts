@@ -17,11 +17,11 @@ java {
     }
 }
 
-//configurations {
-//    compileOnly {
-//        extendsFrom(configurations.annotationProcessor.get())
-//    }
-//}
+configurations {
+    compileOnly {
+        extendsFrom(configurations.annotationProcessor.get())
+    }
+}
 
 repositories {
     mavenCentral()
@@ -36,6 +36,9 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.21")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.21")
+
+    // Email 및 Thymeleaf 관련 의존성 (중복 제거 및 정리)
+    implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 
@@ -55,25 +58,25 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5-jvm:5.9.1")
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.9.1")
     testImplementation("io.mockk:mockk:1.14.2")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
     // jwt
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
+    // actuator & prometheus
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-core")
     implementation("io.micrometer:micrometer-registry-prometheus")
 
+    // cache
     implementation("com.github.ben-manes.caffeine:caffeine")
     implementation("org.springframework.boot:spring-boot-starter-cache")
-    implementation("org.springframework.boot:spring-boot-starter-mail")
-
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform()
 }
 
 allOpen {

@@ -26,8 +26,8 @@ class JwtTokenizer(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val blackListTokenRepository: BlackListTokenRepository,
     private val customMemberDetailsService: CustomMemberDetailsService,
-    @Value("213948109238490182309481asdkasdfkajsdlf19023840921") accessSecret: String,
-    @Value("213948109238490182309asdfasdfasdf4819023840921") refreshSecret: String
+    @Value("\${spring.jwt.key.AccessKey}") accessSecret: String,
+    @Value("\${spring.jwt.key.RefreshKey}") refreshSecret: String
 ) {
     
     private val logger = LoggerFactory.getLogger(JwtTokenizer::class.java)
@@ -38,29 +38,33 @@ class JwtTokenizer(
         const val ACCESS_TOKEN_EXPIRE = 24 * 60 * 60 * 1000L // 1일
         const val REFRESH_TOKEN_EXPIRE = 7 * 24 * 60 * 60 * 1000L // 1주일
     }
-    
+
     fun reissueTokenPair(response: HttpServletResponse, memberDetails: MemberDetails): String {
         val accessToken = createToken(
             memberDetails,
             ACCESS_TOKEN_EXPIRE,
             getSigningKey(accessSecret)
         )
-        
-        val refreshToken = createToken(
+
+        val newRefreshTokenValue = createToken(
             memberDetails,
             REFRESH_TOKEN_EXPIRE,
             getSigningKey(refreshSecret)
         )
-        
-        val refreshTokenEntity = refreshTokenRepository.findByUserId(memberDetails.id)
-            ?: RefreshToken(
-                userId = memberDetails.id,
-                tokenValue = refreshToken
-            )
-        
-        refreshTokenRepository.save(refreshTokenEntity)
-        addRefreshToken(response, refreshToken, REFRESH_TOKEN_EXPIRE)
-        
+
+        refreshTokenRepository.findByUserId(memberDetails.id)?.let {
+            refreshTokenRepository.delete(it)
+        }
+
+        val newRefreshTokenEntity = RefreshToken(
+            userId = memberDetails.id,
+            tokenValue = newRefreshTokenValue
+        )
+
+        refreshTokenRepository.save(newRefreshTokenEntity)
+
+        addRefreshToken(response, newRefreshTokenValue, REFRESH_TOKEN_EXPIRE)
+
         return accessToken
     }
     
