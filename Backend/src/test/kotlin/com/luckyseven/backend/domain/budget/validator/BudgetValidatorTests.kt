@@ -12,25 +12,13 @@ import com.luckyseven.backend.domain.budget.util.TestUtils.genBudgetCreateReq
 import com.luckyseven.backend.domain.budget.util.TestUtils.genBudgetUpdateReq
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkClass
-import org.assertj.core.api.Assertions
-import org.assertj.core.api.ThrowableAssert
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.junit.jupiter.MockitoExtension
 import java.math.BigDecimal
-import java.util.*
 
 class BudgetValidatorTests {
 

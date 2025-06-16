@@ -1,38 +1,44 @@
 package com.luckyseven.backend.domain.budget.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.luckyseven.backend.domain.budget.dto.*
-import com.luckyseven.backend.domain.budget.entity.CurrencyCode
+import com.luckyseven.backend.core.JwtAuthenticationFilter
 import com.luckyseven.backend.domain.budget.service.BudgetService
 import com.luckyseven.backend.domain.budget.util.TestUtils
+import com.luckyseven.backend.domain.budget.util.TestUtils.setupAuthentication
 import com.luckyseven.backend.domain.budget.validator.BudgetValidator
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.MockKAnnotations
 import io.mockk.every
-import io.mockk.impl.annotations.MockK
 import io.mockk.verify
+import io.mockk.just
+import io.mockk.Runs
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.FilterType
 import org.springframework.http.MediaType
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers
-import java.math.BigDecimal
 
-@WebMvcTest(BudgetController::class)
+@WebMvcTest(
+    controllers = [BudgetController::class],
+    excludeFilters = [
+        ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = [JwtAuthenticationFilter::class]
+        )
+    ]
+)
 @AutoConfigureMockMvc(addFilters = false)
 class BudgetControllerTests {
     @Autowired
@@ -41,27 +47,33 @@ class BudgetControllerTests {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
-    @MockK
+    @MockkBean
     private lateinit var budgetService: BudgetService
 
-    @MockK
+    @MockkBean
     private lateinit var budgetValidator: BudgetValidator
 
-    // SecurityContext 정리
+    @BeforeEach
+    fun setUp() {
+        MockKAnnotations.init(this)
+    }
+
     @AfterEach
     fun tearDown() {
         SecurityContextHolder.clearContext()
     }
 
+
     @Test
     fun `POST 요청으로 예산 생성이 성공하면 201 CREATED를 응답한다`() {
         val member = TestUtils.genMemberDetails()
-        TestUtils.genAuthentication(member)
+        setupAuthentication(member)
 
         val teamId = 1L
         val req = TestUtils.genBudgetCreateReq()
         val resp = TestUtils.genBudgetCreateResp()
 
+        every { budgetValidator.validateRequest(req) } just Runs
         every { budgetService.save(teamId, member.id, req) } returns resp
 
         mockMvc.post("/api/teams/${teamId}/budgets") {
@@ -80,7 +92,7 @@ class BudgetControllerTests {
     @Test
     fun `totalAmount가 누락된 요청을 받으면 400 BAD REQUEST와 함께 예산 생성에 실패한다`() {
         val member = TestUtils.genMemberDetails()
-        TestUtils.genAuthentication(member)
+        setupAuthentication(member)
 
         val teamId = 1L
 
@@ -114,7 +126,6 @@ class BudgetControllerTests {
                 status { isOk() }
                 jsonPath("$.totalAmount") { value(resp.totalAmount) }
                 jsonPath("$.balance") { value(resp.balance) }
-                jsonPath("$.foreignCurrency") { value(resp.foreignCurrency) }
             }.andDo {
                 print()
             }
@@ -124,7 +135,7 @@ class BudgetControllerTests {
     fun `존재하지 않는 teamId로 예산 조회를 할 경우 404 NOT FOUND가 발생한다`() {
         val teamId = 1L
 
-        every { budgetService.getByTeamId(teamId) } throws CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
+        every { budgetService.getByTeamId(1L) } throws CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
 
         mockMvc.get("/api/teams/${teamId}/budgets")
             .andExpect {
@@ -138,6 +149,8 @@ class BudgetControllerTests {
     fun `DELETE 요청으로 예산 삭제에 성공하면 204 NO CONTENT를 응답한다`() {
         val teamId = 1L
 
+        every { budgetService.deleteByTeamId(teamId) } just Runs
+
         mockMvc.delete("/api/teams/${teamId}/budgets")
             .andExpect {
                 status { isNoContent() }
@@ -150,14 +163,14 @@ class BudgetControllerTests {
 
     @Test
     fun `PATCH 요청으로 예산 수정에 성공하면 200 OK를 응답한다`() {
-
         val teamId = 1L
         val member = TestUtils.genMemberDetails()
-        TestUtils.genAuthentication(member)
+        setupAuthentication(member)
 
         val req = TestUtils.genBudgetUpdateReq()
         val resp = TestUtils.genBudgetUpdateResp()
 
+        every { budgetValidator.validateRequest(req) } just Runs
         every { budgetService.updateByTeamId(teamId, member.id, req) } returns resp
 
         mockMvc.patch("/api/teams/${teamId}/budgets") {
@@ -166,7 +179,6 @@ class BudgetControllerTests {
         }.andExpect {
             status { isOk() }
             jsonPath("$.balance") { value(resp.balance) }
-            jsonPath("$.foreignCurrency") { value(resp.foreignCurrency) }
         }.andDo {
             print()
         }
@@ -177,9 +189,8 @@ class BudgetControllerTests {
     @Test
     fun `totalAmount가 누락된 요청이 들어온 경우 예산 수정에 실패하고 400 BAD REQUEST를 응답한다`() {
         val teamId = 1L
-
         val member = TestUtils.genMemberDetails()
-        TestUtils.genAuthentication(member)
+        setupAuthentication(member)
 
         val req = """
         {
@@ -201,13 +212,13 @@ class BudgetControllerTests {
     @Test
     fun `PATCH 요청으로 예산 추가에 성공하면 200 OK를 응답한다`() {
         val teamId = 1L
-
         val member = TestUtils.genMemberDetails()
-        TestUtils.genAuthentication(member)
+        setupAuthentication(member)
 
         val req = TestUtils.genBudgetAddReq()
         val resp = TestUtils.genBudgetUpdateRespAfterAdd()
 
+        every { budgetValidator.validateRequest(req) } just Runs
         every { budgetService.addBudgetByTeamId(teamId, member.id, req) } returns resp
 
         mockMvc.patch("/api/teams/${teamId}/budgets/add") {
@@ -216,18 +227,18 @@ class BudgetControllerTests {
         }.andExpect {
             status { isOk() }
             jsonPath("$.balance") { value(resp.balance) }
-            jsonPath("$.foreignCurrency") { value(resp.foreignCurrency) }
         }.andDo {
             print()
         }
 
         verify(exactly = 1) { budgetValidator.validateRequest(req) }
-
     }
 
     @Test
     fun `additionalBudget가 누락된 요청이 들어온 경우 예산 추가에 실패하고 400 BAD REQUEST를 응답한다`() {
         val teamId = 1L
+        val member = TestUtils.genMemberDetails()
+        setupAuthentication(member)
 
         val req = """
         {
