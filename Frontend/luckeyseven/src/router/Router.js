@@ -1,7 +1,7 @@
 import {Navigate, Route, Routes} from "react-router-dom";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/Login/Signup";
-import TeamSetup from "../pages/TeamSetup";
+import TeamSetup from "../pages/Team/TeamSetup";
 import Home from "../pages/Home";
 import ExpensesPage from "../pages/ExpensesPage";
 import TeamDashBoard from "../pages/TeamDashBoard";

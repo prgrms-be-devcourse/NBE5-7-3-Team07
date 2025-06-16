@@ -10,6 +10,7 @@ import com.luckyseven.backend.domain.settlement.dao.SettlementRepository
 import com.luckyseven.backend.domain.settlement.dao.SettlementSpecification
 import com.luckyseven.backend.domain.settlement.entity.Settlement
 import com.luckyseven.backend.domain.team.entity.Team
+import com.luckyseven.backend.sharedkernel.entity.BaseEntity
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import jakarta.persistence.EntityManager
@@ -24,6 +25,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.test.context.ActiveProfiles
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 
 @DataJpaTest
@@ -45,6 +47,11 @@ class SettlementRepositoryTest {
     private lateinit var expense1: Expense
     private lateinit var expense2: Expense
 
+    fun setDate(t: BaseEntity) {
+        t.createdAt = LocalDateTime.now()
+        t.updatedAt = LocalDateTime.now()
+    }
+
     @BeforeEach
     fun setUp() {
         // 멤버 생성
@@ -53,21 +60,25 @@ class SettlementRepositoryTest {
             password = "password1",
             nickname = "정산자1"
         )
+        setDate(settler1)
         settler2 = Member(
             email = "settler2@example.com",
             password = "password2",
             nickname = "정산자2"
         )
+        setDate(settler2)
         payer1 = Member(
             email = "payer1@example.com",
             password = "password3",
             nickname = "지불자1"
         )
+        setDate(payer1)
         payer2 = Member(
             email = "payer2@example.com",
             password = "password4",
             nickname = "지불자2"
         )
+        setDate(payer2)
 
         // 멤버 엔티티 저장
         entityManager.persist(settler1)
@@ -84,6 +95,7 @@ class SettlementRepositoryTest {
             foreignCurrency = CurrencyCode.USD,
             avgExchangeRate = BigDecimal("1300")
         )
+        setDate(budget1)
 
         val budget2 = Budget(
             totalAmount = BigDecimal("50000.00"),
@@ -93,6 +105,7 @@ class SettlementRepositoryTest {
             foreignCurrency = CurrencyCode.USD,
             avgExchangeRate = BigDecimal("1300")
         )
+        setDate(budget2)
 
         entityManager.persist(budget1)
         entityManager.persist(budget2)
@@ -105,6 +118,7 @@ class SettlementRepositoryTest {
             leader = settler1,
             budget = budget1
         )
+        setDate(team1)
 
         team2 = Team(
             name = "team2",
@@ -113,6 +127,7 @@ class SettlementRepositoryTest {
             leader = payer1,
             budget = budget2
         )
+        setDate(team2)
 
         // 팀 엔티티 저장
         entityManager.persist(team1)
@@ -127,6 +142,7 @@ class SettlementRepositoryTest {
             category = ExpenseCategory.MEAL,
             paymentMethod = PaymentMethod.CARD
         )
+        setDate(expense1)
 
         expense2 = Expense(
             amount = BigDecimal.valueOf(1000),
@@ -136,6 +152,7 @@ class SettlementRepositoryTest {
             category = ExpenseCategory.MEAL,
             paymentMethod = PaymentMethod.CARD
         )
+        setDate(expense2)
 
         // 비용 엔티티 저장
         entityManager.persist(expense1)
@@ -152,6 +169,7 @@ class SettlementRepositoryTest {
                 payer = if (i < 10) payer1 else payer2,
                 expense = if (i < 15) expense1 else expense2
             )
+            setDate(settlement)
             if (i % 2 == 0) {
                 settlement.convertSettled()
             }

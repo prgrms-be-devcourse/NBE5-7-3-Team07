@@ -17,8 +17,8 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
       try {
         // budgetId가 없을 경우, team의 예산을 fetch하려 시도
         const url = budgetId 
-          ? `/api/teams/${teamId}/budget/${budgetId}`
-          : `/api/teams/${teamId}/budget`;
+          ? `/api/teams/${teamId}/budgets/${budgetId}`
+          : `/api/teams/${teamId}/budgets`;
           
         const response = await axios.get(url);
         const budget = response.data;
@@ -80,7 +80,7 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
     }
 
     try {
-      const response = await axios.patch(`/api/teams/${teamId}/budget`, {
+      const response = await axios.patch(`/api/teams/${teamId}/budgets`, {
         totalAmount: Number(totalAmount),
         isExchanged,
         foreignCurrency,

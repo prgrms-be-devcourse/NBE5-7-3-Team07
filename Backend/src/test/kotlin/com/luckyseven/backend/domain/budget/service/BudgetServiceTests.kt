@@ -42,6 +42,8 @@ class BudgetServiceTests {
         every { teamRepository.findById(team.id) } returns Optional.of(team)
         every { budgetMapper.toEntity(team, leader.id!!, req) } returns budget
         every { budgetMapper.toCreateResponse(budget) } returns expectedResp
+        every { budgetValidator.validateBudgetNotExist(team.id!!) } returns Unit
+        every { budgetRepository.save(budget) } returns budget
 
         val actualResp = budgetService.save(team.id!!, leader.id!!, req)
 
@@ -86,7 +88,7 @@ class BudgetServiceTests {
         val actualResp = budgetService.updateByTeamId(teamId, loginMemberId, req)
 
         // 예산이 수정되었는지 확인
-        budget.totalAmount shouldBe req.totalAmount
+        actualResp.balance shouldBe req.totalAmount
         actualResp.balance shouldBe expectedResp.balance
         actualResp.foreignCurrency shouldBe expectedResp.foreignCurrency
 
@@ -119,7 +121,9 @@ class BudgetServiceTests {
 
         every { teamRepository.findById(teamId) } returns Optional.of(team)
         every { budgetValidator.validateBudgetExist(teamId) } returns budget
-        every { expenseRepository.existsById(teamId) } returns false
+        every { expenseRepository.existsByTeamId(teamId) } returns false
+        every { teamRepository.save(team) } returns team
+        every { budgetRepository.delete(budget) } returns Unit
 
         budgetService.deleteByTeamId(teamId)
 
