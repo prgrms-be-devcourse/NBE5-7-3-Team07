@@ -76,7 +76,7 @@ dependencies {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform()
 }
 
 allOpen {
