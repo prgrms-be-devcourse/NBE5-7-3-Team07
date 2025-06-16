@@ -53,11 +53,6 @@ class BudgetControllerTests {
     @MockkBean
     private lateinit var budgetValidator: BudgetValidator
 
-    @BeforeEach
-    fun setUp() {
-        MockKAnnotations.init(this)
-    }
-
     @AfterEach
     fun tearDown() {
         SecurityContextHolder.clearContext()
