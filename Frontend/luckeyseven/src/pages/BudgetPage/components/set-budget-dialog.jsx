@@ -101,8 +101,12 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2>예산 설정</h2>
-        
+
         {error && <div className="error-message">{error}</div>}
+                
+        <div className="notice-box">
+          <span>팀의 예산을 설정해 보세요! 나중에 환율을 업데이트하거나 예산을 추가할 수 있습니다.</span>
+        </div>
         
         <label>예산 금액</label>
         <input

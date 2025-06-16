@@ -126,7 +126,7 @@ export function BudgetPage() {
 
       {budget ? (
         <div className="space-y-2 text-gray-700">
-          <p>총 예산: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.totalAmount)} KRW</span></p>
+          <p>총예산: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.totalAmount)} KRW</span></p>
           <p>원화 잔고: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.balance)} KRW</span></p>
           <p>외화 잔고: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.foreignBalance)} {budget?.foreignCurrency || 'KRW'}</span></p>
           <p>평균 환율: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.avgExchangeRate)}</span></p>

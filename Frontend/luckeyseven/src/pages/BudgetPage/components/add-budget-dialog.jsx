@@ -79,7 +79,7 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
     }
 
     try {
-      const response = await axios.patch(`/api/teams/${teamId}/budgets`, {
+      const response = await axios.patch(`/api/teams/${teamId}/budgets/add`, {
         additionalBudget: Number(additionalBudget),
         isExchanged,
         exchangeRate: isExchanged ? Number(exchangeRate) : null,
@@ -125,7 +125,7 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
     return (
       <div className="modal-overlay" onClick={handleClose}>
         <div className="modal" onClick={(e) => e.stopPropagation()}>
-          <h2>예산 수정</h2>
+          <h2>예산 추가</h2>
           <div className="error-message">{error}</div>
           <div className="modal-buttons">
             <button onClick={handleClose}>닫기</button>
@@ -141,6 +141,10 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
         <h2>예산 추가</h2>
 
         {error && <div className="error-message">{error}</div>}
+
+        <div className="notice-box">
+          <span>예산이 부족하다면 예산을 추가해 보세요! 추가 환전 시 환율을 입력하면 평균 환율을 계산하여 외화 잔고를 업데이트합니다.</span>
+        </div>
         
         <label>추가 예산 금액</label>
         <input
