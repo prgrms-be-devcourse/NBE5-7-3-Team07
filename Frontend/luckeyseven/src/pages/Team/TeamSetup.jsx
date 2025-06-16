@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import styles from '../styles/TeamSetup.module.css';
-import Header from '../components/Header';
-import { createTeam, joinTeam } from '../service/TeamService';
+import styles from '../../styles/TeamSetup.module.css';
+import Header from '../../components/Header';
+import { createTeam, joinTeam } from '../../service/TeamService';
 import { useNavigate } from 'react-router-dom';
 import { useSetRecoilState } from 'recoil';
-import { currentTeamIdState } from '../recoil/atoms/teamAtoms';
-import { getMyTeams } from '../service/TeamService'; // 팀 목록 불러오기
+import { currentTeamIdState } from '../../recoil/atoms/teamAtoms';
+import { getMyTeams } from '../../service/TeamService'; // 팀 목록 불러오기
 
 
 
