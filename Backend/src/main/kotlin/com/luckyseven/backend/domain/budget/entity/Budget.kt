@@ -19,8 +19,7 @@ class Budget(
     @OneToOne(mappedBy = "budget")
     var team: Team? = null,
 
-    @Column(nullable = false)
-    var totalAmount: BigDecimal,
+    totalAmount: BigDecimal,
 
     @Column(nullable = false)
     var setBy: Long,
@@ -45,10 +44,12 @@ class Budget(
         private val ROUNDING: RoundingMode = RoundingMode.HALF_UP
     }
 
-    fun setTotalAmount(totalAmount: BigDecimal) {
-        this.balance = this.balance.add(totalAmount.subtract(this.totalAmount))
-        this.totalAmount = totalAmount
-    }
+    @Column(nullable = false)
+    var totalAmount: BigDecimal = totalAmount
+        set(value) {
+            balance = balance.add(value.subtract(field))
+            field = value
+        }
 
     fun setExchangeInfo(isExchanged: Boolean, amount: BigDecimal, exchangeRate: BigDecimal?) {
         if (!isExchanged) {
@@ -98,10 +99,6 @@ class Budget(
         if (avgExchangeRate != null) {
             this.foreignBalance = totalAmount.divide(avgExchangeRate, SCALE, ROUNDING)
         }
-    }
-
-    fun setForeignBalance(amount: BigDecimal?) {
-        this.foreignBalance = amount
     }
 
     fun setTeam(team: Team?): Budget {

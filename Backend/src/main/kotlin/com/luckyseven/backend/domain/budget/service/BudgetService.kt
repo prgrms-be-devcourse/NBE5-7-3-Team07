@@ -92,7 +92,7 @@ class BudgetService(
 
         val budget = budgetValidator.validateBudgetExist(teamId)
 
-        team!!.budget = budget
+        team.budget = null
         teamRepository.save(team)
         budgetRepository.delete(budget)
     }
@@ -106,12 +106,12 @@ class BudgetService(
                 request.exchangeRate
             )
             val sum = budget.totalAmount.add(request.additionalBudget)
-            budget.setTotalAmount(sum)
+            budget.totalAmount = sum
         }
 
         private fun updateTotalAmountOrExchangeRate(request: BudgetUpdateRequest, budget: Budget) {
             // totalAmount, Balance update
-            budget.setTotalAmount(request.totalAmount)
+            budget.totalAmount = request.totalAmount
 
             // avgExchange, foreignBalance update
             budget.setExchangeInfo(
