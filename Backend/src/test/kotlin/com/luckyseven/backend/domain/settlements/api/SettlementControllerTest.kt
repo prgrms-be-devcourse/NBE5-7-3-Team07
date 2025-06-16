@@ -7,10 +7,10 @@ import com.luckyseven.backend.domain.settlement.app.SettlementService
 import com.luckyseven.backend.domain.settlement.dto.SettlementResponse
 import com.luckyseven.backend.domain.settlement.dto.SettlementSearchCondition
 import com.luckyseven.backend.domain.settlement.dto.SettlementUpdateRequest
+import com.ninjasquad.springmockk.MockkBean
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.mockk.every
-import io.mockk.impl.annotations.MockK
 import io.mockk.verify
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -51,10 +51,10 @@ class SettlementControllerTest {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
-    @MockK
+    @MockkBean
     private lateinit var settlementService: SettlementService
 
-    @MockK
+    @MockkBean
     private lateinit var jpaMetamodelMappingContext: JpaMetamodelMappingContext
 
     fun genSettlement(
@@ -205,7 +205,14 @@ class SettlementControllerTest {
             isSettled = false,
         )
 
-        val mockResponse = genSettlement(id = settlementId)
+        val mockResponse = genSettlement(
+            id = settlementId,
+            amount = request.amount!!.toLong(),
+            payerId = request.payerId!!,
+            settlerId = request.settlerId!!,
+            expenseId = request.expenseId!!,
+            isSettled = request.isSettled!!,
+        )
 
         every {
             settlementService.updateSettlement(
@@ -256,7 +263,7 @@ class SettlementControllerTest {
             isSettled = false,
         )
 
-        val mockResponse = genSettlement(id = settlementId)
+        val mockResponse = genSettlement(id = settlementId, isSettled = true)
 
         every { settlementService.settleSettlement(settlementId) } returns mockResponse
 
@@ -283,3 +290,4 @@ class SettlementControllerTest {
         } // updateSettlement는 호출되지 않음
     }
 }
+

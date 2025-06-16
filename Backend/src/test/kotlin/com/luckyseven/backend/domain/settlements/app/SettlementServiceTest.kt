@@ -32,6 +32,8 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import java.math.BigDecimal
+import java.time.LocalDateTime
+import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class SettlementServiceTest {
@@ -85,6 +87,8 @@ class SettlementServiceTest {
             expense = expense,
             isSettled = false
         )
+        settlement.createdAt = LocalDateTime.now()
+        settlement.updatedAt = LocalDateTime.now()
     }
 
     @Test
@@ -125,6 +129,8 @@ class SettlementServiceTest {
         // given
         every { settlementRepository.findWithSettlerAndPayerById(any()) } returns settlement
         every { settlementRepository.save(any()) } returns settlement
+        every { memberService.findMemberOrThrow(any()) } returns settler andThen payer
+        every { expenseRepository.findById(any()) } returns Optional.of(expense)
 
         val newAmount = BigDecimal.valueOf(2000)
         val request = SettlementUpdateRequest(
