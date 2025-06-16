@@ -69,6 +69,9 @@ class BudgetControllerTests {
             content = objectMapper.writeValueAsString(req)
         }.andExpect {
             status { isCreated() }
+            jsonPath("$.balance") { value(resp.balance) }
+            jsonPath("$.avgExchangeRate") { value(resp.avgExchangeRate) }
+            jsonPath("$.foreignBalance") { value(resp.foreignBalance) }
         }.andDo { print() }
 
         verify(exactly = 1) { budgetValidator.validateRequest(req) }
@@ -109,6 +112,9 @@ class BudgetControllerTests {
         mockMvc.get("/api/teams/${teamId}/budgets")
             .andExpect {
                 status { isOk() }
+                jsonPath("$.totalAmount") { value(resp.totalAmount) }
+                jsonPath("$.balance") { value(resp.balance) }
+                jsonPath("$.foreignCurrency") { value(resp.foreignCurrency) }
             }.andDo {
                 print()
             }
@@ -159,6 +165,8 @@ class BudgetControllerTests {
             content = objectMapper.writeValueAsString(req)
         }.andExpect {
             status { isOk() }
+            jsonPath("$.balance") { value(resp.balance) }
+            jsonPath("$.foreignCurrency") { value(resp.foreignCurrency) }
         }.andDo {
             print()
         }
@@ -207,6 +215,8 @@ class BudgetControllerTests {
             content = objectMapper.writeValueAsString(req)
         }.andExpect {
             status { isOk() }
+            jsonPath("$.balance") { value(resp.balance) }
+            jsonPath("$.foreignCurrency") { value(resp.foreignCurrency) }
         }.andDo {
             print()
         }
