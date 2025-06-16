@@ -129,6 +129,17 @@ internal class ExpenseServiceTest {
             // then
             verify { expenseRepository.save(match { it.description == request.description }) }
             verify { cacheEvictService.evictByPrefix(any(), any()) }
+            verify {
+                settlementService.createAllSettlements(
+                    request,
+                    payer,
+                    match { savedExpense ->
+                        savedExpense.description == request.description &&
+                                savedExpense.amount == request.amount &&
+                                savedExpense.payer.id == payer.id
+                    }
+                )
+            }
 
             val expectedBalance = BigDecimal("100000.00") - request.amount
             assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
@@ -191,8 +202,18 @@ internal class ExpenseServiceTest {
             val response = expenseService.saveExpense(1L, request)
 
             verify { expenseRepository.save(any()) }
+            verify {
+                settlementService.createAllSettlements(
+                    request,
+                    payer,
+                    match { savedExpense ->
+                        savedExpense.description == request.description &&
+                                savedExpense.amount == request.amount &&
+                                savedExpense.payer.id == payer.id
+                    }
+                )
+            }
             verify { cacheEvictService.evictByPrefix(any(), any()) }
-            verify { settlementService.createAllSettlements(any(), any(), any()) }
 
             val expectedBalance = BigDecimal("100000.00") - request.amount
             assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
