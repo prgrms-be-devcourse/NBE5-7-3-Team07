@@ -9,7 +9,6 @@ import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
 
-@Cacheable
 @Entity
 @Table(indexes = [
     Index(name = "idx_budget_team", columnList = "team_id")
