@@ -1,11 +1,14 @@
 package com.luckyseven.backend.domain.settlement.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class SettlementResponse(
     val id: Long?,
     val amount: BigDecimal,
+
+    @field:JsonProperty("isSettled")
     val isSettled: Boolean,
     val settlerId: Long,
     val settlerNickName: String,
