@@ -44,8 +44,8 @@ class Budget(
 ) : BaseEntity() {
 
     companion object {
+        private const val SCALE = 2
         private val ROUNDING: RoundingMode = RoundingMode.HALF_UP
-        private val MATH_CONTEXT = MathContext(2, RoundingMode.HALF_UP)
         private val ZERO = BigDecimal.ZERO
     }
 
@@ -88,11 +88,11 @@ class Budget(
         ) // 외화 환산, 충분한 정밀도 확보
         val totalCost = this.foreignBalance!!.multiply(this.avgExchangeRate).add(amount)
         val totalForeign = this.foreignBalance!!.add(foreignAmount)
-        this.avgExchangeRate = totalCost.divide(totalForeign, MATH_CONTEXT)
+        this.avgExchangeRate = totalCost.divide(totalForeign, SCALE, ROUNDING)
     }
 
     private fun updateForeignBalance(amount: BigDecimal, exchangeRate: BigDecimal) {
-        val additionalBudget = amount.divide(exchangeRate, MATH_CONTEXT)
+        val additionalBudget = amount.divide(exchangeRate, SCALE, ROUNDING)
         if (this.foreignBalance == null) {
             foreignBalance = ZERO
         }
@@ -102,7 +102,7 @@ class Budget(
 
     fun setForeignBalance() {
         if (avgExchangeRate != null) {
-            this.foreignBalance = totalAmount.divide(avgExchangeRate, MATH_CONTEXT)
+            this.foreignBalance = totalAmount.divide(avgExchangeRate, SCALE, ROUNDING)
         }
     }
 
