@@ -20,7 +20,7 @@ class CustomCaffeineCacheManager : CaffeineCacheManager() {
         return if (cacheConfig != null) {
             // (2) 있으면 그걸로 CaffeineCache 생성
             CaffeineCache(name, cacheConfig.build<Any, Any>(), isAllowNullValues)
-        } else{
+        } else {
             // (3) 없으면 부모 클래스 기본 방식으로 생성
             super.createCaffeineCache(name)
         }
