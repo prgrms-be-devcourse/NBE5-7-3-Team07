@@ -186,8 +186,8 @@ function TeamDashBoard() {
       }
     };
 
-    fetchData();
-  }, [teamId, budgetData, budgetInitialized, setTeamForeignCurrency]);
+      fetchData().catch(error => console.error(error))
+  }, [activeTab, budgetData, budgetInitialized, setTeamForeignCurrency]);
 
   return (
       <div className={styles.app}>
@@ -197,23 +197,27 @@ function TeamDashBoard() {
               pageHeaderData={pageHeaderData}
               onBudgetDelete={handleBudgetDelete}
           />
-          <Tabs activeTab={activeTab} setActiveTab={setActiveTab}/>
-          {activeTab === 'Overview' &&
-              <OverviewTabContent dashboardData={dashboardData}/>
-          }
-          {activeTab === 'Members' && (
-              <MembersTabContent
-                  teamCode={membersData.teamCode}
-                  teamPassword={membersData.teamPassword}
-                  members={membersData.members}
-              />
-          )}
-          {activeTab === 'Expenses' && (
-              <ExpenseList/>
-          )}
-          {activeTab === 'Settlement' && (
-              <TeamSettlementsPage/>
-          )}
+          <div className={styles.tabsWrapper}>
+            <Tabs activeTab={activeTab} setActiveTab={setActiveTab}/>
+            <div className={styles.tabContentArea}>
+              {activeTab === 'Overview' &&
+                  <OverviewTabContent dashboardData={dashboardData}/>
+              }
+              {activeTab === 'Members' && (
+                  <MembersTabContent
+                      teamCode={membersData.teamCode}
+                      teamPassword={membersData.teamPassword}
+                      members={membersData.members}
+                  />
+              )}
+              {activeTab === 'Expenses' && (
+                  <ExpenseList/>
+              )}
+              {activeTab === 'Settlement' && (
+                  <TeamSettlementsPage/>
+              )}
+            </div>
+          </div>
 
           {dialogType === 'set' && (
               <SetBudgetDialog
