@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 @EnableJpaAuditing
 @EnableCaching
 @SpringBootApplication
+@EnableJpaAuditing
+@EnableCaching
 class BackendApplication
 
 fun main(args: Array<String>) {

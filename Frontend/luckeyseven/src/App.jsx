@@ -17,11 +17,13 @@ import {SettlementEditPage} from "./pages/Settlement/SettlementEditPage"
 import {SettlementDetailPage} from "./pages/Settlement/SettlementDetailPage"
 import ExpenseList from "./pages/ExpenseDialog/ExpenseList"
 import "./styles/auth.css"
-import {getCurrentUser} from "./service/AuthService"
+import {getCurrentUser, verifyEmailToken} from "./service/AuthService"
 import TeamDashBoard from "./pages/Team/TeamDashBoard";
 import TeamSetup from "./pages/Team/TeamSetup"
 import {ToastProvider} from "./context/ToastContext"
-import { verifyEmailToken } from "./service/AuthService"
+import {
+  SettlementAggregationPage
+} from "./pages/Settlement/SettlementAggregationPage";
 
 // 보호된 라우트 컴포넌트
 const ProtectedRoute = ({children}) => {
@@ -44,40 +46,44 @@ const EmailRedirect = () => {
   const [status, setStatus] = React.useState("processing"); // processing, success, error
   const verificationInProgress = React.useRef(false); // 중복 요청 방지용 ref
   const hasVerified = React.useRef(false); // 검증 완료 여부
-  
+
   useEffect(() => {
     // 이미 검증했거나 진행 중인 경우 중복 요청 방지
-    if (hasVerified.current || verificationInProgress.current || globalVerificationInProgress) return;
-    
+    if (hasVerified.current || verificationInProgress.current
+        || globalVerificationInProgress) {
+      return;
+    }
+
     const verifyToken = async () => {
       try {
         const queryParams = new URLSearchParams(location.search);
         const token = queryParams.get('token');
-        
+
         if (!token) {
           setStatus("error");
           return;
         }
-        
+
         // 같은 토큰으로 이미 처리된 경우 중복 요청 방지
-        const processedTokens = JSON.parse(localStorage.getItem('processedTokens') || '[]');
+        const processedTokens = JSON.parse(
+            localStorage.getItem('processedTokens') || '[]');
         if (processedTokens.includes(token)) {
           setStatus("success");
           hasVerified.current = true;
           return;
         }
-        
+
         // 전역 및 로컬 진행 중 플래그 설정 (중복 요청 방지)
         globalVerificationInProgress = true;
         verificationInProgress.current = true;
-        
+
         // 백엔드 API 직접 호출하여 토큰 검증
         const response = await verifyEmailToken(token);
-        
+
         if (response.status === 200) {
           // 이메일 주소 추출 (백엔드 응답에서 이메일을 반환하는 경우)
           const email = response.data?.email || '';
-          
+
           // 인증 성공 시 로컬 스토리지에 인증 상태 저장
           localStorage.setItem('emailVerified', 'true');
           if (email) {
@@ -253,9 +259,10 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
-            <Route path="/verify-email" element={<EmailVerification />} />
-            <Route path="/email-verification-handler" element={<EmailVerificationHandler />} />
-            <Route path="/email-verify" element={<EmailRedirect />} />
+            <Route path="/verify-email" element={<EmailVerification/>}/>
+            <Route path="/email-verification-handler"
+                   element={<EmailVerificationHandler/>}/>
+            <Route path="/email-verify" element={<EmailRedirect/>}/>
             <Route path="/TeamDashBoard" element={<TeamDashBoard/>}/>
             <Route
                 path="/"
@@ -275,6 +282,13 @@ function App() {
                     <TeamSettlementsPage/>
                   </ProtectedRoute>
                 }
+            />
+            <Route
+                path="/teams/:teamId/settlements/aggregation"
+                element={
+                  <ProtectedRoute>
+                    <SettlementAggregationPage/>
+                  </ProtectedRoute>}
             />
             <Route
                 path="/teams/:teamId/settlements/new"
