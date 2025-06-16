@@ -6,7 +6,6 @@ import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.repository.MemberRepository
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails
 import com.luckyseven.backend.domain.member.validate.MemberValidator
-import com.luckyseven.backend.sharedkernel.jwt.repository.BlackListTokenRepository
 import com.luckyseven.backend.sharedkernel.jwt.util.JwtTokenizer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
