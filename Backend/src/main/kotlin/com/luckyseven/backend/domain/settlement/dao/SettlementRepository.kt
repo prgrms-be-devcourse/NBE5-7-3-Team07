@@ -17,4 +17,12 @@ interface SettlementRepository : JpaRepository<Settlement, Long>,
     @Query("SELECT s From Settlement s join s.expense e where e.team.id = :teamId and s.isSettled = false")
     @QueryHints(QueryHint(name = "org.hibernate.fetchSize", value = "-2147483648"))
     fun findAllByTeamId(teamId: Long): Stream<Settlement>
+
+    @Query(
+        "SELECT s FROM Settlement s " +
+                "WHERE s.expense.team.id = :teamId " +
+                "AND ((s.payer.id = :from AND s.settler.id = :to) " +
+                "OR (s.payer.id = :to AND s.settler.id = :from))"
+    )
+    fun findAssociatedNotSettled(teamId: Long, from: Long, to: Long): Stream<Settlement>
 }
