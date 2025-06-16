@@ -45,7 +45,7 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
     try {
       // 기존 예산 확인을 위한 GET 요청
       try {
-        const checkResponse = await axios.get(`/api/teams/${teamId}/budget`);
+        const checkResponse = await axios.get(`/api/teams/${teamId}/budgets`);
         
         // 이미 예산이 있는 경우, 409 에러를 설정하고 종료
         if (checkResponse.status === 200) {
@@ -64,7 +64,7 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
       }
 
       // 새 예산 설정
-      const response = await axios.post(`/api/teams/${teamId}/budget`, {
+      const response = await axios.post(`/api/teams/${teamId}/budgets`, {
         totalAmount: Number(totalAmount),
         isExchanged,
         foreignCurrency,

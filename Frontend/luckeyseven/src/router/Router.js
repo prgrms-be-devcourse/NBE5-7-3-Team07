@@ -1,13 +1,9 @@
 import {Route, Routes} from "react-router-dom";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/Login/Signup";
-import TeamSetup from "../pages/TeamSetup";
+import TeamSetup from "../pages/Team/TeamSetup";
 import Home from "../pages/Home";
 import ExpensesPage from "../pages/ExpensesPage";
-import SettlementPage from "../pages/SettlementPage";
-import {Route, Routes} from "react-router-dom";
-import Login from "../pages/Login/Login";
-import Signup from "../pages/Login/Signup";
 import {TeamSettlementsPage} from "../pages/Settlement/TeamSettlementsPage";
 import {SettlementNewPage} from "../pages/Settlement/SettlementNewPage";
 import {SettlementDetailPage} from "../pages/Settlement/SettlementDetailPage";

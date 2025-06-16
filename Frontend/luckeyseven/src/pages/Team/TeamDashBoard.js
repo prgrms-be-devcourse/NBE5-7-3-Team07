@@ -3,20 +3,20 @@ import {useRecoilValue, useSetRecoilState} from 'recoil';
 import {
   currentTeamIdState,
   teamForeignCurrencyState
-} from '../recoil/atoms/teamAtoms';
-import {getTeamDashboard, getTeamMembers} from '../service/TeamService';
-import styles from '../styles/App.module.css';
-import Header from '../components/Header';
-import PageHeaderControls from '../components/PageHeaderControls';
-import Tabs from '../components/Tabs';
-import OverviewTabContent from '../components/OverviewTabContent';
-import MembersTabContent from '../components/MembersTabContent';
-import {TeamSettlementsPage} from './Settlement/TeamSettlementsPage';
-import SetBudgetDialog from '../pages/BudgetPage/components/set-budget-dialog';
+} from '../../recoil/atoms/teamAtoms';
+import {getTeamDashboard, getTeamMembers} from '../../service/TeamService';
+import styles from '../../styles/App.module.css';
+import Header from '../../components/Header';
+import PageHeaderControls from '../../components/PageHeaderControls';
+import Tabs from '../../components/Tabs';
+import OverviewTabContent from '../../components/OverviewTabContent';
+import MembersTabContent from '../../components/MembersTabContent';
+import {TeamSettlementsPage} from '../Settlement/TeamSettlementsPage';
+import SetBudgetDialog from '../BudgetPage/components/set-budget-dialog';
 import EditBudgetDialog
-  from '../pages/BudgetPage/components/edit-budget-dialog';
-import AddBudgetDialog from '../pages/BudgetPage/components/add-budget-dialog';
-import ExpenseList from "./ExpenseDialog/ExpenseList";
+  from '../BudgetPage/components/edit-budget-dialog';
+import AddBudgetDialog from '../BudgetPage/components/add-budget-dialog';
+import ExpenseList from "../ExpenseDialog/ExpenseList";
 
 function TeamDashBoard() {
   const [activeTab, setActiveTab] = useState('Overview');

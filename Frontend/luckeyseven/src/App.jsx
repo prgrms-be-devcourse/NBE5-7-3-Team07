@@ -18,8 +18,8 @@ import {SettlementDetailPage} from "./pages/Settlement/SettlementDetailPage"
 import ExpenseList from "./pages/ExpenseDialog/ExpenseList"
 import "./styles/auth.css"
 import {getCurrentUser} from "./service/AuthService"
-import TeamDashBoard from "./pages/TeamDashBoard";
-import TeamSetup from "./pages/TeamSetup"
+import TeamDashBoard from "./pages/Team/TeamDashBoard";
+import TeamSetup from "./pages/Team/TeamSetup"
 import {ToastProvider} from "./context/ToastContext"
 import { verifyEmailToken } from "./service/AuthService"
 
