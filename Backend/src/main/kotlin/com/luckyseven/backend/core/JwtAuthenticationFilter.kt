@@ -33,6 +33,7 @@ class JwtAuthenticationFilter(
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path = request.requestURI
         return path.startsWith("/api/users/") || path.startsWith("/api/email/")
+                || path.startsWith("/api/refresh")
     }
     
     @Throws(ServletException::class, IOException::class)
