@@ -7,6 +7,8 @@ import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.entity.TeamMember
+import io.mockk.every
+import io.mockk.mockk
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
@@ -23,12 +25,11 @@ object TestUtils {
         )
     }
 
-    // 테스트에서 인증된 사용자처럼 보이게 설정
-    fun genAuthentication(member: MemberDetails) {
-        val auth: Authentication = UsernamePasswordAuthenticationToken(
-            member, null, member.getAuthorities()
-        )
-        SecurityContextHolder.getContext().authentication = auth
+    // SecurityContext에 인증 정보 설정
+    fun setupAuthentication(member: Any) {
+        val authentication = mockk<Authentication>()
+        every { authentication.principal } returns member
+        SecurityContextHolder.getContext().authentication = authentication
     }
 
     @JvmStatic
