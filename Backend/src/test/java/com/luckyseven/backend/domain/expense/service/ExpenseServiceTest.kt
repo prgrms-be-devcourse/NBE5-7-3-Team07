@@ -17,40 +17,42 @@ import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.repository.TeamRepository
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
+import io.mockk.every
+import io.mockk.impl.annotations.InjectMockKs
+import io.mockk.impl.annotations.MockK
+import io.mockk.junit5.MockKExtension
+import io.mockk.justRun
+import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentMatchers.any
-import org.mockito.InjectMocks
-import org.mockito.Mock
-import org.mockito.junit.jupiter.MockitoExtension
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import java.math.BigDecimal
 
-@ExtendWith(MockitoExtension::class)
+@ExtendWith(MockKExtension::class)
 internal class ExpenseServiceTest {
 
-    @Mock
+    @MockK
     private lateinit var teamRepository: TeamRepository
 
-    @Mock
+    @MockK
     private lateinit var memberService: MemberService
 
-    @Mock
+    @MockK
     private lateinit var expenseRepository: ExpenseRepository
 
-    @Mock
+    @MockK
     private lateinit var settlementService: SettlementService
 
-    @Mock
+    @MockK
     private lateinit var cacheEvictService: CacheEvictService
 
-    @InjectMocks
+    @InjectMockKs
     private lateinit var expenseService: ExpenseService
 
     private lateinit var team: Team
@@ -98,11 +100,13 @@ internal class ExpenseServiceTest {
             budget = budget
         )
         budget.setTeam(team)
+
+        justRun { cacheEvictService.evictByPrefix(any(), any()) }
     }
 
     @Nested
     @DisplayName("지출 등록 테스트")
-    internal inner class SaveExpenseTests {
+    inner class SaveExpenseTests {
 
         @Test
         @DisplayName("지출 등록 성공")
@@ -117,20 +121,17 @@ internal class ExpenseServiceTest {
                 settlerId = mutableListOf(10L, 20L)
             )
 
-            whenever(expenseRepository.save(any<Expense>()))
-                .thenAnswer { it.getArgument<Expense>(0) }
-            whenever(teamRepository.findTeamWithBudget(1L)).thenReturn(team)
-            whenever(memberService.findMemberOrThrow(1L)).thenReturn(payer)
+            every { expenseRepository.save(any<Expense>()) } answers { firstArg() }
+            every { teamRepository.findTeamWithBudget(1L) } returns team
+            every { memberService.findMemberOrThrow(1L) } returns payer
+            justRun { settlementService.createAllSettlements(any(), any(), any()) }
 
             // when
             val response = expenseService.saveExpense(1L, request)
 
             // then
-            val captor = argumentCaptor<Expense>()
-            verify(expenseRepository).save(captor.capture())
-            val saved = captor.firstValue
-
-            assertThat(saved.description).isEqualTo(request.description)
+            verify { expenseRepository.save(match { it.description == request.description }) }
+            verify { cacheEvictService.evictByPrefix(any(), any()) }
 
             val expectedBalance = BigDecimal("100000.00") - request.amount
             assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
@@ -138,13 +139,12 @@ internal class ExpenseServiceTest {
         }
 
         @Nested
-        internal inner class ExceptionCases {
+        inner class ExceptionCases {
 
             @Test
             @DisplayName("존재하지 않는 팀")
             fun teamNotFound_throwsException() {
-                // given
-                whenever(teamRepository.findTeamWithBudget(999L)).thenReturn(null)
+                every { teamRepository.findTeamWithBudget(999L) } returns null
                 val request = ExpenseRequest(
                     description = "변종된 럭키비키즈 나쁜 점심 식사",
                     amount = BigDecimal("1000.00"),
@@ -154,8 +154,7 @@ internal class ExpenseServiceTest {
                     settlerId = mutableListOf(10L, 20L)
                 )
 
-                // when & then
-                val exception = assertThrows<CustomLogicException> {
+                val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
                     expenseService.saveExpense(999L, request)
                 }
                 assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.TEAM_NOT_FOUND)
@@ -164,8 +163,10 @@ internal class ExpenseServiceTest {
             @Test
             @DisplayName("예산보다 큰 지출 금액")
             fun insufficientBalance_throwsException() {
-                // given
-                whenever(teamRepository.findTeamWithBudget(1L)).thenReturn(team)
+                every { teamRepository.findTeamWithBudget(1L) } returns team
+
+                every { memberService.findMemberOrThrow(1L) } returns payer
+
                 val request = ExpenseRequest(
                     description = "럭키비키즈 팀 배부르게 식사",
                     amount = BigDecimal("1000000.00"),
@@ -175,8 +176,7 @@ internal class ExpenseServiceTest {
                     settlerId = mutableListOf(10L)
                 )
 
-                // when & then
-                val exception = assertThrows<CustomLogicException> {
+                val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
                     expenseService.saveExpense(1L, request)
                 }
                 assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.INSUFFICIENT_BALANCE)
@@ -186,7 +186,6 @@ internal class ExpenseServiceTest {
         @Test
         @DisplayName("지출 등록 성공 및 정산 생성 호출")
         fun success_and_createSettlements() {
-            // given
             val request = ExpenseRequest(
                 description = "럭키비키즈 점심 식사",
                 amount = BigDecimal("50000.00"),
@@ -196,42 +195,30 @@ internal class ExpenseServiceTest {
                 settlerId = mutableListOf(10L, 20L)
             )
 
-            whenever(expenseRepository.save(any<Expense>()))
-                .thenAnswer { it.getArgument<Expense>(0) }
-            whenever(teamRepository.findTeamWithBudget(1L)).thenReturn(team)
-            whenever(memberService.findMemberOrThrow(1L)).thenReturn(payer)
+            every { expenseRepository.save(any<Expense>()) } answers { firstArg() }
+            every { teamRepository.findTeamWithBudget(1L) } returns team
+            every { memberService.findMemberOrThrow(1L) } returns payer
+            justRun { settlementService.createAllSettlements(any(), any(), any()) }
 
-            // when
             val response = expenseService.saveExpense(1L, request)
 
-            // then
-            val expenseCaptor = argumentCaptor<Expense>()
-            verify(expenseRepository).save(expenseCaptor.capture())
-            val savedExpense = expenseCaptor.firstValue
-
-            assertThat(savedExpense.description).isEqualTo(request.description)
+            verify { expenseRepository.save(any()) }
+            verify { cacheEvictService.evictByPrefix(any(), any()) }
+            verify { settlementService.createAllSettlements(any(), any(), any()) }
 
             val expectedBalance = BigDecimal("100000.00") - request.amount
             assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
             assertThat(response.balance).isEqualByComparingTo(expectedBalance)
-
-            // Todo: 수정하기
-//            verify(settlementService).createAllSettlements(
-//                eq(request),
-//                eq(payer),
-//                eq(savedExpense)
-//            )
         }
     }
 
     @Nested
     @DisplayName("지출 조회 테스트")
-    internal inner class GetExpenseTests {
+    inner class GetExpenseTests {
 
         @Test
         @DisplayName("지출 조회 성공")
         fun success() {
-            // given
             val expense = Expense(
                 id = 1L,
                 description = "럭키비키즈 점심 식사",
@@ -241,29 +228,24 @@ internal class ExpenseServiceTest {
                 payer = payer,
                 team = team
             )
-            whenever(expenseRepository.findByIdWithPayer(1L)).thenReturn(expense)
+            every { expenseRepository.findByIdWithPayer(1L) } returns expense
 
-            // when
             val response = expenseService.getExpense(1L)
 
-            // then
             assertThat(response.description).isEqualTo(expense.description)
             assertThat(response.amount).isEqualByComparingTo(expense.amount)
             assertThat(response.category).isEqualTo(expense.category)
             assertThat(response.paymentMethod).isEqualTo(expense.paymentMethod)
-            verify(expenseRepository).findByIdWithPayer(1L)
+            verify { expenseRepository.findByIdWithPayer(1L) }
         }
 
         @Test
         @DisplayName("존재하지 않는 지출 조회 시 예외 발생")
         fun notFound_throwsException() {
-            // given
-            val expenseId = 999L
-            whenever(expenseRepository.findByIdWithPayer(expenseId)).thenReturn(null)
+            every { expenseRepository.findByIdWithPayer(999L) } returns null
 
-            // when & then
-            val exception = assertThrows<CustomLogicException> {
-                expenseService.getExpense(expenseId)
+            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+                expenseService.getExpense(999L)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
         }
@@ -271,12 +253,11 @@ internal class ExpenseServiceTest {
 
     @Nested
     @DisplayName("지출 수정 테스트")
-    internal inner class UpdateExpenseTests {
+    inner class UpdateExpenseTests {
 
         @Test
         @DisplayName("지출 금액 증가 수정 성공")
         fun increaseAmountSuccess() {
-            // given
             val request = ExpenseUpdateRequest(
                 description = "잘못 계산해서 수정한 럭키비키즈 점심 식사",
                 amount = BigDecimal("70000.00"),
@@ -291,14 +272,13 @@ internal class ExpenseServiceTest {
                 payer = payer,
                 team = team
             )
-            whenever(expenseRepository.findWithTeamAndBudgetById(1L)).thenReturn(original)
+            every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
 
-            // when
             val response = expenseService.updateExpense(1L, request)
 
-            // then
             assertThat(original.description).isEqualTo(request.description)
             assertThat(original.amount).isEqualByComparingTo(request.amount)
+            verify { cacheEvictService.evictByPrefix(any(), any()) }
 
             val expectedDelta = request.amount!! - BigDecimal("50000.00")
             val expectedBalance = BigDecimal("100000.00") - expectedDelta
@@ -309,7 +289,6 @@ internal class ExpenseServiceTest {
         @Test
         @DisplayName("지출 금액 감소 수정 성공")
         fun decreaseAmountSuccess() {
-            // given
             val request = ExpenseUpdateRequest(
                 description = "업데이트된 점심 식사",
                 amount = BigDecimal("30000.00"),
@@ -324,12 +303,12 @@ internal class ExpenseServiceTest {
                 payer = payer,
                 team = team
             )
-            whenever(expenseRepository.findWithTeamAndBudgetById(1L)).thenReturn(original)
+            every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
 
-            // when
             val response = expenseService.updateExpense(1L, request)
 
-            // then
+            verify { cacheEvictService.evictByPrefix(any(), any()) }
+
             val expectedDelta = request.amount!! - BigDecimal("50000.00")
             val expectedBalance = BigDecimal("100000.00") - expectedDelta
             assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
@@ -339,16 +318,14 @@ internal class ExpenseServiceTest {
         @Test
         @DisplayName("존재하지 않는 지출")
         fun expenseNotFound_throwsException() {
-            // given
-            whenever(expenseRepository.findWithTeamAndBudgetById(999L)).thenReturn(null)
+            every { expenseRepository.findWithTeamAndBudgetById(999L) } returns null
             val request = ExpenseUpdateRequest(
                 description = "없는 지출 수정",
                 amount = BigDecimal("1000.00"),
                 category = ExpenseCategory.MEAL
             )
 
-            // when & then
-            val exception = assertThrows<CustomLogicException> {
+            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
                 expenseService.updateExpense(999L, request)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
@@ -357,7 +334,6 @@ internal class ExpenseServiceTest {
         @Test
         @DisplayName("예산 부족으로 수정 실패")
         fun insufficientBalance_throwsException() {
-            // given
             val request = ExpenseUpdateRequest(
                 description = "너무 많이 먹었는데 예산보다 많은 지출 수정",
                 amount = BigDecimal("200000.00"),
@@ -372,10 +348,9 @@ internal class ExpenseServiceTest {
                 payer = payer,
                 team = team
             )
-            whenever(expenseRepository.findWithTeamAndBudgetById(1L)).thenReturn(original)
+            every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
 
-            // when & then
-            val exception = assertThrows<CustomLogicException> {
+            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
                 expenseService.updateExpense(1L, request)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.INSUFFICIENT_BALANCE)
@@ -384,12 +359,11 @@ internal class ExpenseServiceTest {
 
     @Nested
     @DisplayName("지출 삭제 테스트")
-    internal inner class DeleteExpenseTests {
+    inner class DeleteExpenseTests {
 
         @Test
         @DisplayName("지출 삭제 성공")
         fun success() {
-            // given
             val expense = Expense(
                 id = 1L,
                 description = "삭제할 지출",
@@ -399,27 +373,25 @@ internal class ExpenseServiceTest {
                 payer = payer,
                 team = team
             )
-            whenever(expenseRepository.findWithTeamAndBudgetById(1L)).thenReturn(expense)
+            every { expenseRepository.findWithTeamAndBudgetById(1L) } returns expense
+            justRun { expenseRepository.delete(expense) }
 
-            // when
             val response = expenseService.deleteExpense(1L)
 
-            // then
             val expectedBalance = BigDecimal("130000.00")
             assertThat(team.budget?.balance).isEqualByComparingTo(expectedBalance)
             assertThat(response.balance).isEqualByComparingTo(expectedBalance)
 
-            verify(expenseRepository).delete(expense)
+            verify { expenseRepository.delete(expense) }
+            verify { cacheEvictService.evictByPrefix(any(), any()) }
         }
 
         @Test
         @DisplayName("존재하지 않는 지출 삭제 시 예외 발생")
         fun expenseNotFound_throwsException() {
-            // given
-            whenever(expenseRepository.findWithTeamAndBudgetById(999L)).thenReturn(null)
+            every { expenseRepository.findWithTeamAndBudgetById(999L) } returns null
 
-            // when & then
-            val exception = assertThrows<CustomLogicException> {
+            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
                 expenseService.deleteExpense(999L)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
@@ -428,28 +400,23 @@ internal class ExpenseServiceTest {
 
     @Nested
     @DisplayName("지출 리스트 조회 테스트")
-    internal inner class GetListExpenseTests {
+    inner class GetListExpenseTests {
 
         @Test
         @DisplayName("지출 리스트 정상 반환")
         fun success() {
-            // given
             val pageable: Pageable = PageRequest.of(0, 10)
-
-            val expenses = listOf(
+            val responses = listOf(
                 createExpense("점심 식사", BigDecimal("10000.00"), PaymentMethod.CASH),
                 createExpense("저녁 식사", BigDecimal("15000.00"), PaymentMethod.CARD)
             ).map { ExpenseMapper.toExpenseResponse(it) }
+            val page = PageImpl(responses, pageable, responses.size.toLong())
 
-            val page = PageImpl(expenses, pageable, expenses.size.toLong())
+            every { teamRepository.existsById(1L) } returns true
+            every { expenseRepository.findResponsesByTeamId(1L, pageable) } returns page
 
-            whenever(teamRepository.existsById(1L)).thenReturn(true)
-            whenever(expenseRepository.findResponsesByTeamId(1L, pageable)).thenReturn(page)
-
-            // when
             val result = expenseService.getExpenses(1L, pageable)
 
-            // then
             assertThat(result.content).hasSize(2)
             assertThat(result.page).isEqualTo(0)
             assertThat(result.size).isEqualTo(10)
@@ -464,12 +431,10 @@ internal class ExpenseServiceTest {
         @Test
         @DisplayName("존재하지 않는 팀으로 조회 시 예외 발생")
         fun teamNotFound() {
-            // given
             val pageable = PageRequest.of(0, 5)
-            whenever(teamRepository.existsById(999L)).thenReturn(false)
+            every { teamRepository.existsById(999L) } returns false
 
-            // when & then
-            val exception = assertThrows<CustomLogicException> {
+            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
                 expenseService.getExpenses(999L, pageable)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.TEAM_NOT_FOUND)
