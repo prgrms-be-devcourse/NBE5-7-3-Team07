@@ -37,10 +37,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.21")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.21")
 
-    // Email dependencies
-    implementation("org.springframework.boot:spring-boot-starter-mail")
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
+    // Email 및 Thymeleaf 관련 의존성 (중복 제거 및 정리)
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
@@ -68,17 +65,18 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
+    // actuator & prometheus
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-core")
     implementation("io.micrometer:micrometer-registry-prometheus")
 
+    // cache
     implementation("com.github.ben-manes.caffeine:caffeine")
     implementation("org.springframework.boot:spring-boot-starter-cache")
-
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform() // 이 부분이 가장 중요합니다.
+tasks.test {
+    useJUnitPlatform()
 }
 
 allOpen {
