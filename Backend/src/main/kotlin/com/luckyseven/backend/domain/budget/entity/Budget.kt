@@ -101,6 +101,10 @@ class Budget(
         }
     }
 
+    fun setForeignBalance(amount: BigDecimal?) {
+        this.foreignBalance = amount
+    }
+
     fun setTeam(team: Team?): Budget {
         // 기존 연결 해제
         this.team?.budget = null

@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface TeamMemberRepository : JpaRepository<TeamMember?, Long?> {
+interface TeamMemberRepository : JpaRepository<TeamMember, Long> {
     fun existsByTeamAndMember(team: Team, member: Member): Boolean
 
     fun findByTeamId(id: Long): List<TeamMember>
