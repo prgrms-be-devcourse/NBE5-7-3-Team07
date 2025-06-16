@@ -10,38 +10,65 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 object ExpenseTestUtils {
-    fun buildRequest() = ExpenseRequest(
-        description = "Test expense",
-        amount = BigDecimal("1000.00"),
-        category = ExpenseCategory.MEAL,
-        payerId = 1L,
-        paymentMethod = PaymentMethod.CASH,
-        settlerId = mutableListOf(1L)
+    fun buildRequest(
+        description: String = "Test expense",
+        amount: BigDecimal = BigDecimal("1000.00"),
+        category: ExpenseCategory = ExpenseCategory.MEAL,
+        payerId: Long = 1L,
+        paymentMethod: PaymentMethod = PaymentMethod.CASH,
+        settlerIds: List<Long> = listOf(1L)
+    ) = ExpenseRequest(
+        description = description,
+        amount = amount,
+        category = category,
+        payerId = payerId,
+        paymentMethod = paymentMethod,
+        settlerId = settlerIds.toMutableList()
     )
 
-    fun buildCreateResponse() = CreateExpenseResponse(
-        id = 1L,
-        amount = BigDecimal("1000.00"),
-        foreignBalance = BigDecimal("8000.00"),
-        balance = BigDecimal("9000.00"),
-        createdAt = LocalDateTime.now(),
-        updatedAt = LocalDateTime.now()
+    fun buildCreateResponse(
+        id: Long = 1L,
+        amount: BigDecimal = BigDecimal("1000.00"),
+        foreignBalance: BigDecimal = BigDecimal("8000.00"),
+        balance: BigDecimal = BigDecimal("9000.00"),
+        createdAt: LocalDateTime = LocalDateTime.now(),
+        updatedAt: LocalDateTime = LocalDateTime.now()
+    ) = CreateExpenseResponse(
+        id = id,
+        amount = amount,
+        foreignBalance = foreignBalance,
+        balance = balance,
+        createdAt = createdAt,
+        updatedAt = updatedAt
     )
 
-    fun buildExpenseResponse() = ExpenseResponse(
-        id = 1L,
-        description = "Test expense",
-        amount = BigDecimal("1000.00"),
-        category = ExpenseCategory.MEAL,
-        paymentMethod = PaymentMethod.CASH,
-        payerId = 1L,
-        payerNickname = "TestUser",
-        createdAt = LocalDateTime.now(),
-        updatedAt = LocalDateTime.now()
+    fun buildExpenseResponse(
+        id: Long = 1L,
+        description: String = "Test expense",
+        amount: BigDecimal = BigDecimal("1000.00"),
+        category: ExpenseCategory = ExpenseCategory.MEAL,
+        paymentMethod: PaymentMethod = PaymentMethod.CASH,
+        payerId: Long = 1L,
+        payerNickname: String = "TestUser",
+        createdAt: LocalDateTime = LocalDateTime.now(),
+        updatedAt: LocalDateTime = LocalDateTime.now()
+    ) = ExpenseResponse(
+        id = id,
+        description = description,
+        amount = amount,
+        category = category,
+        paymentMethod = paymentMethod,
+        payerId = payerId,
+        payerNickname = payerNickname,
+        createdAt = createdAt,
+        updatedAt = updatedAt
     )
 
-    fun buildBalanceResponse() = ExpenseBalanceResponse(
-        foreignBalance = BigDecimal("8000.00"),
-        balance = BigDecimal("9000.00")
+    fun buildBalanceResponse(
+        foreignBalance: BigDecimal = BigDecimal("8000.00"),
+        balance: BigDecimal = BigDecimal("9000.00")
+    ) = ExpenseBalanceResponse(
+        foreignBalance = foreignBalance,
+        balance = balance
     )
 }

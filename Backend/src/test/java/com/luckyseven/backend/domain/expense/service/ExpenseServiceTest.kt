@@ -3,13 +3,13 @@ package com.luckyseven.backend.domain.expense.service
 import com.luckyseven.backend.domain.budget.entity.Budget
 import com.luckyseven.backend.domain.budget.entity.CurrencyCode
 import com.luckyseven.backend.domain.expense.cache.CacheEvictService
-import com.luckyseven.backend.domain.expense.dto.ExpenseRequest
 import com.luckyseven.backend.domain.expense.dto.ExpenseUpdateRequest
 import com.luckyseven.backend.domain.expense.entity.Expense
 import com.luckyseven.backend.domain.expense.enums.ExpenseCategory
 import com.luckyseven.backend.domain.expense.enums.PaymentMethod
 import com.luckyseven.backend.domain.expense.mapper.ExpenseMapper
 import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
+import com.luckyseven.backend.domain.expense.util.ExpenseTestUtils
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.service.MemberService
 import com.luckyseven.backend.domain.settlement.app.SettlementService
@@ -112,13 +112,10 @@ internal class ExpenseServiceTest {
         @DisplayName("지출 등록 성공")
         fun success() {
             // given
-            val request = ExpenseRequest(
+            val request = ExpenseTestUtils.buildRequest(
                 description = "럭키비키즈 점심 식사",
                 amount = BigDecimal("10000.00"),
-                category = ExpenseCategory.MEAL,
-                payerId = 1L,
-                paymentMethod = PaymentMethod.CASH,
-                settlerId = mutableListOf(10L, 20L)
+                settlerIds = listOf(10L, 20L)
             )
 
             every { expenseRepository.save(any<Expense>()) } answers { firstArg() }
@@ -145,13 +142,10 @@ internal class ExpenseServiceTest {
             @DisplayName("존재하지 않는 팀")
             fun teamNotFound_throwsException() {
                 every { teamRepository.findTeamWithBudget(999L) } returns null
-                val request = ExpenseRequest(
+                val request = ExpenseTestUtils.buildRequest(
                     description = "변종된 럭키비키즈 나쁜 점심 식사",
                     amount = BigDecimal("1000.00"),
-                    category = ExpenseCategory.MEAL,
-                    payerId = 1L,
-                    paymentMethod = PaymentMethod.CASH,
-                    settlerId = mutableListOf(10L, 20L)
+                    settlerIds = listOf(10L, 20L)
                 )
 
                 val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
@@ -164,16 +158,13 @@ internal class ExpenseServiceTest {
             @DisplayName("예산보다 큰 지출 금액")
             fun insufficientBalance_throwsException() {
                 every { teamRepository.findTeamWithBudget(1L) } returns team
-
                 every { memberService.findMemberOrThrow(1L) } returns payer
 
-                val request = ExpenseRequest(
+                val request = ExpenseTestUtils.buildRequest(
                     description = "럭키비키즈 팀 배부르게 식사",
                     amount = BigDecimal("1000000.00"),
-                    category = ExpenseCategory.MEAL,
-                    payerId = 1L,
                     paymentMethod = PaymentMethod.CARD,
-                    settlerId = mutableListOf(10L)
+                    settlerIds = listOf(10L)
                 )
 
                 val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
@@ -186,13 +177,10 @@ internal class ExpenseServiceTest {
         @Test
         @DisplayName("지출 등록 성공 및 정산 생성 호출")
         fun success_and_createSettlements() {
-            val request = ExpenseRequest(
+            val request = ExpenseTestUtils.buildRequest(
                 description = "럭키비키즈 점심 식사",
                 amount = BigDecimal("50000.00"),
-                category = ExpenseCategory.MEAL,
-                payerId = 1L,
-                paymentMethod = PaymentMethod.CASH,
-                settlerId = mutableListOf(10L, 20L)
+                settlerIds = listOf(10L, 20L)
             )
 
             every { expenseRepository.save(any<Expense>()) } answers { firstArg() }
