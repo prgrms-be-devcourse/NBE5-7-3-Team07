@@ -21,9 +21,9 @@ import java.util.*
 
 class TeamMemberServiceTest : FunSpec({
     // 의존성 모킹
-    val teamRepository = mockk<TeamRepository>(relaxed = true)
-    val teamMemberRepository = mockk<TeamMemberRepository>(relaxed = true)
-    val memberRepository = mockk<MemberRepository>(relaxed = true)
+    val teamRepository = mockk<TeamRepository>()
+    val teamMemberRepository = mockk<TeamMemberRepository>()
+    val memberRepository = mockk<MemberRepository>()
 
     // 테스트 대상 서비스
     val teamMemberService = TeamMemberService(
@@ -150,6 +150,7 @@ class TeamMemberServiceTest : FunSpec({
         every { memberRepository.findById(leader.id!!) } returns Optional.of(leader)
         every { teamRepository.findById(teamId) } returns Optional.of(team)
         every { teamMemberRepository.findById(teamMemberId) } returns Optional.of(teamMember)
+        every { teamMemberRepository.deleteById(teamMemberId) } returns Unit
 
         // When
         teamMemberService.removeTeamMember(leaderDetails, teamId, teamMemberId)

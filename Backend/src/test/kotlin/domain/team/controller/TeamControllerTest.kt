@@ -43,8 +43,8 @@ import java.time.LocalDateTime
 class TeamControllerTest : FunSpec({
 
     // 의존성 모킹
-    val teamService = mockk<TeamService>(relaxed = true)
-    val teamMemberService = mockk<TeamMemberService>(relaxed = true)
+    val teamService = mockk<TeamService>()
+    val teamMemberService = mockk<TeamMemberService>()
     val objectMapper = ObjectMapper()
 
     // 컨트롤러 생성

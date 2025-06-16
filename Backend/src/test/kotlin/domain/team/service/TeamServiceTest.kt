@@ -38,13 +38,13 @@ import java.time.LocalDateTime
 import java.util.*
 
 class TeamServiceTest : FunSpec({
-    val teamRepository = mockk<TeamRepository>(relaxed = true)
-    val teamMemberRepository = mockk<TeamMemberRepository>(relaxed = true)
-    val memberRepository = mockk<MemberRepository>(relaxed = true)
-    val budgetRepository = mockk<BudgetRepository>(relaxed = true)
-    val expenseRepository = mockk<ExpenseRepository>(relaxed = true)
-    val passwordEncoder = mockk<BCryptPasswordEncoder>(relaxed = true)
-    val teamDashboardCacheService = mockk<TeamDashboardCacheService>(relaxed = true)
+    val teamRepository = mockk<TeamRepository>()
+    val teamMemberRepository = mockk<TeamMemberRepository>()
+    val memberRepository = mockk<MemberRepository>()
+    val budgetRepository = mockk<BudgetRepository>()
+    val expenseRepository = mockk<ExpenseRepository>()
+    val passwordEncoder = mockk<BCryptPasswordEncoder>()
+    val teamDashboardCacheService = mockk<TeamDashboardCacheService>()
 
     //테스트 대상 서비스
     val teamService = object : TeamService(
