@@ -29,9 +29,9 @@ class SettlementService(
     private val expenseRepository: ExpenseRepository,
 ) {
     fun createAllSettlements(request: ExpenseRequest, payer: Member, expense: Expense) {
-        val settlerIds = request.settlerId()
-        val nonPayerIds = getNonPayerIds(settlerIds, request.payerId())
-        val shareAmount = calculateShareAmount(request.amount(), settlerIds.size)
+        val settlerIds = request.settlerId
+        val nonPayerIds = getNonPayerIds(settlerIds, request.payerId)
+        val shareAmount = calculateShareAmount(request.amount, settlerIds.size)
         val settlerMap = getSettlerMap(nonPayerIds)
         val settlements = nonPayerIds.map { settlerId ->
             createSettlement(settlerId, payer, expense, shareAmount, settlerMap)
@@ -46,9 +46,9 @@ class SettlementService(
         amount.divide(BigDecimal.valueOf(totalMembers.toLong()), RoundingMode.HALF_UP)
 
     private fun getSettlerMap(nonPayerIds: List<Long>): Map<Long, Member> =
-        memberService.findMembersByIds(nonPayerIds).associateBy { it.id }
+        memberService.findMembersByIds(nonPayerIds).associateBy { it.id!! }
 
-    private fun createSettlement(
+    fun createSettlement(
         settlerId: Long,
         payer: Member,
         expense: Expense,
@@ -59,7 +59,7 @@ class SettlementService(
             settlerMap[settlerId] ?: throw CustomLogicException(ExceptionCode.NOT_TEAM_MEMBER)
         val createRequest = SettlementMapper.toSettlementCreateRequest(
             expense = expense,
-            payerId = payer.id,
+            payerId = payer.id!!,
             settlerId = settlerId,
             shareAmount = shareAmount
         )

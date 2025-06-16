@@ -32,7 +32,7 @@ class BudgetService(
         val team = teamRepository.findById(teamId)
             .orElseThrow { EntityNotFoundException("팀을 찾을 수 없습니다: " + teamId) }
 
-        val budget = budgetMapper.toEntity(team, loginMemberId, request)
+        val budget = budgetMapper.toEntity(team!!, loginMemberId, request)
 
         budget.setExchangeInfo(
             request.isExchanged,

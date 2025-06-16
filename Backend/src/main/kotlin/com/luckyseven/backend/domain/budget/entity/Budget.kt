@@ -44,7 +44,6 @@ class Budget(
         private val ROUNDING: RoundingMode = RoundingMode.HALF_UP
     }
 
-
     @Column(nullable = false)
     var totalAmount: BigDecimal = totalAmount
         set(value) {
@@ -102,9 +101,9 @@ class Budget(
         }
     }
 
-//    fun setForeignBalance(amount: BigDecimal?) {
-//        this.foreignBalance = amount
-//    }
+    fun setForeignBalance(amount: BigDecimal?) {
+        this.foreignBalance = amount
+    }
 
     fun setTeam(team: Team?): Budget {
         // 기존 연결 해제

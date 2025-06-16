@@ -13,16 +13,16 @@ object SettlementMapper {
         return SettlementResponse(
             id = settlement.id,
             amount = settlement.amount,
-            createdAt = settlement.createdAt,
-            updatedAt = settlement.updatedAt,
+            createdAt = settlement.createdAt!!,
+            updatedAt = settlement.updatedAt!!,
             isSettled = settlement.isSettled,
-            settlerId = settlement.settler.id,
+            settlerId = settlement.settler.id!!,
             settlerNickName = settlement.settler.nickname,
-            payerId = settlement.payer.id,
+            payerId = settlement.payer.id!!,
             payerNickName = settlement.payer.nickname,
-            expenseId = settlement.expense.id,
+            expenseId = settlement.expense.id!!,
             expenseDescription = settlement.expense.description,
-            teamId = settlement.expense.team.id
+            teamId = settlement.expense.team.id!!
         )
     }
 
@@ -47,7 +47,7 @@ object SettlementMapper {
         shareAmount: BigDecimal
     ): SettlementCreateRequest {
         return SettlementCreateRequest(
-            expenseId = expense.id,
+            expenseId = expense.id!!,
             payerId = payerId,
             settlerId = settlerId,
             amount = shareAmount

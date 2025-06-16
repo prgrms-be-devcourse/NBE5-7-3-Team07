@@ -1,167 +1,144 @@
-package com.luckyseven.backend.domain.budget.service;
+package com.luckyseven.backend.domain.budget.service
 
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genBudget;
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genBudgetAddReq;
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genBudgetCreateReq;
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genBudgetCreateResp;
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genBudgetReadResp;
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genBudgetUpdateReq;
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genBudgetUpdateResp;
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genBudgetUpdateRespAfterAdd;
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genMember;
-import static com.luckyseven.backend.domain.budget.util.TestUtils.genTeam;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.luckyseven.backend.domain.budget.dao.BudgetRepository
+import com.luckyseven.backend.domain.budget.dto.BudgetCreateResponse
+import com.luckyseven.backend.domain.budget.dto.BudgetReadResponse
+import com.luckyseven.backend.domain.budget.dto.BudgetUpdateResponse
+import com.luckyseven.backend.domain.budget.entity.Budget
+import com.luckyseven.backend.domain.budget.entity.CurrencyCode
+import com.luckyseven.backend.domain.budget.mapper.BudgetMapper
+import com.luckyseven.backend.domain.budget.util.TestUtils
+import com.luckyseven.backend.domain.budget.validator.BudgetValidator
+import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
+import com.luckyseven.backend.domain.team.entity.Team
+import com.luckyseven.backend.domain.team.repository.TeamRepository
+import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.InjectMocks
+import org.mockito.Mock
+import org.mockito.Mockito
+import org.mockito.junit.jupiter.MockitoExtension
+import java.util.*
 
-import com.luckyseven.backend.domain.budget.dao.BudgetRepository;
-import com.luckyseven.backend.domain.budget.dto.BudgetAddRequest;
-import com.luckyseven.backend.domain.budget.dto.BudgetCreateRequest;
-import com.luckyseven.backend.domain.budget.dto.BudgetCreateResponse;
-import com.luckyseven.backend.domain.budget.dto.BudgetReadResponse;
-import com.luckyseven.backend.domain.budget.dto.BudgetUpdateRequest;
-import com.luckyseven.backend.domain.budget.dto.BudgetUpdateResponse;
-import com.luckyseven.backend.domain.budget.entity.Budget;
-import com.luckyseven.backend.domain.budget.mapper.BudgetMapper;
-import com.luckyseven.backend.domain.budget.validator.BudgetValidator;
-import com.luckyseven.backend.domain.expense.repository.ExpenseRepository;
-import com.luckyseven.backend.domain.member.entity.Member;
-import com.luckyseven.backend.domain.team.entity.Team;
-import com.luckyseven.backend.domain.team.repository.TeamRepository;
-import java.util.Optional;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-@ExtendWith(MockitoExtension.class)
 class BudgetServiceTests {
 
-  @InjectMocks
-  private BudgetService budgetService;
+    val budgetRepository = mockk<BudgetRepository>()
+    val teamRepository = mockk<TeamRepository>()
+    val expenseRepository = mockk<ExpenseRepository>()
+    val budgetMapper = mockk<BudgetMapper>()
+    val budgetValidator = mockk<BudgetValidator>()
 
-  @Mock
-  private BudgetRepository budgetRepository;
+    val budgetService = BudgetService(
+        teamRepository,
+        expenseRepository,
+        budgetRepository,
+        budgetMapper,
+        budgetValidator
+    )
 
-  @Mock
-  private TeamRepository teamRepository;
 
-  @Mock
-  private ExpenseRepository expenseRepository;
+    @Test
+    fun `save는 budgetRepository에 예산을 저장하고 BudgetCreateResponse를 반환한다`() {
+        val req = TestUtils.genBudgetCreateReq()
+        val leader = TestUtils.genMember()
 
-  @Mock
-  private BudgetMapper budgetMapper;
+        val team = TestUtils.genTeam()
+        val budget = TestUtils.genBudget()
+        val expectedResp = TestUtils.genBudgetCreateResp()
 
-  @Mock
-  private BudgetValidator budgetValidator;
+        every { teamRepository.findById(team.id) } returns Optional.of(team)
+        every { budgetMapper.toEntity(team, leader.id!!, req) } returns budget
+        every { budgetMapper.toCreateResponse(budget) } returns expectedResp
 
-  @Test
-  @DisplayName("save는 budgetRepository에 예산을 저장하고 BudgetCreateResponse를 반환한다")
-  void save_should_return_BudgetCreateResponse() throws Exception {
+        val actualResp = budgetService.save(team.id!!, leader.id!!, req)
 
-    BudgetCreateRequest req = genBudgetCreateReq();
-    Member leader = genMember();
+        actualResp.balance shouldBe expectedResp.balance
+        actualResp.avgExchangeRate shouldBe expectedResp.avgExchangeRate
+        actualResp.foreignBalance shouldBe expectedResp.foreignBalance
 
-    Team team = genTeam();
-    Budget budget = genBudget();
-    BudgetCreateResponse expectedResp = genBudgetCreateResp();
+        verify(exactly = 1) { budgetValidator.validateBudgetNotExist(team.id!!) }
+        verify(exactly = 1) { budgetRepository.save(budget) }
 
-    when(teamRepository.findById(team.getId())).thenReturn(Optional.of(team));
-    when(budgetMapper.toEntity(team, leader.getId(), req)).thenReturn(budget);
-    when(budgetMapper.toCreateResponse(budget)).thenReturn(expectedResp);
+    }
 
-    BudgetCreateResponse actualResp = budgetService.save(team.getId(), leader.getId(), req);
+    @Test
+    fun `getByTeamId는 teamId로 예산을 조회하고 BudgetReadResponse를 반환한다`() {
+        val teamId = 1L
+        val budget = TestUtils.genBudget()
+        val expectedResp = TestUtils.genBudgetReadResp()
 
-    assertThat(actualResp.balance).isEqualTo(expectedResp.balance);
-    assertThat(actualResp.avgExchangeRate).isEqualTo(expectedResp.avgExchangeRate);
-    assertThat(actualResp.foreignBalance).isEqualTo(expectedResp.foreignBalance);
-    verify(budgetValidator, times(1)).validateBudgetNotExist(team.getId());
-    verify(budgetRepository, times(1)).save(budget);
-  }
+        every { budgetValidator.validateBudgetExist(teamId) } returns budget
+        every { budgetMapper.toReadResponse(budget) } returns expectedResp
 
-  @Test
-  @DisplayName("getByTeamId는 teamId로 예산을 조회하고 BudgetReadResponse를 반환한다")
-  void getByTeamId_should_return_BudgetReadResponse() throws Exception {
+        val actualResp = budgetService.getByTeamId(teamId)
 
-    Long teamId = 1L;
-    Budget budget = genBudget();
-    BudgetReadResponse expectedResp = genBudgetReadResp();
+        actualResp.totalAmount shouldBe expectedResp.totalAmount
+        actualResp.balance shouldBe expectedResp.balance
+        actualResp.foreignCurrency shouldBe expectedResp.foreignCurrency
 
-    when(budgetValidator.validateBudgetExist(teamId)).thenReturn(budget);
-    when(budgetMapper.toReadResponse(budget)).thenReturn(expectedResp);
+    }
 
-    BudgetReadResponse actualResp = budgetService.getByTeamId(teamId);
+    @Test
+    fun `updateByTeamId는 teamId로 예산을 수정하고 BudgetUpdateResponse를 반환한다`() {
+        val teamId = 1L
+        val loginMemberId = 1L
+        val req = TestUtils.genBudgetUpdateReq()
 
-    assertThat(actualResp.totalAmount).isEqualTo(expectedResp.totalAmount);
-    assertThat(actualResp.balance).isEqualTo(expectedResp.balance);
-    assertThat(actualResp.foreignCurrency).isEqualTo(expectedResp.foreignCurrency);
+        val budget = TestUtils.genBudget()
+        val expectedResp = TestUtils.genBudgetUpdateResp()
 
-  }
+        every { budgetValidator.validateBudgetExist(teamId) } returns budget
+        every { budgetMapper.toUpdateResponse(budget) } returns expectedResp
 
-  @Test
-  @DisplayName("updateByTeamId는 teamId로 예산을 수정하고 BudgetUpdateResponse를 반환한다")
-  void updateByTeamId_should_return_BudgetUpdateResponse() throws Exception {
+        val actualResp = budgetService.updateByTeamId(teamId, loginMemberId, req)
 
-    Long teamId = 1L;
-    Long loginMemberId = 1L;
-    BudgetUpdateRequest req = genBudgetUpdateReq();
+        // 예산이 수정되었는지 확인
+        budget.totalAmount shouldBe req.totalAmount
+        actualResp.balance shouldBe expectedResp.balance
+        actualResp.foreignCurrency shouldBe expectedResp.foreignCurrency
 
-    Budget budget = genBudget();
-    BudgetUpdateResponse expectedResp = genBudgetUpdateResp();
+    }
 
-    when(budgetValidator.validateBudgetExist(teamId)).thenReturn(budget);
-    when(budgetMapper.toUpdateResponse(budget)).thenReturn(expectedResp);
+    @Test
+    fun `addBudgetByTeamId는 teamId로 예산을 추가하고 BudgetUpdateResponse를 반환한다`() {
+        val teamId = 1L
+        val loginMemberId = 1L
+        val req = TestUtils.genBudgetAddReq()
 
-    BudgetUpdateResponse actualResp = budgetService.updateByTeamId(teamId, loginMemberId, req);
+        val budget = TestUtils.genBudget()
+        val expectedResp = TestUtils.genBudgetUpdateRespAfterAdd()
 
-    // 예산이 수정되었는지 확인
-    assertThat(budget.getTotalAmount()).isEqualTo(req.totalAmount);
-    assertThat(actualResp.balance).isEqualTo(expectedResp.balance);
-    assertThat(actualResp.foreignCurrency).isEqualTo(expectedResp.foreignCurrency);
+        every { budgetValidator.validateBudgetExist(teamId) } returns budget
+        every { budgetMapper.toUpdateResponse(budget) } returns expectedResp
 
-  }
+        val actualResp = budgetService.addBudgetByTeamId(teamId, loginMemberId, req)
 
-  @Test
-  @DisplayName("addBudgetByTeamId는 teamId로 예산을 추가하고 BudgetUpdateResponse를 반환한다")
-  void addBudgetByTeamId_should_return_BudgetUpdateResponse() throws Exception {
+        budget.totalAmount shouldBe expectedResp.balance
+        actualResp.balance shouldBe expectedResp.balance
+        actualResp.foreignCurrency shouldBe expectedResp.foreignCurrency
+    }
 
-    Long teamId = 1L;
-    Long loginMemberId = 1L;
-    BudgetAddRequest req = genBudgetAddReq();
+    @Test
+    fun `deleteByTeamId는 teamId로 예산을 삭제한다`() {
+        val teamId = 1L
+        val team = TestUtils.genTeam()
+        val budget = TestUtils.genBudget()
 
-    Budget budget = genBudget();
-    BudgetUpdateResponse expectedResp = genBudgetUpdateRespAfterAdd();
+        every { teamRepository.findById(teamId) } returns Optional.of(team)
+        every { budgetValidator.validateBudgetExist(teamId) } returns budget
+        every { expenseRepository.existsById(teamId) } returns false
 
-    when(budgetValidator.validateBudgetExist(teamId)).thenReturn(budget);
-    when(budgetMapper.toUpdateResponse(budget)).thenReturn(expectedResp);
+        budgetService.deleteByTeamId(teamId)
 
-    BudgetUpdateResponse actualResp = budgetService.addBudgetByTeamId(teamId, loginMemberId, req);
-
-    assertThat(budget.getTotalAmount()).isEqualTo(expectedResp.balance);
-    assertThat(actualResp.balance).isEqualTo(expectedResp.balance);
-    assertThat(actualResp.foreignCurrency).isEqualTo(expectedResp.foreignCurrency);
-  }
-
-  @Test
-  @DisplayName("deleteByTeamId는 teamId로 예산을 삭제한다")
-  void deleteByTeamId_should_delete_Budget_by_teamId() throws Exception {
-
-    Long teamId = 1L;
-    Team team = genTeam();
-    Budget budget = genBudget();
-
-    when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
-    when(budgetValidator.validateBudgetExist(teamId)).thenReturn(budget);
-    when(expenseRepository.existsByTeamId(teamId)).thenReturn(false);
-
-    budgetService.deleteByTeamId(teamId);
-
-    verify(expenseRepository, times(1)).existsByTeamId(teamId);
-    verify(teamRepository, times(1)).save(team);
-    verify(budgetRepository, times(1)).delete(budget);
-  }
-
+        verify(exactly = 1) { expenseRepository.existsByTeamId(teamId) }
+        verify(exactly = 1) { teamRepository.save(team) }
+        verify(exactly = 1) { budgetRepository.delete(budget) }
+    }
 }
