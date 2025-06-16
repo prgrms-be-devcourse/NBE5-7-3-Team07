@@ -31,6 +31,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import kotlin.random.Random
 
 @WebMvcTest(
     controllers = [SettlementController::class],
@@ -56,32 +57,46 @@ class SettlementControllerTest {
     @MockK
     private lateinit var jpaMetamodelMappingContext: JpaMetamodelMappingContext
 
+    fun genSettlement(
+        id: Long = Random.nextLong(),
+        amount: Long = Random.nextLong(100000000000000000L),
+        settlerId: Long = Random.nextLong(),
+        payerId: Long = Random.nextLong(),
+        expenseId: Long = Random.nextLong(),
+        isSettled: Boolean = Random.nextBoolean(),
+        settlerNickName: String = "settler",
+        payerNickName: String = "payer",
+        expenseDescription: String = "expense",
+        teamId: Long = Random.nextLong()
+    ): SettlementResponse {
+        return SettlementResponse(
+            id = id,
+            amount = BigDecimal.valueOf(amount),
+            settlerId = settlerId,
+            payerId = payerId,
+            expenseId = expenseId,
+            isSettled = isSettled,
+            settlerNickName = settlerNickName,
+            payerNickName = payerNickName,
+            expenseDescription = expenseDescription,
+            createdAt = LocalDateTime.now(),
+            updatedAt = LocalDateTime.now(),
+            teamId = teamId
+        )
+    }
+
     @Test
     @DisplayName("ID로 정산 조회 API 테스트")
     fun readSettlement_ShouldReturnSettlement() {
         // given
         val settlementId = 1L
-        val mockResponse = SettlementResponse(
-            id = settlementId,
-            settlerId = 10L,
-            payerId = 20L,
-            expenseId = 30L,
-            amount = BigDecimal.valueOf(1000),
-            isSettled = false,
-            settlerNickName = "settler",
-            payerNickName = "payer",
-            expenseDescription = "expense",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            teamId = 1L
-        )
+        val mockSettlement = genSettlement(id = settlementId)
 
-        every { settlementService.readSettlement(settlementId) } returns mockResponse
+        every { settlementService.readSettlement(settlementId) } returns mockSettlement
 
         // when
         val result = mockMvc.perform(
-            get("/api/settlements/{settlementId}", settlementId)
-                .contentType(MediaType.APPLICATION_JSON)
+            get("/api/settlements/${settlementId}")
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.id").value(settlementId))
@@ -96,35 +111,9 @@ class SettlementControllerTest {
     fun readSettlements_ShouldReturnSettlementPage() {
         // given
         val teamId = 1L
-        val settlement1 = SettlementResponse(
-            id = 1L,
-            amount = BigDecimal.valueOf(1000),
-            settlerId = 10L,
-            payerId = 20L,
-            expenseId = 30L,
-            isSettled = false,
-            settlerNickName = "settler",
-            payerNickName = "payer",
-            expenseDescription = "expense",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            teamId = 1L
-        )
+        val settlement1 = genSettlement(teamId = teamId)
 
-        val settlement2 = SettlementResponse(
-            id = 2L,
-            amount = BigDecimal.valueOf(2000),
-            settlerId = 11L,
-            payerId = 21L,
-            expenseId = 31L,
-            isSettled = true,
-            settlerNickName = "settler2",
-            payerNickName = "payer2",
-            expenseDescription = "expense2",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            teamId = 1L
-        )
+        val settlement2 = genSettlement(teamId = teamId)
 
         val settlements = listOf(settlement1, settlement2)
         val mockPage = PageImpl(settlements, PageRequest.of(0, 10), 2)
@@ -139,8 +128,7 @@ class SettlementControllerTest {
 
         // when
         val result = mockMvc.perform(
-            get("/api/teams/{teamId}/settlements", teamId)
-                .contentType(MediaType.APPLICATION_JSON)
+            get("/api/teams/${teamId}/settlements")
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.content[0].id").value(settlement1.id))
@@ -162,35 +150,9 @@ class SettlementControllerTest {
     fun readSettlements_WithSortParameter_ShouldReturnSortedPage() {
         // given
         val teamId = 1L
-        val settlement1 = SettlementResponse(
-            id = 1L,
-            amount = BigDecimal.valueOf(2000),
-            settlerId = 10L,
-            payerId = 20L,
-            expenseId = 30L,
-            isSettled = false,
-            settlerNickName = "settler",
-            payerNickName = "payer",
-            expenseDescription = "expense",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            teamId = 1L
-        )
+        val settlement1 = genSettlement(teamId = teamId, amount = 2000)
 
-        val settlement2 = SettlementResponse(
-            id = 2L,
-            amount = BigDecimal.valueOf(1000),
-            settlerId = 11L,
-            payerId = 21L,
-            expenseId = 31L,
-            isSettled = true,
-            settlerNickName = "settler2",
-            payerNickName = "payer2",
-            expenseDescription = "expense2",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            teamId = 1L
-        )
+        val settlement2 = genSettlement(teamId = teamId, amount = 1000)
 
         // 금액 내림차순 정렬 결과 (2000원이 먼저 나옴)
         val settlements = listOf(settlement1, settlement2)
@@ -206,9 +168,8 @@ class SettlementControllerTest {
 
         // when
         val result = mockMvc.perform(
-            get("/api/teams/{teamId}/settlements", teamId)
+            get("/api/teams/${teamId}/settlements")
                 .param("sort", "amount,desc")
-                .contentType(MediaType.APPLICATION_JSON)
         )
             .andExpect(status().isOk)
             .andReturn()
@@ -217,8 +178,8 @@ class SettlementControllerTest {
         val content = result.response.contentAsString
 
         // ID 순서로 확인 (정렬된 결과대로 나오는지)
-        val firstIdIndex = content.indexOf("\"id\":1")
-        val secondIdIndex = content.indexOf("\"id\":2")
+        val firstIdIndex = content.indexOf("\"id\":${settlement1.id}")
+        val secondIdIndex = content.indexOf("\"id\":${settlement2.id}")
         firstIdIndex shouldBeLessThan secondIdIndex
 
         verify(exactly = 1) {
@@ -244,20 +205,7 @@ class SettlementControllerTest {
             isSettled = false,
         )
 
-        val mockResponse = SettlementResponse(
-            id = settlementId,
-            amount = BigDecimal.valueOf(2000),
-            settlerId = 10L,
-            payerId = 20L,
-            expenseId = 30L,
-            isSettled = false,
-            settlerNickName = "settler",
-            payerNickName = "payer",
-            expenseDescription = "expense",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            teamId = 1L
-        )
+        val mockResponse = genSettlement(id = settlementId)
 
         every {
             settlementService.updateSettlement(
@@ -268,7 +216,7 @@ class SettlementControllerTest {
 
         // when
         val result = mockMvc.perform(
-            patch("/api/settlements/{settlementId}", settlementId)
+            patch("/api/settlements/${settlementId}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
         )
@@ -280,11 +228,11 @@ class SettlementControllerTest {
         val response = objectMapper.readValue(content, SettlementResponse::class.java)
 
         response.id shouldBe settlementId
-        response.amount shouldBe BigDecimal.valueOf(2000)
-        response.settlerId shouldBe 10L
-        response.payerId shouldBe 20L
-        response.expenseId shouldBe 30L
-        response.isSettled shouldBe false
+        response.amount shouldBe request.amount
+        response.settlerId shouldBe request.settlerId
+        response.payerId shouldBe request.payerId
+        response.expenseId shouldBe request.expenseId
+        response.isSettled shouldBe request.isSettled
 
         verify(exactly = 1) {
             settlementService.updateSettlement(
@@ -308,26 +256,13 @@ class SettlementControllerTest {
             isSettled = false,
         )
 
-        val mockResponse = SettlementResponse(
-            id = settlementId,
-            amount = BigDecimal.valueOf(1000),
-            settlerId = 10L,
-            payerId = 20L,
-            expenseId = 30L,
-            isSettled = true,
-            settlerNickName = "settler",
-            payerNickName = "payer",
-            expenseDescription = "expense",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            teamId = 1L
-        )
+        val mockResponse = genSettlement(id = settlementId)
 
         every { settlementService.settleSettlement(settlementId) } returns mockResponse
 
         // when
         val result = mockMvc.perform(
-            patch("/api/settlements/{settlementId}", settlementId)
+            patch("/api/settlements/${settlementId}")
                 .param("settledOnly", "true")  // settledOnly=true 파라미터 추가
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
