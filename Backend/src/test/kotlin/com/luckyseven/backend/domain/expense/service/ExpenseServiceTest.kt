@@ -24,10 +24,7 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.justRun
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -159,7 +156,7 @@ internal class ExpenseServiceTest {
                     settlerIds = listOf(10L, 20L)
                 )
 
-                val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+                val exception = assertThrows<CustomLogicException> {
                     expenseService.saveExpense(999L, request)
                 }
                 assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.TEAM_NOT_FOUND)
@@ -178,7 +175,7 @@ internal class ExpenseServiceTest {
                     settlerIds = listOf(10L)
                 )
 
-                val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+                val exception = assertThrows<CustomLogicException> {
                     expenseService.saveExpense(1L, request)
                 }
                 assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.INSUFFICIENT_BALANCE)
@@ -253,7 +250,7 @@ internal class ExpenseServiceTest {
         fun notFound_throwsException() {
             every { expenseRepository.findByIdWithPayer(999L) } returns null
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.getExpense(999L)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
@@ -334,7 +331,7 @@ internal class ExpenseServiceTest {
                 category = ExpenseCategory.MEAL
             )
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.updateExpense(999L, request)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
@@ -359,7 +356,7 @@ internal class ExpenseServiceTest {
             )
             every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.updateExpense(1L, request)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.INSUFFICIENT_BALANCE)
@@ -400,7 +397,7 @@ internal class ExpenseServiceTest {
         fun expenseNotFound_throwsException() {
             every { expenseRepository.findWithTeamAndBudgetById(999L) } returns null
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.deleteExpense(999L)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
@@ -443,7 +440,7 @@ internal class ExpenseServiceTest {
             val pageable = PageRequest.of(0, 5)
             every { teamRepository.existsById(999L) } returns false
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.getExpenses(999L, pageable)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.TEAM_NOT_FOUND)
