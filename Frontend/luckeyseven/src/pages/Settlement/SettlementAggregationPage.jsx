@@ -66,7 +66,9 @@ export function SettlementAggregationPage() {
       setIsProcessing(true)
       setSelectedSettlement({from: fromMemberId, to: toMemberId})
 
+      console.log('정산 처리 시작:', {teamId, fromMemberId, toMemberId})
       await settleBetweenMembers(teamId, fromMemberId, toMemberId)
+      console.log('정산 처리 성공')
 
       // 정산 완료 후 데이터 다시 가져오기
       const newAggregation = await getSettlementAggregation(teamId)
@@ -79,6 +81,7 @@ export function SettlementAggregationPage() {
       })
     } catch (error) {
       console.error("정산 처리 오류:", error)
+      console.error("오류 상세 정보:", error.response?.data || error.message)
       addToast({
         title: "오류 발생",
         description: "정산 처리 중 오류가 발생했습니다.",
@@ -131,13 +134,13 @@ export function SettlementAggregationPage() {
             </div>
         ) : (
             <div className="overflow-x-auto">
-              <table className="table w-full">
+              <table className="table w-full border-collapse">
                 <thead>
-                <tr>
-                  <th>지불자</th>
-                  <th>수령자</th>
-                  <th>금액</th>
-                  <th>작업</th>
+                <tr className="bg-base-200">
+                  <th className="border-b-2 border-base-300 p-3">지불자</th>
+                  <th className="border-b-2 border-base-300 p-3">수령자</th>
+                  <th className="border-b-2 border-base-300 p-3">금액</th>
+                  <th className="border-b-2 border-base-300 p-3">작업</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -148,16 +151,28 @@ export function SettlementAggregationPage() {
                   }
 
                   return (
-                      <tr key={`${agg.from}-${agg.to}-${index}`}>
-                        <td>{getUserNickname(agg.from)}</td>
-                        <td>{getUserNickname(agg.to)}</td>
-                        <td className="font-semibold">
+                      <tr key={`${agg.from}-${agg.to}-${index}`}
+                          className="border-b border-base-200 hover:bg-base-100">
+                        <td className="p-3">
+                          <span
+                              className="font-medium text-red-500">{getUserNickname(
+                              agg.from)}</span>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center">
+                            <span className="text-gray-500 mx-2">→</span>
+                            <span
+                                className="font-medium text-green-500">{getUserNickname(
+                                agg.to)}</span>
+                          </div>
+                        </td>
+                        <td className="p-3 font-semibold">
                           {new Intl.NumberFormat('ko-KR', {
                             style: 'currency',
                             currency: 'KRW'
                           }).format(agg.amount)}
                         </td>
-                        <td>
+                        <td className="p-3">
                           <button
                               className="btn btn-sm btn-primary"
                               onClick={() => handleSettlement(agg.from, agg.to)}
@@ -192,4 +207,3 @@ export function SettlementAggregationPage() {
       </div>
   )
 }
-

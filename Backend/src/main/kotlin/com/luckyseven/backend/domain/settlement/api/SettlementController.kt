@@ -1,10 +1,7 @@
 package com.luckyseven.backend.domain.settlement.api
 
 import com.luckyseven.backend.domain.settlement.app.SettlementService
-import com.luckyseven.backend.domain.settlement.dto.SettlementAggregationResponse
-import com.luckyseven.backend.domain.settlement.dto.SettlementResponse
-import com.luckyseven.backend.domain.settlement.dto.SettlementSearchCondition
-import com.luckyseven.backend.domain.settlement.dto.SettlementUpdateRequest
+import com.luckyseven.backend.domain.settlement.dto.*
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -82,9 +79,8 @@ class SettlementController(
     @PostMapping("/teams/{teamId}/settlements")
     fun settleBetweenMembers(
         @PathVariable @Positive teamId: Long,
-        @RequestBody @Positive from: Long,
-        @RequestBody @Positive to: Long
+        @Valid @RequestBody request: SettleBetweenMembersRequest
     ) {
-        settlementService.settleBetweenMembers(teamId, from, to)
+        settlementService.settleBetweenMembers(teamId, request.from, request.to)
     }
 }

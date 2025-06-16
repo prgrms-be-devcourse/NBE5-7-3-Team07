@@ -12,4 +12,4 @@ data class SettlementUpdateRequest(
     val payerId: Long? = null,
     val expenseId: Long? = null,
     val isSettled: Boolean? = null
-) 
+)
