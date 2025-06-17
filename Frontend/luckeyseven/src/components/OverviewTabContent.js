@@ -53,7 +53,7 @@ const OverviewTabContent = ({dashboardData}) => {
   return (
       <div>
         <div className={styles.summaryCardContainer}>
-          <SummaryCard title="총 예산" amount={totalAmount} currency="₩"/>
+          <SummaryCard title="총예산" amount={totalAmount} currency="₩"/>
           <SummaryCard title="총 지출" amount={totalExpense} currency="₩"
                        percentage={totalExpensePercentage.toFixed(1)}
                        of="of budget"/>

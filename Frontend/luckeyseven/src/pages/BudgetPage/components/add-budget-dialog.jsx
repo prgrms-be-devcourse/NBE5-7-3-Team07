@@ -79,7 +79,7 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
     }
 
     try {
-      const response = await axios.patch(`/api/teams/${teamId}/budgets`, {
+      const response = await axios.patch(`/api/teams/${teamId}/budgets/add`, {
         additionalBudget: Number(additionalBudget),
         isExchanged,
         exchangeRate: isExchanged ? Number(exchangeRate) : null,
@@ -125,7 +125,7 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
     return (
       <div className="modal-overlay" onClick={handleClose}>
         <div className="modal" onClick={(e) => e.stopPropagation()}>
-          <h2>예산 수정</h2>
+          <h2>예산 추가</h2>
           <div className="error-message">{error}</div>
           <div className="modal-buttons">
             <button onClick={handleClose}>닫기</button>
@@ -141,6 +141,10 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
         <h2>예산 추가</h2>
 
         {error && <div className="error-message">{error}</div>}
+
+        <div className="notice-box">
+          <span>예산이 부족하다면 예산을 추가해 보세요!</span>
+        </div>
         
         <label>추가 예산 금액</label>
         <input
@@ -152,8 +156,8 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
           step = "100"
         />
         
+        <label>환율 적용 여부</label>
         <div className="toggle-buttons">
-          <label>환율 적용 여부</label>
           <button 
             className={isExchanged ? 'active' : ''} 
             onClick={() => setIsExchanged(true)}
@@ -188,7 +192,7 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? '처리 중...' : '예산 추가'}
+            {isSubmitting ? '처리 중...' : '완료'}
           </button>
         </div>
       </div>

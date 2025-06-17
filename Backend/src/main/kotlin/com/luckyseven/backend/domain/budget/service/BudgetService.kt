@@ -97,31 +97,29 @@ class BudgetService(
         budgetRepository.delete(budget)
     }
 
-    companion object {
-        private fun addBudget(request: BudgetAddRequest, budget: Budget) {
-            // totalAmount, Balance += additionalBudget
-            budget.updateExchangeInfo(
-                request.isExchanged,
-                request.additionalBudget,
-                request.exchangeRate
-            )
-            val sum = budget.totalAmount.add(request.additionalBudget)
-            budget.totalAmount = sum
-        }
+    private fun addBudget(request: BudgetAddRequest, budget: Budget) {
+        // totalAmount, Balance += additionalBudget
+        budget.updateExchangeInfo(
+            request.isExchanged,
+            request.additionalBudget,
+            request.exchangeRate
+        )
+        val sum = budget.totalAmount.add(request.additionalBudget)
+        budget.totalAmount = sum
+    }
 
-        private fun updateTotalAmountOrExchangeRate(request: BudgetUpdateRequest, budget: Budget) {
-            // totalAmount, Balance update
-            budget.totalAmount = request.totalAmount
+    private fun updateTotalAmountOrExchangeRate(request: BudgetUpdateRequest, budget: Budget) {
+        // totalAmount, Balance update
+        budget.totalAmount = request.totalAmount
 
-            // avgExchange, foreignBalance update
-            budget.setExchangeInfo(
-                request.isExchanged,
-                budget.totalAmount,
-                request.exchangeRate
-            )
+        // avgExchange, foreignBalance update
+        budget.setExchangeInfo(
+            request.isExchanged,
+            budget.totalAmount,
+            request.exchangeRate
+        )
 
-            // totalAmount만 수정을 원할 경우, foreignBalance update
-            budget.setForeignBalance()
-        }
+        // totalAmount만 수정을 원할 경우, foreignBalance update
+        budget.setForeignBalance()
     }
 }
