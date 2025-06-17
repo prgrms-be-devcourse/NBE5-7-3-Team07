@@ -8,6 +8,7 @@ import com.luckyseven.backend.domain.team.cache.TeamDashboardCacheService
 import com.luckyseven.backend.domain.team.dto.*
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.entity.TeamMember
+import com.luckyseven.backend.domain.team.enums.TeamStatus
 import com.luckyseven.backend.domain.team.repository.TeamMemberRepository
 import com.luckyseven.backend.domain.team.repository.TeamRepository
 import com.luckyseven.backend.domain.team.util.TeamMapper
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 import java.util.*
 
 @Service
@@ -95,7 +97,7 @@ class TeamService(
         )
 
 
-        if (team.teamPassword != teamPassword){
+        if (team.teamPassword != teamPassword) {
             throw CustomLogicException(ExceptionCode.TEAM_PASSWORD_MISMATCH)
         }
 
@@ -103,7 +105,7 @@ class TeamService(
         if (isAlreadyJoined) {
             throw CustomLogicException(
                 ExceptionCode.ALREADY_TEAM_MEMBER,
-                "회원 ID [%d]는 이미 팀 ID [%d]에 가입되어 있습니다", member.id ?: -1L, team.id?: -1L
+                "회원 ID [%d]는 이미 팀 ID [%d]에 가입되어 있습니다", member.id ?: -1L, team.id ?: -1L
             )
         }
 
@@ -140,8 +142,9 @@ class TeamService(
                 )
             }
 
-        val teamMembers: List<TeamMember?> = teamMemberRepository.findByMemberId(memberId)
-        return teamMembers.mapNotNull { it?.team }
+        val teamMembers = teamMemberRepository.findByMemberId(memberId)
+        return teamMembers.mapNotNull { it.team }
+            .filter { it.status == TeamStatus.ACTIVE }
             .map { TeamMapper.toTeamListResponse(it) }
     }
 
@@ -212,6 +215,47 @@ class TeamService(
         teamDashboardCacheService.cacheTeamDashboard(teamId, dashboard)
 
         return dashboard
+    }
+
+    @Transactional
+    fun markTeamForDeletion(memberDetails: MemberDetails, teamId: Long) {
+        val team = teamRepository.findById(teamId)
+            .orElseThrow { CustomLogicException(ExceptionCode.TEAM_NOT_FOUND) }
+        if (team.leader.id != memberDetails.id) {
+            throw CustomLogicException(ExceptionCode.ROLE_FORBIDDEN)
+        }
+        team.status = TeamStatus.MARKED_FOR_DELETE
+        team.deletionScheduledAt = LocalDateTime.now().plusDays(14)
+        teamRepository.save(team)
+
+    }
+
+    @Transactional
+    fun deleteMarkedTeams() {
+        val teamsToDelete = teamRepository.findByStatusAndDeletionScheduledAt(
+            TeamStatus.MARKED_FOR_DELETE, LocalDateTime.now()
+        )
+        teamsToDelete.forEach { team ->
+            // 연관 데이터 먼저 삭제 (예산, 정산, 멤버)
+            val teamId = team.id ?: throw CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
+
+            val expenses = expenseRepository.findByTeamId(teamId, Pageable.unpaged()).content
+            if (expenses.isNotEmpty()) {
+                expenseRepository.deleteAll(expenses)
+            }
+
+            val teamMembers = teamMemberRepository.findByTeamId(teamId)
+            if (teamMembers.isNotEmpty()) {
+                teamMemberRepository.deleteAll(teamMembers)
+            }
+
+            val budget = budgetRepository.findByTeamId(teamId)
+            if (budget != null) {
+                budgetRepository.delete(budget)
+            }
+
+            teamRepository.delete(team)
+        }
     }
 }
 

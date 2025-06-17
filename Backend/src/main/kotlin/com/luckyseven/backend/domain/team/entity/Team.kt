@@ -3,9 +3,11 @@ package com.luckyseven.backend.domain.team.entity
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.luckyseven.backend.domain.budget.entity.Budget
 import com.luckyseven.backend.domain.member.entity.Member
+import com.luckyseven.backend.domain.team.enums.TeamStatus
 import com.luckyseven.backend.sharedkernel.entity.BaseEntity
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.*
+import java.time.LocalDateTime
 
 @Entity
 @Table(
@@ -35,6 +37,12 @@ class Team(
 
     @Column(nullable = false)
     var teamPassword: String,
+
+    @Enumerated(EnumType.STRING)
+    var status: TeamStatus = TeamStatus.ACTIVE,
+
+    var deletionScheduledAt: LocalDateTime? = null,
+
 
     /**
      * 팀장 ID
