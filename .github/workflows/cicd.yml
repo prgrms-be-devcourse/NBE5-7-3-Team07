@@ -171,19 +171,19 @@ jobs:
             
             # 기존 컨테이너 중지 및 제거
             echo "Stopping and removing existing containers..."
-            sudo docker compose -f docker-compose-server.yml down || true
+            docker compose -f docker-compose-server.yml down || true
             
             # 최신 이미지 풀
             echo "Pulling latest Docker images..."
-            sudo docker pull ${{ env.DOCKER_USERNAME }}/tem-backend:latest
-            sudo docker pull ${{ env.DOCKER_USERNAME }}/tem-frontend:latest
+            docker pull ${{ env.DOCKER_USERNAME }}/tem-backend:latest
+            docker pull ${{ env.DOCKER_USERNAME }}/tem-frontend:latest
             
             
             
             # Docker Compose로 애플리케이션 실행
             echo "Starting application with Docker Compose..."
-            sudo docker compose -f docker-compose-server.yml up -d
+            docker compose -f docker-compose-server.yml up -d
             
             # 사용하지 않는 이미지 정리
             echo "Cleaning up unused Docker images..."
-            sudo docker image prune -f
+            docker image prune -f
