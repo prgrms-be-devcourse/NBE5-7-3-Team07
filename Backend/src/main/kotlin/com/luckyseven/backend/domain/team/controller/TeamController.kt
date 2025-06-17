@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import lombok.`val`
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.ErrorResponse
@@ -213,7 +212,7 @@ class TeamController(
         return ResponseEntity.ok(dashboardResponse)
     }
 
-    @PostMapping("/{teamId}/    delete")
+    @PostMapping("/{teamId}/delete")
     fun markTeamForDeletion(
         @AuthenticationPrincipal memberDetails: MemberDetails,
         @PathVariable teamId: Long

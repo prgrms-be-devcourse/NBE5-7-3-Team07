@@ -16,6 +16,7 @@ import com.luckyseven.backend.domain.team.dto.TeamCreateRequest
 import com.luckyseven.backend.domain.team.dto.TeamDashboardResponse
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.entity.TeamMember
+import com.luckyseven.backend.domain.team.enums.TeamStatus
 import com.luckyseven.backend.domain.team.repository.TeamMemberRepository
 import com.luckyseven.backend.domain.team.repository.TeamRepository
 import com.luckyseven.backend.domain.team.service.TeamService
@@ -438,4 +439,75 @@ class TeamServiceTest : FunSpec({
 
         exception.exceptionCode shouldBe ExceptionCode.TEAM_NOT_FOUND
     }
+
+    test("deleteMarkedTeams는 삭제 예정으로 표시된 팀과 관련 데이터를 모두 삭제해야 한다.") {
+        // Given
+        val now = LocalDateTime.now()
+        val teamToDelete = Team(
+            id = 3L,
+            name = "team_to_delete",
+            teamCode = "DELETE1",
+            teamPassword = "password123",
+            leader = creator,
+            status = TeamStatus.MARKED_FOR_DELETE,
+            deletionScheduledAt = now.minusDays(1) // Past date to trigger deletion
+        )
+
+        // 연관 데이터 생성
+        val teamMember1 = TeamMember(
+            id = 10L,
+            member = creator,
+            team = teamToDelete
+        )
+
+        val budget = Budget(
+            id = 3L,
+            team = teamToDelete,
+            balance = BigDecimal("1000.00"),
+            foreignCurrency = CurrencyCode.USD,
+            foreignBalance = BigDecimal("100.00"),
+            totalAmount = BigDecimal("1100.00"),
+            avgExchangeRate = BigDecimal("10.00"),
+            setBy = creator.id ?: 1L
+        )
+
+        val expense = Expense(
+            id = 5L,
+            team = teamToDelete,
+            payer = creator,
+            amount = BigDecimal("100.00"),
+            description = "Test expense",
+            category = ExpenseCategory.MEAL,
+            paymentMethod = PaymentMethod.CASH
+        )
+        every { teamRepository.findByStatusAndDeletionScheduledAt(TeamStatus.MARKED_FOR_DELETE, any()) } returns listOf(teamToDelete)
+
+        val pageableSlot = slot<Pageable>()
+        every { expenseRepository.findByTeamId(eq(teamToDelete.id!!), capture(pageableSlot)) } returns
+                PageImpl(listOf(expense))
+
+        every { teamMemberRepository.findByTeamId(teamToDelete.id!!) } returns listOf(teamMember1)
+        every { budgetRepository.findByTeamId(teamToDelete.id!!) } returns budget
+
+        // delete 목업
+        every { expenseRepository.deleteAll(any<List<Expense>>()) } returns Unit
+        every { teamMemberRepository.deleteAll(any<List<TeamMember>>()) } returns Unit
+        every { budgetRepository.delete(any()) } returns Unit
+        every { teamRepository.delete(any()) } returns Unit
+
+        // When
+        teamService.deleteMarkedTeams()
+
+        // Then
+        verify { teamRepository.findByStatusAndDeletionScheduledAt(TeamStatus.MARKED_FOR_DELETE, any()) }
+        verify { expenseRepository.findByTeamId(teamToDelete.id!!, any()) }
+        verify { teamMemberRepository.findByTeamId(teamToDelete.id!!) }
+        verify { budgetRepository.findByTeamId(teamToDelete.id!!) }
+
+        verify { expenseRepository.deleteAll(match { it.contains(expense) }) }
+        verify { teamMemberRepository.deleteAll(match { it.contains(teamMember1) }) }
+        verify { budgetRepository.delete(budget) }
+        verify { teamRepository.delete(teamToDelete) }
+    }
+
 })

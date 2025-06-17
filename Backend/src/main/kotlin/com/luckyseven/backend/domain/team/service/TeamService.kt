@@ -227,7 +227,6 @@ class TeamService(
         team.status = TeamStatus.MARKED_FOR_DELETE
         team.deletionScheduledAt = LocalDateTime.now().plusDays(14)
         teamRepository.save(team)
-
     }
 
     @Transactional
