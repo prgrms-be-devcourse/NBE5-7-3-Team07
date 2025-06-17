@@ -13,6 +13,8 @@ import com.luckyseven.backend.domain.settlement.util.SettlementMapper
 import com.luckyseven.backend.domain.team.service.TeamMemberService
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
+import jakarta.persistence.EntityManager
+import jakarta.persistence.PersistenceContext
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
@@ -27,6 +29,8 @@ class SettlementService(
     private val memberService: MemberService,
     private val teamMemberService: TeamMemberService,
     private val expenseRepository: ExpenseRepository,
+    @PersistenceContext
+    private val em: EntityManager
 ) {
     fun createAllSettlements(request: ExpenseRequest, payer: Member, expense: Expense) {
         val settlerIds = request.settlerId
@@ -125,15 +129,22 @@ class SettlementService(
 
     @Transactional(readOnly = true)
     fun getSettlementsAggregation(teamId: Long): SettlementAggregationResponse {
-        // TODO:집계 쿼리로 가져오기 or Stream 사용하기
-        val settlements = settlementRepository
-            .findAllByTeamId(teamId).filter { it.isSettled == false }
         val memberIds = teamMemberService.getTeamMemberByTeamId(teamId).map { it -> it.id }
         val amountSum = Array(memberIds.size) { Array(memberIds.size) { BigDecimal.ZERO } }
-        for (s in settlements) {
-            val settlerIndex = memberIds.indexOf(s.settler.id)
-            val payerIndex = memberIds.indexOf(s.payer.id)
-            amountSum[settlerIndex][payerIndex] += s.amount
+        val memberIndexMap = memberIds.withIndex().associate { it.value to it.index }
+        settlementRepository.findAllByTeamId(teamId).use { stream ->
+            var count = 0;
+            stream.filter { it.settler.id != null && it.payer.id != null }
+                .forEach {
+                    val settlerIndex = memberIndexMap[it.settler.id]!!
+                    val payerIndex = memberIndexMap[it.payer.id]!!
+                    amountSum[settlerIndex][payerIndex] += it.amount
+
+                    if (++count >= 100) {
+                        em.clear()
+                        count = 0;
+                    }
+                }
         }
         val sumList = mutableListOf<SettlementMemberAggregationResponse>()
         for (i in 0 until memberIds.size) {
@@ -149,7 +160,7 @@ class SettlementService(
                 } else if (amountSum[i][j] > amountSum[j][i]) {
                     sumList.add(
                         SettlementMemberAggregationResponse(
-                            from = memberIds[1]!!,
+                            from = memberIds[i]!!,
                             to = memberIds[j]!!,
                             amount = amountSum[i][j] - amountSum[j][i]
                         )
@@ -162,11 +173,9 @@ class SettlementService(
 
     @Transactional
     fun settleBetweenMembers(teamId: Long, from: Long, to: Long) {
-        //TODO: 쿼리튜닝으로 개선하기
-        val settlements = settlementRepository.findAllByTeamId(teamId).filter { it ->
-            (it.settler.id == from && it.payer.id == to) || (it.settler.id == to && it.payer.id == from)
-        }.forEach { it.isSettled = true }
-
+        settlementRepository.findAssociatedNotSettled(teamId, from, to).use { stream ->
+            stream.forEach { it.isSettled = true }
+        }
     }
 }
 

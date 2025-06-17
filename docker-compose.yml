@@ -1,0 +1,14 @@
+# docker-compose.build.yml (빌드 전용 - 선택사항)
+
+services:
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/tem-backend:${GITHUB_SHA:-latest}
+
+  frontend:
+    build:
+      context: ./Frontend/luckeyseven
+      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/tem-frontend:${GITHUB_SHA:-latest}

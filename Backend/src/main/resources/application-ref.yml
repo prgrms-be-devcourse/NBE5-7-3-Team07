@@ -16,7 +16,7 @@ spring:
 
   datasource:
     driver-class-name: org.h2.Driver
-    url:
+    url: 경로?rewriteBatchedStatements=true # batch 설정
     username:
     password:
 
@@ -25,6 +25,8 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+        jdbc:
+          batch_size: 10
     hibernate:
       ddl-auto: create
 
