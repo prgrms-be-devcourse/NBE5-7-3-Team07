@@ -57,12 +57,12 @@ export function SettlementList({
                           className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div>
                           <p className="text-sm text-muted">결제자</p>
-                          <p className="font-medium">{settlement.payerNickname
+                          <p className="font-medium">{settlement.payerNickName
                               || "알 수 없음"}</p>
                         </div>
                         <div>
                           <p className="text-sm text-muted">정산자</p>
-                          <p className="font-medium">{settlement.settlerNickname
+                          <p className="font-medium">{settlement.settlerNickName
                               || "알 수 없음"}</p>
                         </div>
                         <div>

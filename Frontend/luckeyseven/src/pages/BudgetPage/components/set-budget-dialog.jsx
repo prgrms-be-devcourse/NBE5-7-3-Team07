@@ -46,7 +46,6 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
       // 기존 예산 확인을 위한 GET 요청
       try {
         const checkResponse = await axios.get(`/api/teams/${teamId}/budgets`);
-
         // 이미 예산이 있는 경우, 409 에러를 설정하고 종료
         if (checkResponse.status === 200) {
           setError('이미 설정된 예산이 있습니다. 예산 수정을 이용해 주세요.');
@@ -98,81 +97,86 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
   };
 
   return (
-      <div className="modal-overlay" onClick={handleClose}>
-        <div className="modal" onClick={(e) => e.stopPropagation()}>
-          <h2>예산 설정</h2>
+    <div className="modal-overlay" onClick={handleClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h2>예산 설정</h2>
 
-          {error && <div className="error-message">{error}</div>}
+        {error && <div className="error-message">{error}</div>}
+                
+        <div className="notice-box">
+          <span>팀의 예산을 설정해 보세요! 나중에 환율을 업데이트하거나 예산을 추가할 수 있습니다.</span>
+        </div>
+        
+        <label>예산 금액</label>
+        <input
+          type="number"
+          value={totalAmount}
+          onChange={(e) => setTotalAmount(e.target.value)}
+          placeholder="예산 금액"
+          min="0"
+          step="100"
+        />
+        
+        <label>통화 코드</label>
+        <select value={foreignCurrency} onChange={(e) => setForeignCurrency(e.target.value)}>
+          <option value="AUD">AUD - 호주 달러</option>
+          <option value="BRL">BRL - 브라질 헤알</option>
+          <option value="CAD">CAD - 캐나다 달러</option>
+          <option value="CHF">CHF - 스위스 프랑</option>
+          <option value="CNY">CNY - 중국 위안</option>
+          <option value="EUR">EUR - 유로</option>
+          <option value="GBP">GBP - 영국 파운드</option>
+          <option value="HKD">HKD - 홍콩 달러</option>
+          <option value="INR">INR - 인도 루피</option>
+          <option value="JPY">JPY - 일본 엔화</option>
+          <option value="KRW">KRW - 대한민국 원</option>
+          <option value="RUB">RUB - 러시아 루블</option>
+          <option value="SGD">SGD - 싱가포르 달러</option>
+          <option value="THB">THB - 태국 바트</option>
+          <option value="USD">USD - 미국 달러</option>
+          <option value="VND">VND - 베트남 동</option>
+        </select>
+        
+        <label>환율 적용 여부</label>
+        <div className="toggle-buttons">
+          <button 
+            className={isExchanged ? 'active' : ''} 
+            onClick={() => setIsExchanged(true)}
+          >
+            예
+          </button>
+          <button 
+            className={!isExchanged ? 'active' : ''} 
+            onClick={() => setIsExchanged(false)}
+          >
+            아니오
+          </button>
+        </div>
+        
+        {isExchanged && (
+          <>
+            <label>환율</label>
+            <input
 
-          <label>예산 금액</label>
-          <input
               type="number"
               value={totalAmount}
               onChange={(e) => setTotalAmount(e.target.value)}
               placeholder="예산 금액"
               min="0"
-              step="100"
-          />
+            />
+          </>
+        )}
+        
+        <div className="modal-buttons">
+          <button onClick={handleClose}>취소</button>
+          <button 
+            className="primary" 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? '처리 중...' : '완료'}
+          </button>
 
-          <label>통화 코드</label>
-          <select value={foreignCurrency} onChange={(e) => setForeignCurrency(e.target.value)}>
-            <option value="AUD">AUD - 호주 달러</option>
-            <option value="BRL">BRL - 브라질 헤알</option>
-            <option value="CAD">CAD - 캐나다 달러</option>
-            <option value="CHF">CHF - 스위스 프랑</option>
-            <option value="CNY">CNY - 중국 위안</option>
-            <option value="EUR">EUR - 유로</option>
-            <option value="GBP">GBP - 영국 파운드</option>
-            <option value="HKD">HKD - 홍콩 달러</option>
-            <option value="INR">INR - 인도 루피</option>
-            <option value="JPY">JPY - 일본 엔화</option>
-            <option value="KRW">KRW - 대한민국 원</option>
-            <option value="RUB">RUB - 러시아 루블</option>
-            <option value="SGD">SGD - 싱가포르 달러</option>
-            <option value="THB">THB - 태국 바트</option>
-            <option value="USD">USD - 미국 달러</option>
-            <option value="VND">VND - 베트남 동</option>
-          </select>
-
-          <div className="toggle-buttons">
-            <label>환율 적용 여부</label>
-            <button
-                className={isExchanged ? 'active' : ''}
-                onClick={() => setIsExchanged(true)}
-            >
-              예
-            </button>
-            <button
-                className={!isExchanged ? 'active' : ''}
-                onClick={() => setIsExchanged(false)}
-            >
-              아니오
-            </button>
-          </div>
-
-          {isExchanged && (
-              <>
-                <label>환율</label>
-                <input
-                    type="number"
-                    value={exchangeRate}
-                    onChange={(e) => setExchangeRate(e.target.value)}
-                    placeholder="환율"
-                    min="0"
-                />
-              </>
-          )}
-
-          <div className="modal-buttons">
-            <button onClick={handleClose}>취소</button>
-            <button
-                className="primary"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-            >
-              {isSubmitting ? '처리 중...' : '예산 설정'}
-            </button>
-          </div>
         </div>
       </div>
   );

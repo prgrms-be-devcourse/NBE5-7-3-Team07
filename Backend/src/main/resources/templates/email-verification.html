@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이메일 인증</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .email-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+      padding: 40px 30px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    }
+
+
+
+    .header h1 {
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header p {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .content {
+      padding: 40px 30px;
+    }
+
+    .greeting {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .message {
+      font-size: 16px;
+      color: #475569;
+      margin-bottom: 30px;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .cta-section {
+      text-align: center;
+      margin: 40px 0;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+      color: white !important;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+      margin: 30px 0;
+    }
+
+    .fallback {
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+      border-left: 4px solid #2563eb;
+    }
+
+    .fallback-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 10px;
+    }
+
+    .fallback-text {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.6;
+      word-break: break-all;
+    }
+
+    .fallback-link {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .fallback-link:hover {
+      text-decoration: underline;
+      color: #1d4ed8;
+    }
+
+    .footer {
+      background: #f8fafc;
+      padding: 20px 30px;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .footer-text {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .security-badge {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(37, 99, 235, 0.1);
+      color: #2563eb;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 15px;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    .security-badge::before {
+      content: '🔒';
+      margin-right: 6px;
+    }
+
+    .accent-dot {
+      width: 8px;
+      height: 8px;
+      background: #2563eb;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 8px;
+      opacity: 0.6;
+    }
+
+    .highlight-text {
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    @media (max-width: 640px) {
+      .email-container {
+        margin: 20px auto;
+        border-radius: 12px;
+      }
+
+      .header {
+        padding: 30px 20px;
+      }
+
+      .content {
+        padding: 30px 20px;
+      }
+
+      .greeting {
+        font-size: 20px;
+      }
+
+      .btn {
+        padding: 14px 28px;
+        font-size: 15px;
+      }
+    }
+
+    /* 추가 블루 액센트 요소들 */
+    .content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
+      border-radius: 2px;
+    }
+
+    .content {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+<div class="email-container">
+  <div class="header">
+
+    <h1>이메일 인증</h1>
+    <p>계정 보안을 위한 인증 단계입니다</p>
+  </div>
+
+  <div class="content">
+    <h2 class="greeting" th:text="'안녕하세요, ' + ${email} + '님!'">안녕하세요!</h2>
+
+    <p class="message">
+      계정 생성을 완료하기 위해 <span class="highlight-text">이메일 주소 인증</span>이 필요합니다.<br>
+      아래 버튼을 클릭하여 인증을 완료해주세요.
+    </p>
+
+    <div class="cta-section">
+      <a th:href="${link}" class="btn">이메일 인증하기</a>
+    </div>
+
+    <div class="security-badge">
+      안전한 인증 링크
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="fallback">
+      <div class="fallback-title">버튼이 작동하지 않나요?</div>
+      <div class="fallback-text">
+        아래 링크를 복사하여 브라우저 주소창에 붙여넣어 주세요:<br><br>
+        <a th:href="${link}" th:text="${link}" class="fallback-link">인증 URL</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-text">
+      이 이메일은 자동으로 발송되었습니다.
+      <span class="accent-dot"></span>
+      인증 링크는 24시간 후 만료됩니다.
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -16,7 +16,7 @@ spring:
 
   datasource:
     driver-class-name: org.h2.Driver
-    url:
+    url: 경로?rewriteBatchedStatements=true # batch 설정
     username:
     password:
 
@@ -25,13 +25,30 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+        jdbc:
+          batch_size: 10
     hibernate:
       ddl-auto: create
 
 logging:
   level:
     org.springframework.security: TRACE
-
+  # prod 환경용 메일 설정
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: twinkey0201@gmail.com
+    password: hlladtyptniichnm # Gmail 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  jwt:
+    key:
+      AccessKey: "213948109238490182309481asdkasdfkajsdlf19023840921"
+      RefreshKey: "213948109238490182309asdfasdfasdf4819023840921"
 ---
 # prod profile
 spring:
@@ -48,3 +65,20 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+  # prod 환경용 메일 설정
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: twinkey0201@gmail.com
+    password: hlladtyptniichnm # Gmail 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  jwt:
+    key:
+      AccessKey: "213948109238490182309481asdkasdfkajsdlf19023840921"
+      RefreshKey: "213948109238490182309asdfasdfasdf4819023840921"

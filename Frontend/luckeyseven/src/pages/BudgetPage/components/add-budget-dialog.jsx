@@ -16,6 +16,7 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
     const fetchBudget = async () => {
       try {
         // budgetId가 없을 경우, team의 예산을 fetch하려 시도
+
         const url = budgetId
             ? `/api/teams/${teamId}/budgets/${budgetId}`
             : `/api/teams/${teamId}/budgets`;
@@ -123,74 +124,77 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
   // 예산 정보를 불러올 수 없는 경우 에러 메시지 표시
   if (error && !currentBudgetData) {
     return (
-        <div className="modal-overlay" onClick={handleClose}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>예산 수정</h2>
-            <div className="error-message">{error}</div>
-            <div className="modal-buttons">
-              <button onClick={handleClose}>닫기</button>
-            </div>
+      <div className="modal-overlay" onClick={handleClose}>
+        <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <h2>예산 추가</h2>
+          <div className="error-message">{error}</div>
+          <div className="modal-buttons">
+            <button onClick={handleClose}>닫기</button>
+
           </div>
         </div>
     );
   }
 
   return (
-      <div className="modal-overlay" onClick={handleClose}>
-        <div className="modal" onClick={(e) => e.stopPropagation()}>
-          <h2>예산 추가</h2>
+    <div className="modal-overlay" onClick={handleClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h2>예산 추가</h2>
 
-          {error && <div className="error-message">{error}</div>}
+        {error && <div className="error-message">{error}</div>}
 
-          <label>추가 예산 금액</label>
-          <input
+        <div className="notice-box">
+          <span>예산이 부족하다면 예산을 추가해 보세요!</span>
+        </div>
+        
+        <label>추가 예산 금액</label>
+        <input
+          type="number"
+          value={additionalBudget}
+          onChange={(e) => setAdditionalBudget(e.target.value)}
+          placeholder="추가할 예산 금액"
+          min = "0"
+          step = "100"
+        />
+        
+        <label>환율 적용 여부</label>
+        <div className="toggle-buttons">
+          <button 
+            className={isExchanged ? 'active' : ''} 
+            onClick={() => setIsExchanged(true)}
+          >
+            예
+          </button>
+          <button 
+            className={!isExchanged ? 'active' : ''} 
+            onClick={() => setIsExchanged(false)}
+          >
+            아니오
+          </button>
+        </div>
+        
+        {isExchanged && (
+          <>
+            <label>환율</label>
+            <input
               type="number"
               value={additionalBudget}
               onChange={(e) => setAdditionalBudget(e.target.value)}
               placeholder="추가할 예산 금액"
               min = "0"
-              step = "100"
-          />
-
-          <div className="toggle-buttons">
-            <label>환율 적용 여부</label>
-            <button
-                className={isExchanged ? 'active' : ''}
-                onClick={() => setIsExchanged(true)}
-            >
-              예
-            </button>
-            <button
-                className={!isExchanged ? 'active' : ''}
-                onClick={() => setIsExchanged(false)}
-            >
-              아니오
-            </button>
-          </div>
-
-          {isExchanged && (
-              <>
-                <label>환율</label>
-                <input
-                    type="number"
-                    value={exchangeRate}
-                    onChange={(e) => setExchangeRate(e.target.value)}
-                    placeholder="환율"
-                    min = "0"
-                />
-              </>
-          )}
-
-          <div className="modal-buttons">
-            <button onClick={handleClose}>취소</button>
-            <button
-                className="primary"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-            >
-              {isSubmitting ? '처리 중...' : '예산 추가'}
-            </button>
-          </div>
+            />
+          </>
+        )}
+        
+        <div className="modal-buttons">
+          <button onClick={handleClose}>취소</button>
+          <button 
+            className="primary" 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? '처리 중...' : '완료'}
+          </button>
         </div>
       </div>
   );

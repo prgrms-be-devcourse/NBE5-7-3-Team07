@@ -1,0 +1,192 @@
+# .github/workflows/deploy.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+  DB_URL: ${{ secrets.DB_URL }}
+  DB_USERNAME: ${{ secrets.DB_USERNAME }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+  MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+  ACCESS_KEY: ${{ secrets.ACCESS_KEY}}
+  REFRESH_KEY: ${{ secrets.REFRESH_KEY }}
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # 백엔드 테스트
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./Backend/gradlew
+
+      - name: Run Backend tests
+        run: |
+          cd Backend
+          ./gradlew test
+
+      # 프론트엔드 테스트
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Frontend/luckeyseven/package-lock.json
+
+      - name: Install Frontend dependencies
+        run: |
+          cd Frontend/luckeyseven
+          npm ci
+
+      - name: Run frontend tests
+        run: |
+          cd Frontend/luckeyseven
+          npm test -- --coverage --watchAll=false --passWithNoTests
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # 백엔드 빌드
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./Backend/gradlew
+
+      - name: Build Backend with Gradle
+        run: |
+          cd Backend
+          ./gradlew build -x test
+        env:
+          SPRING_EMAIL_USERNAME: ${{ env.MAIL_USERNAME }}
+          SPRING_EMAIL_PASSWORD: ${{ env.MAIL_PASSWORD }}
+
+      # 프론트엔드 빌드
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Frontend/luckeyseven/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd Frontend/luckeyseven
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd Frontend/luckeyseven
+          npm run build
+
+      # Docker Hub 로그인
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      # 환경 변수 설정
+      - name: Set environment variables
+        run: |
+          echo "DOCKER_USERNAME=${{ env.DOCKER_USERNAME }}" >> $GITHUB_ENV
+          echo "GITHUB_SHA=${{ github.sha }}" >> $GITHUB_ENV
+
+      # Docker Compose로 이미지 빌드
+      - name: Build Docker images with docker-compose
+        run: |
+          export DOCKER_USERNAME=${{ env.DOCKER_USERNAME }}
+          export GITHUB_SHA=${{ github.sha }}
+          export COMPOSE_BAKE=true
+          docker compose build
+
+      # 이미지에 latest 태그 추가 및 Docker Hub에 푸시
+      - name: Tag and push images to Docker Hub
+        run: |
+          docker compose push
+          
+          docker tag ${{ env.DOCKER_USERNAME }}/tem-backend:${{ github.sha }} ${{ env.DOCKER_USERNAME }}/tem-backend:latest
+          docker tag ${{ env.DOCKER_USERNAME }}/tem-frontend:${{ github.sha }} ${{ env.DOCKER_USERNAME }}/tem-frontend:latest
+          
+          docker push ${{ env.DOCKER_USERNAME }}/tem-backend:latest
+          docker push ${{ env.DOCKER_USERNAME }}/tem-frontend:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Copy docker-compose-server.yml to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USERNAME }}
+          key: ${{ env.EC2_SSH_KEY }}
+          source: "docker-compose-server.yml"
+          target: "/home/ubuntu/"
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USERNAME }}
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            echo "Deploying to EC2 instance..."
+            echo "make environment variables"
+            export DOCKER_USERNAME="${{ env.DOCKER_USERNAME }}"
+            export DB_URL="${{ env.DB_URL }}"
+            export DB_USERNAME="${{ env.DB_USERNAME }}"
+            export DB_PASSWORD="${{ env.DB_PASSWORD }}"
+            export MAIL_USERNAME="${{ env.MAIL_USERNAME}}"
+            export MAIL_PASSWORD="${{ env.MAIL_PASSWORD}}"
+            export ACCESS_KEY="${{ env.ACCESS_KEY }}"
+            export REFRESH_KEY="${{ env.REFRESH_KEY }}"
+            
+            # 기존 컨테이너 중지 및 제거
+            echo "Stopping and removing existing containers..."
+            docker compose -f docker-compose-server.yml down || true
+            
+            # 최신 이미지 풀
+            echo "Pulling latest Docker images..."
+            docker pull ${{ env.DOCKER_USERNAME }}/tem-backend:latest
+            docker pull ${{ env.DOCKER_USERNAME }}/tem-frontend:latest
+            
+            
+            
+            # Docker Compose로 애플리케이션 실행
+            echo "Starting application with Docker Compose..."
+            docker compose -f docker-compose-server.yml up -d
+            
+            # 사용하지 않는 이미지 정리
+            echo "Cleaning up unused Docker images..."
+            docker image prune -f
