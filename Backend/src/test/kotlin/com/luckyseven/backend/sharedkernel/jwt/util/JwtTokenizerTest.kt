@@ -1,3 +1,6 @@
+package com.luckyseven.backend.sharedkernel.jwt.util.jwtTokenizerTest
+
+
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.service.CustomMemberDetailsService
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails
