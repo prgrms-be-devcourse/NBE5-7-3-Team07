@@ -160,7 +160,7 @@ class SettlementService(
                 } else if (amountSum[i][j] > amountSum[j][i]) {
                     sumList.add(
                         SettlementMemberAggregationResponse(
-                            from = memberIds[1]!!,
+                            from = memberIds[i]!!,
                             to = memberIds[j]!!,
                             amount = amountSum[i][j] - amountSum[j][i]
                         )
