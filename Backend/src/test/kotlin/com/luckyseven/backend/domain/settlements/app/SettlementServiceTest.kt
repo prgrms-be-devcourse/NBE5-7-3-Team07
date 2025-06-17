@@ -361,8 +361,6 @@ class SettlementServiceTest {
                 toMemberId
             )
         } returns settlementStream
-        every { em.flush() } returns Unit
-
         // when
         settlementService.settleBetweenMembers(teamId, fromMemberId, toMemberId)
 
@@ -370,6 +368,5 @@ class SettlementServiceTest {
         // 모든 정산이 완료 상태로 변경되었는지 확인
         settlement1.isSettled shouldBe true
         settlement2.isSettled shouldBe true
-        verify { em.flush() }
     }
 }
