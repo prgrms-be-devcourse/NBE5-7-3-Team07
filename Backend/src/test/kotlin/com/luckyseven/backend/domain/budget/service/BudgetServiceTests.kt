@@ -39,7 +39,7 @@ class BudgetServiceTests {
         val budget = TestUtils.genBudget()
         val expectedResp = TestUtils.genBudgetCreateResp()
 
-        every { teamRepository.findById(team.id) } returns Optional.of(team)
+        every { teamRepository.findById(team.id ?: 1L) } returns Optional.of(team)
         every { budgetMapper.toEntity(team, leader.id!!, req) } returns budget
         every { budgetMapper.toCreateResponse(budget) } returns expectedResp
         every { budgetValidator.validateBudgetNotExist(team.id!!) } returns Unit
