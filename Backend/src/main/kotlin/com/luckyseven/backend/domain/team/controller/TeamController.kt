@@ -211,5 +211,14 @@ class TeamController(
 
         return ResponseEntity.ok(dashboardResponse)
     }
+
+    @PostMapping("/{teamId}/delete")
+    fun markTeamForDeletion(
+        @AuthenticationPrincipal memberDetails: MemberDetails,
+        @PathVariable teamId: Long
+    ): ResponseEntity<Void> {
+        teamService.markTeamForDeletion(memberDetails, teamId)
+        return ResponseEntity.noContent().build()
+    }
 }
 

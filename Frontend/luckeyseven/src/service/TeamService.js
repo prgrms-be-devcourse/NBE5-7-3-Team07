@@ -59,7 +59,7 @@ export const getTeamDashboard = async (teamId) => {
   
   export const deleteTeam = async (teamId) => {
     try {
-      const response = await privateApi.delete(`/api/teams/${teamId}`);
+      const response = await privateApi.post(`/api/teams/${teamId}/delete`);
       return response.data;
     } catch (error) {
       console.error('Error deleting team:', error);

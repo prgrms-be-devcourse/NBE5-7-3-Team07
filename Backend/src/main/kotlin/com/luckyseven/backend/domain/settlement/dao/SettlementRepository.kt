@@ -2,7 +2,11 @@ package com.luckyseven.backend.domain.settlement.dao
 
 import com.luckyseven.backend.domain.settlement.entity.Settlement
 import jakarta.persistence.QueryHint
-import org.springframework.data.jpa.repository.*
+import org.springframework.data.jpa.repository.EntityGraph
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.stereotype.Repository
 import java.util.stream.Stream
 
@@ -25,4 +29,6 @@ interface SettlementRepository : JpaRepository<Settlement, Long>,
                 "OR (s.payer.id = :to AND s.settler.id = :from))"
     )
     fun findAssociatedNotSettled(teamId: Long, from: Long, to: Long): Stream<Settlement>
+
+    fun findByExpenseIdIn(expenseIds: List<Long>): List<Settlement>
 }

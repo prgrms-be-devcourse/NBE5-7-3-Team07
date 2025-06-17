@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import styles from '../../styles/TeamSetup.module.css';
 import Header from '../../components/Header';
-import { createTeam, joinTeam } from '../../service/TeamService';
-import { useNavigate } from 'react-router-dom';
-import { useSetRecoilState } from 'recoil';
-import { currentTeamIdState } from '../../recoil/atoms/teamAtoms';
-import { getMyTeams } from '../../service/TeamService'; // 팀 목록 불러오기
-
-
-
+import {createTeam, joinTeam, deleteTeam} from '../../service/TeamService';
+import {useNavigate} from 'react-router-dom';
+import {useSetRecoilState} from 'recoil';
+import {currentTeamIdState} from '../../recoil/atoms/teamAtoms';
+import {getMyTeams} from '../../service/TeamService'; // 팀 목록 불러오기
 
 // 공통 폼 컴포넌트
 const TeamForm = ({
@@ -26,9 +23,13 @@ const TeamForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isCreate && (!teamName || !teamPassword)) return;
-    if (!isCreate && (!teamCode || !teamPassword)) return;
-    onSubmit({ teamName, teamPassword, teamCode });
+    if (isCreate && (!teamName || !teamPassword)) {
+      return;
+    }
+    if (!isCreate && (!teamCode || !teamPassword)) {
+      return;
+    }
+    onSubmit({teamName, teamPassword, teamCode});
   };
 
   return (
@@ -69,7 +70,8 @@ const TeamForm = ({
         <button type="submit" className={styles.formButton} disabled={loading}>
           {loading ? "처리 중..." : buttonText}
         </button>
-        {error && <div style={{ color: "red", marginTop: "0.5rem" }}>{error}</div>}
+        {error && <div
+            style={{color: "red", marginTop: "0.5rem"}}>{error}</div>}
       </form>
   );
 };
@@ -83,14 +85,13 @@ const TeamSetup = () => {
   // 팀 목록 상태
   const [teams, setTeams] = useState([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
-  
+
   // 목업 데이터
   const MOCK_TEAMS = [
-    { id: 1, name: "오사카 여행" },
-    { id: 2, name: "후쿠오카 여행" },
-    { id: 3, name: "도쿄 여행" },
+    {id: 1, name: "오사카 여행"},
+    {id: 2, name: "후쿠오카 여행"},
+    {id: 3, name: "도쿄 여행"},
   ];
-
   // useEffect 부분 임시 수정
   // useEffect(() => {
   //   // 목업 데이터로 테스트
@@ -114,7 +115,7 @@ const TeamSetup = () => {
   }, [loading]); // 팀 생성/참가 후 자동 새로고침(loading 끝나면 재호출)
 
   // 팀 생성
-  const handleCreate = async ({ teamName, teamPassword }) => {
+  const handleCreate = async ({teamName, teamPassword}) => {
     setLoading(true);
     setError("");
     try {
@@ -130,7 +131,7 @@ const TeamSetup = () => {
   };
 
   // 팀 참가
-  const handleJoin = async ({ teamCode, teamPassword }) => {
+  const handleJoin = async ({teamCode, teamPassword}) => {
     setLoading(true);
     setError("");
     try {
@@ -145,11 +146,25 @@ const TeamSetup = () => {
     }
   };
 
-  // 팀 리스트/목업은 생략
+  // 팀 삭제
+  const handleDelete = async (teamId) => {
+    if (window.confirm("정말로 이 팀을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다")) {
+      setLoading(true);
+      try {
+        await deleteTeam(teamId);
+        const myTeams = await getMyTeams();
+        setTeams(myTeams);
+      } catch (e) {
+        setError("팀 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
 
   return (
       <div>
-        <Header />
+        <Header/>
         <div className={styles.teamSetupContainer}>
           <div className={styles.mainContent}>
             <div className={styles.leftColumn}>
@@ -174,29 +189,37 @@ const TeamSetup = () => {
               <div className={styles.teamCardContainer}>
                 <h1>내 팀</h1>
                 {teamsLoading ? (
-                <div className={styles.noTeamsCard}>
-                  <p>팀 목록을 불러오는 중...</p>
-                </div>
-              ) : teams.length === 0 ? (
-                <div className={styles.noTeamsCard}>
-                  <p>팀을 생성하거나 참여하세요!</p>
-                </div>
-              ) : (
-                teams.map((team) => (
-                  <div key={team.id} className={styles.teamCard}>
-                    <p className={styles.teamCardTitle}>{team.name}</p>
-                    <button
-                      className={styles.teamCardButton}
-                      onClick={() => {
-                        setCurrentTeamId(team.id);
-                        navigate(`/TeamDashBoard`);
-                      }}
-                    >
-                      팀 작업 공간으로 이동
-                    </button>
-                  </div>
-                ))
-              )}
+                    <div className={styles.noTeamsCard}>
+                      <p>팀 목록을 불러오는 중...</p>
+                    </div>
+                ) : teams.length === 0 ? (
+                    <div className={styles.noTeamsCard}>
+                      <p>팀을 생성하거나 참여하세요!</p>
+                    </div>
+                ) : (
+                    teams.map((team) => (
+                        <div key={team.id} className={styles.teamCard}>
+                          <button
+                              className={styles.teamCardDeleteBtn}
+                              onClick={() => handleDelete(team.id)}
+                              aria-label="팀 삭제"
+                              title="팀 삭제"
+                          >
+                            ×
+                          </button>
+                          <p className={styles.teamCardTitle}>{team.name}</p>
+                          <button
+                              className={styles.teamCardButton}
+                              onClick={() => {
+                                setCurrentTeamId(team.id);
+                                navigate(`/TeamDashBoard`);
+                              }}
+                          >
+                            팀 작업 공간으로 이동
+                          </button>
+                        </div>
+                    ))
+                )}
               </div>
             </div>
           </div>
