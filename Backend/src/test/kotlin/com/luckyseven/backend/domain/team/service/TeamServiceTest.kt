@@ -11,6 +11,8 @@ import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.repository.MemberRepository
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails
+import com.luckyseven.backend.domain.settlement.dao.SettlementRepository
+import com.luckyseven.backend.domain.settlement.entity.Settlement
 import com.luckyseven.backend.domain.team.cache.TeamDashboardCacheService
 import com.luckyseven.backend.domain.team.dto.TeamCreateRequest
 import com.luckyseven.backend.domain.team.dto.TeamDashboardResponse
@@ -36,12 +38,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.math.exp
 
 class TeamServiceTest : FunSpec({
     val teamRepository = mockk<TeamRepository>()
     val teamMemberRepository = mockk<TeamMemberRepository>()
     val memberRepository = mockk<MemberRepository>()
     val budgetRepository = mockk<BudgetRepository>()
+    val settlementRepository = mockk<SettlementRepository>()
     val expenseRepository = mockk<ExpenseRepository>()
     val passwordEncoder = mockk<BCryptPasswordEncoder>()
     val teamDashboardCacheService = mockk<TeamDashboardCacheService>()
@@ -50,6 +54,7 @@ class TeamServiceTest : FunSpec({
     val teamService = object : TeamService(
         teamRepository,
         teamMemberRepository,
+        settlementRepository,
         memberRepository,
         budgetRepository,
         expenseRepository,
@@ -479,6 +484,16 @@ class TeamServiceTest : FunSpec({
             category = ExpenseCategory.MEAL,
             paymentMethod = PaymentMethod.CASH
         )
+
+        val settlement = Settlement(
+            id = 7L,
+            amount = BigDecimal("50.00"),
+            isSettled = false,
+            settler = creator,
+            payer = creator,
+            expense = expense
+        )
+
         every { teamRepository.findByStatusAndDeletionScheduledAt(TeamStatus.MARKED_FOR_DELETE, any()) } returns listOf(teamToDelete)
 
         val pageableSlot = slot<Pageable>()
@@ -487,8 +502,10 @@ class TeamServiceTest : FunSpec({
 
         every { teamMemberRepository.findByTeamId(teamToDelete.id!!) } returns listOf(teamMember1)
         every { budgetRepository.findByTeamId(teamToDelete.id!!) } returns budget
+        every { settlementRepository.findByExpenseIdIn(listOf(expense.id!!)) } returns listOf(settlement)
 
         // delete 목업
+        every { settlementRepository.deleteAll(any<List<Settlement>>()) } returns Unit
         every { expenseRepository.deleteAll(any<List<Expense>>()) } returns Unit
         every { teamMemberRepository.deleteAll(any<List<TeamMember>>()) } returns Unit
         every { budgetRepository.delete(any()) } returns Unit
@@ -503,6 +520,8 @@ class TeamServiceTest : FunSpec({
         verify { teamMemberRepository.findByTeamId(teamToDelete.id!!) }
         verify { budgetRepository.findByTeamId(teamToDelete.id!!) }
 
+        verify { settlementRepository.findByExpenseIdIn(listOf(expense.id!!))}
+        verify { settlementRepository.deleteAll(match { it.contains(settlement) })}
         verify { expenseRepository.deleteAll(match { it.contains(expense) }) }
         verify { teamMemberRepository.deleteAll(match { it.contains(teamMember1) }) }
         verify { budgetRepository.delete(budget) }
