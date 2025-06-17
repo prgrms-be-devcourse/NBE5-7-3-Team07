@@ -102,11 +102,11 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
         <h2>예산 설정</h2>
 
         {error && <div className="error-message">{error}</div>}
-                
+
         <div className="notice-box">
           <span>팀의 예산을 설정해 보세요! 나중에 환율을 업데이트하거나 예산을 추가할 수 있습니다.</span>
         </div>
-        
+
         <label>예산 금액</label>
         <input
           type="number"
@@ -116,7 +116,7 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
           min="0"
           step="100"
         />
-        
+
         <label>통화 코드</label>
         <select value={foreignCurrency} onChange={(e) => setForeignCurrency(e.target.value)}>
           <option value="AUD">AUD - 호주 달러</option>
@@ -136,41 +136,41 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
           <option value="USD">USD - 미국 달러</option>
           <option value="VND">VND - 베트남 동</option>
         </select>
-        
+
         <label>환율 적용 여부</label>
         <div className="toggle-buttons">
-          <button 
-            className={isExchanged ? 'active' : ''} 
+          <button
+            className={isExchanged ? 'active' : ''}
             onClick={() => setIsExchanged(true)}
           >
             예
           </button>
-          <button 
-            className={!isExchanged ? 'active' : ''} 
+          <button
+            className={!isExchanged ? 'active' : ''}
             onClick={() => setIsExchanged(false)}
           >
             아니오
           </button>
         </div>
-        
+
         {isExchanged && (
           <>
             <label>환율</label>
             <input
-
               type="number"
-              value={totalAmount}
-              onChange={(e) => setTotalAmount(e.target.value)}
-              placeholder="예산 금액"
+              value={exchangeRate}
+              onChange={(e) => setExchangeRate(e.target.value)}
+              placeholder="환율"
               min="0"
+              step="0.01"
             />
           </>
         )}
-        
+
         <div className="modal-buttons">
           <button onClick={handleClose}>취소</button>
-          <button 
-            className="primary" 
+          <button
+            className="primary"
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
@@ -179,6 +179,7 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
 
         </div>
       </div>
+    </div>
   );
 };
 

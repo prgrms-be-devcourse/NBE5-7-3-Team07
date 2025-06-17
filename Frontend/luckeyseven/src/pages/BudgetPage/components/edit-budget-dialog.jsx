@@ -16,10 +16,10 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
     const fetchBudget = async () => {
       try {
         // budgetId가 없을 경우, team의 예산을 fetch하려 시도
-        const url = budgetId 
+        const url = budgetId
           ? `/api/teams/${teamId}/budgets/${budgetId}`
           : `/api/teams/${teamId}/budgets`;
-          
+
 
         const response = await axios.get(url);
         const budget = response.data;
@@ -115,26 +115,26 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
 
   if (!initialLoaded) {
     return (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2>예산 정보 로딩 중...</h2>
-          </div>
+      <div className="modal-overlay">
+        <div className="modal">
+          <h2>예산 정보 로딩 중...</h2>
         </div>
+      </div>
     );
   }
 
   // 예산 정보를 불러올 수 없는 경우 에러 메시지 표시
   if (error && !currentBudgetData) {
     return (
-        <div className="modal-overlay" onClick={handleClose}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>예산 수정</h2>
-            <div className="error-message">{error}</div>
-            <div className="modal-buttons">
-              <button onClick={handleClose}>닫기</button>
-            </div>
+      <div className="modal-overlay" onClick={handleClose}>
+        <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <h2>예산 수정</h2>
+          <div className="error-message">{error}</div>
+          <div className="modal-buttons">
+            <button onClick={handleClose}>닫기</button>
           </div>
         </div>
+      </div>
     );
   }
 
@@ -142,13 +142,13 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2>예산 수정</h2>
-        
+
         {error && <div className="error-message">{error}</div>}
 
         <div className="notice-box">
           <span>총예산을 수정하거나 예산 설정 시 입력 못한 환율을 업데이트하고 싶다면 예산을 수정을 해보세요!</span>
         </div>
-        
+
         <label>수정 예산 금액</label>
         <input
           type="number"
@@ -158,12 +158,12 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
           min="0"
           step="100"
         />
-        
+
         <label>통화 코드</label>
-        <select 
-          value={foreignCurrency} 
+        <select
+          value={foreignCurrency}
           onChange={(e) => setForeignCurrency(e.target.value)}
-          disabled = "true"
+          disabled="true"
         >
           <option value="AUD">AUD - 호주 달러</option>
           <option value="BRL">BRL - 브라질 헤알</option>
@@ -182,45 +182,49 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
           <option value="USD">USD - 미국 달러</option>
           <option value="VND">VND - 베트남 동</option>
         </select>
-        
+
         <label>환율 적용 여부</label>
         <div className="toggle-buttons">
-          <button 
-            className={isExchanged ? 'active' : ''} 
+          <button
+            className={isExchanged ? 'active' : ''}
             onClick={() => setIsExchanged(true)}
           >
             예
           </button>
-          <button 
-            className={!isExchanged ? 'active' : ''} 
+          <button
+            className={!isExchanged ? 'active' : ''}
             onClick={() => setIsExchanged(false)}
           >
             아니오
           </button>
         </div>
-        
+
         {isExchanged && (
           <>
             <label>환율</label>
             <input
               type="number"
-              value={totalAmount}
-              onChange={(e) => setTotalAmount(e.target.value)}
-              placeholder="수정할 예산 금액"
+              value={exchangeRate}
+              onChange={(e) => setExchangeRate(e.target.value)}
+              placeholder="환율"
               min="0"
-              step="100"
-          />
+              step="0.01"
+            />
+          </>
+        )}
 
-          <label>통화 코드</label>
-          <select
-              value={foreignCurrency}
-              onChange={(e) => setForeignCurrency(e.target.value)}
-              disabled = "true"
+        <div className="modal-buttons">
+          <button onClick={handleClose}>취소</button>
+          <button
+            className="primary"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
           >
             {isSubmitting ? '처리 중...' : '완료'}
           </button>
         </div>
       </div>
+    </div>
   );
 };
 
