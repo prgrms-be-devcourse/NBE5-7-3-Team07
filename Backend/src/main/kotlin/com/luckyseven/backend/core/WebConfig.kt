@@ -18,7 +18,7 @@ class WebConfig : WebMvcConfigurer {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration().apply {
-            addAllowedOrigin("http://localhost:3000") // 허용할 Origin
+            addAllowedOrigin("*") // 허용할 Origin
             addAllowedMethod("*") // 모든 HTTP 메서드 허용
             addAllowedHeader("*") // 모든 헤더 허용
             addExposedHeader("Authorization")
