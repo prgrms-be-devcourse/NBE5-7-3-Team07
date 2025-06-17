@@ -143,7 +143,7 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
         {error && <div className="error-message">{error}</div>}
 
         <div className="notice-box">
-          <span>예산이 부족하다면 예산을 추가해 보세요! 추가 환전 시 환율을 입력하면 평균 환율을 계산하여 외화 잔고를 업데이트합니다.</span>
+          <span>예산이 부족하다면 예산을 추가해 보세요!</span>
         </div>
         
         <label>추가 예산 금액</label>

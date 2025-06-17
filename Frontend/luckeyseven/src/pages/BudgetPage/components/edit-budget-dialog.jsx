@@ -145,7 +145,7 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
         {error && <div className="error-message">{error}</div>}
 
         <div className="notice-box">
-          <span>총예산을 수정하거나 예산 설정 시 입력 못한 환율을 업데이트하고 싶다면 예산 수정을 해보세요!</span>
+          <span>총예산을 수정하거나 예산 설정 시 입력 못한 환율을 업데이트하고 싶다면 예산을 수정을 해보세요!</span>
         </div>
         
         <label>수정 예산 금액</label>
