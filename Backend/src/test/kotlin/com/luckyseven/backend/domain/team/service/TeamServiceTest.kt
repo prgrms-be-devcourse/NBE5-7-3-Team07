@@ -105,7 +105,7 @@ class TeamServiceTest : FunSpec({
     ) : CategoryExpenseSum
 
     test("주어진 조건으로 CreateTeam을 호출하면 새로운 team이 create가 되어야 한다") {
-        every { memberRepository.findById(creator.id) } returns Optional.of(creator)
+        every { memberRepository.findById(creator.id!!) } returns Optional.of(creator)
         every { teamRepository.save(any()) } returns team
         every { teamMemberRepository.save(any()) } returns teamMember
 
@@ -143,7 +143,7 @@ class TeamServiceTest : FunSpec({
         )
 
         // Mock repository calls
-        every { memberRepository.findById(newMember.id) } returns Optional.of(newMember)
+        every { memberRepository.findById(newMember.id!!) } returns Optional.of(newMember)
         every { teamRepository.findByTeamCode(teamCode) } returns team
         every { teamMemberRepository.existsByTeamAndMember(team, newMember) } returns false
         every { teamMemberRepository.save(any()) } returns teamMember
@@ -175,7 +175,7 @@ class TeamServiceTest : FunSpec({
         val existingMemberDetails = MemberDetails(existingMember)
 
         // Mock repository calls
-        every { memberRepository.findById(existingMember.id) } returns Optional.of(existingMember)
+        every { memberRepository.findById(existingMember.id!!) } returns Optional.of(existingMember)
         every { teamRepository.findByTeamCode(teamCode) } returns team
         //  existingMember로 확인하면 true로 리턴 => 이미 존재 한다고 모킹
         every { teamMemberRepository.existsByTeamAndMember(team, existingMember) } returns true
@@ -200,7 +200,7 @@ class TeamServiceTest : FunSpec({
         val newMemberDetails = MemberDetails(newMember)
 
         // repository 모킹
-        every { memberRepository.findById(newMember.id) } returns Optional.of(newMember)
+        every { memberRepository.findById(newMember.id!!) } returns Optional.of(newMember)
         every { teamRepository.findByTeamCode(teamCode) } returns team
 
         // When/Then
