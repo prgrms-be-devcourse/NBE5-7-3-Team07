@@ -27,5 +27,5 @@ spring:
             enable: true
   jwt:
     key:
-      AccessKey: "testaccesskey"
-      RefreshKey: "testrefreshkey"
+      AccessKey: "vDAz4Q1YhPZIJOpYeZjH2Q==" #테스트용 키
+      RefreshKey: "vivlwkZqYwhhIOZFRR/XbQ==" #테스트용 키
