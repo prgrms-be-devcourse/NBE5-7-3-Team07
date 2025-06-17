@@ -177,6 +177,7 @@ export default function ExpenseDetailDialog({
                           type="number"
                           name="amount"
                           step="100"
+                          min="0"
                           value={formData.amount}
                           onChange={handleChange}
                           style={{

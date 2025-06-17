@@ -20,9 +20,10 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
           ? `/api/teams/${teamId}/budgets/${budgetId}`
           : `/api/teams/${teamId}/budgets`;
           
+
         const response = await axios.get(url);
         const budget = response.data;
-        
+
         setCurrentBudgetData(budget); // 기존 예산 데이터 저장
         setTotalAmount(budget.totalAmount || 0);
         setIsExchanged(!!budget.avgExchangeRate);
@@ -37,7 +38,7 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
         setForeignCurrency('KRW');
         setExchangeRate('');
         setInitialLoaded(true);
-        
+
         if (error.response && error.response.status === 404) {
           setError('예산 정보를 찾을 수 없습니다. 먼저 예산을 설정해주세요.');
         } else {
@@ -45,7 +46,7 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
         }
       }
     };
-    
+
     fetchBudget();
   }, [teamId, budgetId]);
 
@@ -86,18 +87,18 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
         foreignCurrency,
         exchangeRate: isExchanged ? Number(exchangeRate) : null,
       });
-      
+
       console.log('Budget update response:', response.data);
-      
+
       if (onBudgetUpdate) {
         onBudgetUpdate(response.data);
       }
-      
+
       resetForm();
       closeDialog();
     } catch (error) {
       console.error('Error updating budget:', error);
-      
+
       if (error.response) {
         if (error.response.status === 404) {
           setError('예산 정보를 찾을 수 없습니다. 먼저 예산을 설정해주세요.');
@@ -114,26 +115,26 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
 
   if (!initialLoaded) {
     return (
-      <div className="modal-overlay">
-        <div className="modal">
-          <h2>예산 정보 로딩 중...</h2>
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>예산 정보 로딩 중...</h2>
+          </div>
         </div>
-      </div>
     );
   }
 
   // 예산 정보를 불러올 수 없는 경우 에러 메시지 표시
   if (error && !currentBudgetData) {
     return (
-      <div className="modal-overlay" onClick={handleClose}>
-        <div className="modal" onClick={(e) => e.stopPropagation()}>
-          <h2>예산 수정</h2>
-          <div className="error-message">{error}</div>
-          <div className="modal-buttons">
-            <button onClick={handleClose}>닫기</button>
+        <div className="modal-overlay" onClick={handleClose}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>예산 수정</h2>
+            <div className="error-message">{error}</div>
+            <div className="modal-buttons">
+              <button onClick={handleClose}>닫기</button>
+            </div>
           </div>
         </div>
-      </div>
     );
   }
 
@@ -164,21 +165,22 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
           onChange={(e) => setForeignCurrency(e.target.value)}
           disabled = "true"
         >
-          <option value="USD">USD - 미국 달러</option>
-          <option value="EUR">EUR - 유로</option>
-          <option value="KRW">KRW - 대한민국 원</option>
-          <option value="JPY">JPY - 일본 엔화</option>
-          <option value="CNY">CNY - 중국 위안</option>
-          <option value="GBP">GBP - 영국 파운드</option>
           <option value="AUD">AUD - 호주 달러</option>
+          <option value="BRL">BRL - 브라질 헤알</option>
           <option value="CAD">CAD - 캐나다 달러</option>
           <option value="CHF">CHF - 스위스 프랑</option>
+          <option value="CNY">CNY - 중국 위안</option>
+          <option value="EUR">EUR - 유로</option>
+          <option value="GBP">GBP - 영국 파운드</option>
+          <option value="HKD">HKD - 홍콩 달러</option>
           <option value="INR">INR - 인도 루피</option>
+          <option value="JPY">JPY - 일본 엔화</option>
+          <option value="KRW">KRW - 대한민국 원</option>
+          <option value="RUB">RUB - 러시아 루블</option>
           <option value="SGD">SGD - 싱가포르 달러</option>
           <option value="THB">THB - 태국 바트</option>
-          <option value="HKD">HKD - 홍콩 달러</option>
-          <option value="RUB">RUB - 러시아 루블</option>
-          <option value="BRL">BRL - 브라질 헤알</option>
+          <option value="USD">USD - 미국 달러</option>
+          <option value="VND">VND - 베트남 동</option>
         </select>
         
         <label>환율 적용 여부</label>
@@ -202,26 +204,23 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
             <label>환율</label>
             <input
               type="number"
-              value={exchangeRate}
-              onChange={(e) => setExchangeRate(e.target.value)}
-              placeholder="환율"
+              value={totalAmount}
+              onChange={(e) => setTotalAmount(e.target.value)}
+              placeholder="수정할 예산 금액"
               min="0"
-            />
-          </>
-        )}
-        
-        <div className="modal-buttons">
-          <button onClick={handleClose}>취소</button>
-          <button 
-            className="primary" 
-            onClick={handleSubmit}
-            disabled={isSubmitting}
+              step="100"
+          />
+
+          <label>통화 코드</label>
+          <select
+              value={foreignCurrency}
+              onChange={(e) => setForeignCurrency(e.target.value)}
+              disabled = "true"
           >
             {isSubmitting ? '처리 중...' : '완료'}
           </button>
         </div>
       </div>
-    </div>
   );
 };
 

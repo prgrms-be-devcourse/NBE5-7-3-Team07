@@ -46,7 +46,6 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
       // 기존 예산 확인을 위한 GET 요청
       try {
         const checkResponse = await axios.get(`/api/teams/${teamId}/budgets`);
-        
         // 이미 예산이 있는 경우, 409 에러를 설정하고 종료
         if (checkResponse.status === 200) {
           setError('이미 설정된 예산이 있습니다. 예산 수정을 이용해 주세요.');
@@ -70,18 +69,18 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
         foreignCurrency,
         exchangeRate: isExchanged ? Number(exchangeRate) : null,
       });
-      
+
       console.log('Budget setup response:', response.data);
-      
+
       if (onBudgetUpdate) {
         onBudgetUpdate(response.data);
       }
-      
+
       resetForm();
       closeDialog(); // 다이얼로그 닫기
     } catch (error) {
       console.error('Error setting budget:', error);
-      
+
       if (error.response) {
         // 409는 이미 예산이 있는 경우
         if (error.response.status === 409) {
@@ -120,21 +119,22 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
         
         <label>통화 코드</label>
         <select value={foreignCurrency} onChange={(e) => setForeignCurrency(e.target.value)}>
-          <option value="USD">USD - 미국 달러</option>
-          <option value="EUR">EUR - 유로</option>
-          <option value="KRW">KRW - 대한민국 원</option>
-          <option value="JPY">JPY - 일본 엔화</option>
-          <option value="CNY">CNY - 중국 위안</option>
-          <option value="GBP">GBP - 영국 파운드</option>
           <option value="AUD">AUD - 호주 달러</option>
+          <option value="BRL">BRL - 브라질 헤알</option>
           <option value="CAD">CAD - 캐나다 달러</option>
           <option value="CHF">CHF - 스위스 프랑</option>
+          <option value="CNY">CNY - 중국 위안</option>
+          <option value="EUR">EUR - 유로</option>
+          <option value="GBP">GBP - 영국 파운드</option>
+          <option value="HKD">HKD - 홍콩 달러</option>
           <option value="INR">INR - 인도 루피</option>
+          <option value="JPY">JPY - 일본 엔화</option>
+          <option value="KRW">KRW - 대한민국 원</option>
+          <option value="RUB">RUB - 러시아 루블</option>
           <option value="SGD">SGD - 싱가포르 달러</option>
           <option value="THB">THB - 태국 바트</option>
-          <option value="HKD">HKD - 홍콩 달러</option>
-          <option value="RUB">RUB - 러시아 루블</option>
-          <option value="BRL">BRL - 브라질 헤알</option>
+          <option value="USD">USD - 미국 달러</option>
+          <option value="VND">VND - 베트남 동</option>
         </select>
         
         <label>환율 적용 여부</label>
@@ -157,10 +157,11 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
           <>
             <label>환율</label>
             <input
+
               type="number"
-              value={exchangeRate}
-              onChange={(e) => setExchangeRate(e.target.value)}
-              placeholder="환율"
+              value={totalAmount}
+              onChange={(e) => setTotalAmount(e.target.value)}
+              placeholder="예산 금액"
               min="0"
             />
           </>
@@ -175,9 +176,9 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
           >
             {isSubmitting ? '처리 중...' : '완료'}
           </button>
+
         </div>
       </div>
-    </div>
   );
 };
 

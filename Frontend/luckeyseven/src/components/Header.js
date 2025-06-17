@@ -24,7 +24,7 @@ const Header = () => {
         </div>
         <nav className={styles.headerNav}>
           <Link to="/team-setup" className={styles.navLink}>Team Setup</Link>
-            {!isTeamSetup && <Link to="/TeamDashboard" className={styles.navLink}>Dashboard</Link>}
+            {/* {!isTeamSetup && <Link to="/TeamDashboard" className={styles.navLink}>Dashboard</Link>} */}
             <button onClick={handleLogout} className={styles.navLink} style={{background:'none', border:'none', cursor:'pointer'}}>
                 Logout
             </button>

@@ -19,36 +19,6 @@ export function BudgetPage() {
 
   const handleClose = () => setDialogType(null);
 
-  const handleUpdate = async (updatePayload) => {
-    try {
-      const res = await fetch(`/api/teams/${teamId}/budgets`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatePayload),
-      });
-
-      if (!res.ok) {
-        if (res.status === 404) {
-          alert("예산 정보를 찾을 수 없습니다.");
-        } else {
-          alert("예산 업데이트에 실패했습니다.");
-        }
-        return;
-      }
-
-      const updatedBudget = await res.json();
-      setBudget(updatedBudget);
-      setBudgetInitialized(true); // ApiService의 예산 초기화 상태 업데이트
-      setDialogType(null);
-    } catch (err) {
-      alert("서버와 통신 중 오류가 발생했습니다.");
-      console.error(err);
-    }
-  };
-
   // 예산 삭제 처리 함수
   const handleBudgetDelete = async () => {
     try {
@@ -114,59 +84,59 @@ export function BudgetPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg space-y-6">
-      <PageHeaderControls
-        pageHeaderData={pageHeaderData}
-        onBudgetDelete={handleBudgetDelete}
-      />
-
-      <h1 className="text-2xl font-bold text-gray-800">
-        [{budget?.team?.name || `팀 ${teamId}`}] 예산
-      </h1>
-
-      {budget ? (
-        <div className="space-y-2 text-gray-700">
-          <p>총 예산: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.totalAmount)} KRW</span></p>
-          <p>원화 잔고: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.balance)} KRW</span></p>
-          <p>외화 잔고: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.foreignBalance)} {budget?.foreignCurrency || 'KRW'}</span></p>
-          <p>평균 환율: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.avgExchangeRate)}</span></p>
-        </div>
-      ) : (
-        <div className="text-center p-4 bg-gray-100 rounded-lg">
-          <p className="text-gray-600">아직 설정된 예산이 없습니다. 예산을 설정해주세요.</p>
-          <button
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
-            onClick={() => setDialogType('set')}
-          >
-            예산 설정하기
-          </button>
-        </div>
-      )}
-
-      {/* Dialogs */}
-      {dialogType === "set" && (
-        <SetBudgetDialog
-          teamId={teamId}
-          closeDialog={handleClose}
-          onBudgetUpdate={handleBudgetUpdate}
+      <div className="max-w-2xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg space-y-6">
+        <PageHeaderControls
+            pageHeaderData={pageHeaderData}
+            onBudgetDelete={handleBudgetDelete}
         />
-      )}
 
-      {dialogType === "edit" && (
-        <EditBudgetDialog
-          teamId={teamId}
-          closeDialog={handleClose}
-          onBudgetUpdate={handleBudgetUpdate}
-        />
-      )}
+        <h1 className="text-2xl font-bold text-gray-800">
+          [{budget?.team?.name || `팀 ${teamId}`}] 예산
+        </h1>
 
-      {dialogType === "add" && (
-        <AddBudgetDialog
-          teamId={teamId}
-          closeDialog={handleClose}
-          onBudgetUpdate={handleBudgetUpdate}
-        />
-      )}
-    </div>
+        {budget ? (
+            <div className="space-y-2 text-gray-700">
+              <p>총 예산: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.totalAmount)} KRW</span></p>
+              <p>원화 잔고: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.balance)} KRW</span></p>
+              <p>외화 잔고: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.foreignBalance)} {budget?.foreignCurrency || 'KRW'}</span></p>
+              <p>평균 환율: <span className="font-medium">{SafeFormatterUtil.formatCurrency(budget?.avgExchangeRate)}</span></p>
+            </div>
+        ) : (
+            <div className="text-center p-4 bg-gray-100 rounded-lg">
+              <p className="text-gray-600">아직 설정된 예산이 없습니다. 예산을 설정해주세요.</p>
+              <button
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+                  onClick={() => setDialogType('set')}
+              >
+                예산 설정하기
+              </button>
+            </div>
+        )}
+
+        {/* Dialogs */}
+        {dialogType === "set" && (
+            <SetBudgetDialog
+                teamId={teamId}
+                closeDialog={handleClose}
+                onBudgetUpdate={handleBudgetUpdate}
+            />
+        )}
+
+        {dialogType === "edit" && (
+            <EditBudgetDialog
+                teamId={teamId}
+                closeDialog={handleClose}
+                onBudgetUpdate={handleBudgetUpdate}
+            />
+        )}
+
+        {dialogType === "add" && (
+            <AddBudgetDialog
+                teamId={teamId}
+                closeDialog={handleClose}
+                onBudgetUpdate={handleBudgetUpdate}
+            />
+        )}
+      </div>
   );
 }
