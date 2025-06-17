@@ -33,7 +33,7 @@ class TeamDashboardCacheService(
      * @param dashboard 대시보드 데이터
      */
     fun cacheTeamDashboard(teamId: Long, dashboard: TeamDashboardResponse?) {
-        cacheManager.getCache(CACHE_NAME).put(KEY_PREFIX + teamId, dashboard)
+        cacheManager.getCache(CACHE_NAME)?.put(KEY_PREFIX + teamId, dashboard)
     }
 
     /**
