@@ -4,6 +4,7 @@ import com.luckyseven.backend.domain.budget.dao.BudgetRepository
 import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
 import com.luckyseven.backend.domain.member.repository.MemberRepository
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails
+import com.luckyseven.backend.domain.settlement.dao.SettlementRepository
 import com.luckyseven.backend.domain.team.cache.TeamDashboardCacheService
 import com.luckyseven.backend.domain.team.dto.*
 import com.luckyseven.backend.domain.team.entity.Team
@@ -27,6 +28,7 @@ import java.util.*
 class TeamService(
     val teamRepository: TeamRepository,
     val teamMemberRepository: TeamMemberRepository,
+    val settlementRepository: SettlementRepository,
     val memberRepository: MemberRepository,
     val budgetRepository: BudgetRepository,
     val expenseRepository: ExpenseRepository,
@@ -240,6 +242,12 @@ class TeamService(
 
             val expenses = expenseRepository.findByTeamId(teamId, Pageable.unpaged()).content
             if (expenses.isNotEmpty()) {
+                val expenseIds = expenses.mapNotNull { it.id }
+
+                val settlements = settlementRepository.findByExpenseIdIn(expenseIds)
+                if (settlements.isNotEmpty()) {
+                    settlementRepository.deleteAll(settlements)
+                }
                 expenseRepository.deleteAll(expenses)
             }
 

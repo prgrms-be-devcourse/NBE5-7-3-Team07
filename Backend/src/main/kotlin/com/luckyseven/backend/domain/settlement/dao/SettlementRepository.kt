@@ -16,4 +16,6 @@ interface SettlementRepository : JpaRepository<Settlement, Long>,
 
     @Query("SELECT s From Settlement s join s.expense e where e.team.id = :teamId")
     fun findAllByTeamId(teamId: Long): List<Settlement>
+
+    fun findByExpenseIdIn(expenseIds: List<Long>): List<Settlement>
 }
