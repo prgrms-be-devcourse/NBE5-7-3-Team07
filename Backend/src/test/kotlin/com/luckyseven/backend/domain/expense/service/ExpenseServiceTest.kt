@@ -11,7 +11,7 @@ import com.luckyseven.backend.domain.expense.mapper.ExpenseMapper
 import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
 import com.luckyseven.backend.domain.expense.util.ExpenseTestUtils
 import com.luckyseven.backend.domain.member.entity.Member
-import com.luckyseven.backend.domain.member.service.MemberService
+import com.luckyseven.backend.domain.member.repository.MemberRepository
 import com.luckyseven.backend.domain.settlement.app.SettlementService
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.repository.TeamRepository
@@ -29,6 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.repository.findByIdOrNull
 import java.math.BigDecimal
 
 @ExtendWith(MockKExtension::class)
@@ -38,9 +39,6 @@ internal class ExpenseServiceTest {
     private lateinit var teamRepository: TeamRepository
 
     @MockK
-    private lateinit var memberService: MemberService
-
-    @MockK
     private lateinit var expenseRepository: ExpenseRepository
 
     @MockK
@@ -48,6 +46,9 @@ internal class ExpenseServiceTest {
 
     @MockK
     private lateinit var cacheEvictService: CacheEvictService
+
+    @MockK
+    private lateinit var memberRepository: MemberRepository
 
     @InjectMockKs
     private lateinit var expenseService: ExpenseService
@@ -117,7 +118,7 @@ internal class ExpenseServiceTest {
 
             every { expenseRepository.save(any<Expense>()) } answers { firstArg() }
             every { teamRepository.findTeamWithBudget(1L) } returns team
-            every { memberService.findMemberOrThrow(1L) } returns payer
+            every { memberRepository.findByIdOrNull(1L) } returns payer
             justRun { settlementService.createAllSettlements(any(), any(), any()) }
 
             // when
@@ -166,7 +167,7 @@ internal class ExpenseServiceTest {
             @DisplayName("예산보다 큰 지출 금액")
             fun insufficientBalance_throwsException() {
                 every { teamRepository.findTeamWithBudget(1L) } returns team
-                every { memberService.findMemberOrThrow(1L) } returns payer
+                every { memberRepository.findByIdOrNull(1L) } returns payer
 
                 val request = ExpenseTestUtils.buildRequest(
                     description = "럭키비키즈 팀 배부르게 식사",
@@ -193,7 +194,7 @@ internal class ExpenseServiceTest {
 
             every { expenseRepository.save(any<Expense>()) } answers { firstArg() }
             every { teamRepository.findTeamWithBudget(1L) } returns team
-            every { memberService.findMemberOrThrow(1L) } returns payer
+            every { memberRepository.findByIdOrNull(1L) } returns payer
             justRun { settlementService.createAllSettlements(any(), any(), any()) }
 
             val response = expenseService.saveExpense(1L, request)

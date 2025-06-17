@@ -7,7 +7,8 @@ import com.luckyseven.backend.domain.expense.entity.Expense
 import com.luckyseven.backend.domain.expense.enums.PaymentMethod
 import com.luckyseven.backend.domain.expense.mapper.ExpenseMapper
 import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
-import com.luckyseven.backend.domain.member.service.MemberService
+import com.luckyseven.backend.domain.member.entity.Member
+import com.luckyseven.backend.domain.member.repository.MemberRepository
 import com.luckyseven.backend.domain.settlement.app.SettlementService
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.repository.TeamRepository
@@ -17,6 +18,7 @@ import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Pageable
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -24,21 +26,20 @@ import java.math.BigDecimal
 @Service
 @CacheConfig(cacheNames = ["recentExpenses"])
 class ExpenseService(
-
     private val settlementService: SettlementService,
     private val expenseRepository: ExpenseRepository,
     private val teamRepository: TeamRepository,
-    private val memberService: MemberService,
+    private val memberRepository: MemberRepository,
     private val cacheEvictService: CacheEvictService
 ) {
 
     @Transactional
     fun saveExpense(teamId: Long, request: ExpenseRequest): CreateExpenseResponse {
         val team = findTeamWithBudget(teamId)
-        val payer = memberService.findMemberOrThrow(request.payerId)
+        val payer = findMemberOrThrow(request.payerId)
         val budget = findBudgetOrThrow(team)
 
-        adjustBudgetOnCreate(request.paymentMethod, budget, request.amount)
+        adjustBudget(request.paymentMethod, budget, request.amount)
 
         val expense = ExpenseMapper.fromExpenseRequest(request, team, payer)
         val savedExpense = expenseRepository.save(expense)
@@ -73,7 +74,7 @@ class ExpenseService(
         val delta = newAmount.subtract(originalAmount)
         val budget = findBudgetOrThrow(expense.team)
 
-        adjustBudgetOnUpdate(delta, expense.paymentMethod, budget)
+        adjustBudget(expense.paymentMethod, budget, delta)
 
         expense.update(request.description, newAmount, request.category)
         evictCache(expense.team.id!!)
@@ -83,9 +84,9 @@ class ExpenseService(
     @Transactional
     fun deleteExpense(expenseId: Long): ExpenseBalanceResponse {
         val expense = findExpenseWithBudgetOrThrow(expenseId)
-
         val budget = findBudgetOrThrow(expense.team)
-        creditBudgetOnDelete(expense.paymentMethod, budget, expense.amount)
+
+        adjustBudget(expense.paymentMethod, budget, expense.amount.negate())
 
         expenseRepository.delete(expense)
         evictCache(expense.team.id!!)
@@ -111,32 +112,28 @@ class ExpenseService(
         cacheEvictService.evictByPrefix("recentExpenses", "team:$teamId:")
     }
 
-    private fun adjustBudgetOnCreate(
-        method: PaymentMethod,
-        budget: Budget,
-        amount: BigDecimal
-    ) {
-        if (method == PaymentMethod.CASH) budget.debitForeign(amount)
-        else budget.debitKrw(amount)
-    }
+    fun findMemberOrThrow(id: Long): Member =
+        memberRepository.findByIdOrNull(id)
+            ?: throw CustomLogicException(ExceptionCode.MEMBER_ID_NOTFOUND, id)
 
-    private fun creditBudgetOnDelete(
-        method: PaymentMethod,
-        budget: Budget,
-        amount: BigDecimal
-    ) {
-        if (method == PaymentMethod.CASH) budget.creditForeign(amount)
-        else budget.creditKrw(amount)
-    }
+}
 
-    private fun adjustBudgetOnUpdate(
-        delta: BigDecimal,
-        method: PaymentMethod,
-        budget: Budget
-    ) {
-        when {
-            delta > BigDecimal.ZERO -> adjustBudgetOnCreate(method, budget, delta)
-            delta < BigDecimal.ZERO -> creditBudgetOnDelete(method, budget, delta.abs())
+private fun adjustBudget(
+    method: PaymentMethod,
+    budget: Budget,
+    delta: BigDecimal
+) {
+    when {
+        delta > BigDecimal.ZERO -> {
+            if (method == PaymentMethod.CASH) budget.debitForeign(delta)
+            else budget.debitKrw(delta)
+        }
+
+        delta < BigDecimal.ZERO -> {
+            val abs = delta.abs()
+            if (method == PaymentMethod.CASH) budget.creditForeign(abs)
+            else budget.creditKrw(abs)
         }
     }
 }
+
