@@ -33,6 +33,11 @@ class ExpenseService(
     private val cacheEvictService: CacheEvictService
 ) {
 
+    companion object {
+        private const val CACHE_KEY_TEMPLATE = "team:%d:page:%d:size:%d"
+        private const val CACHE_PREFIX_TEMPLATE = "team:%d:"
+    }
+
     @Transactional
     fun saveExpense(teamId: Long, request: ExpenseRequest): CreateExpenseResponse {
         val team = findTeamWithBudget(teamId)
@@ -41,12 +46,13 @@ class ExpenseService(
 
         adjustBudget(request.paymentMethod, budget, request.amount)
 
-        val expense = ExpenseMapper.fromExpenseRequest(request, team, payer)
-        val savedExpense = expenseRepository.save(expense)
+        val expense = createAndSaveExpense(request, team, payer)
 
-        settlementService.createAllSettlements(request, payer, savedExpense)
+        createSettlements(request, payer, expense)
+
         evictCache(teamId)
-        return ExpenseMapper.toCreateExpenseResponse(savedExpense, budget)
+
+        return ExpenseMapper.toCreateExpenseResponse(expense, budget)
     }
 
     @Transactional(readOnly = true)
@@ -56,11 +62,9 @@ class ExpenseService(
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(key = "'team:' + #teamId + ':page:' + #pageable.pageNumber + ':size:' + #pageable.pageSize")
+    @Cacheable(key = "T(String).format('${CACHE_KEY_TEMPLATE}', #teamId, #pageable.pageNumber, #pageable.pageSize)")
     fun getExpenses(teamId: Long, pageable: Pageable): PageResponse<ExpenseResponse> {
-        if (!teamRepository.existsById(teamId)) {
-            throw CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
-        }
+        validateTeamExists(teamId)
         val page = expenseRepository.findResponsesByTeamId(teamId, pageable)
         return ExpenseMapper.toPageResponse(page)
     }
@@ -68,15 +72,13 @@ class ExpenseService(
     @Transactional
     fun updateExpense(expenseId: Long, request: ExpenseUpdateRequest): CreateExpenseResponse {
         val expense = findExpenseWithBudgetOrThrow(expenseId)
-
-        val originalAmount = expense.amount
-        val newAmount: BigDecimal = request.amount ?: originalAmount
-        val delta = newAmount.subtract(originalAmount)
         val budget = findBudgetOrThrow(expense.team)
 
-        adjustBudget(expense.paymentMethod, budget, delta)
+        val amountDelta = calculateAmountDelta(expense.amount, request.amount)
+        adjustBudget(expense.paymentMethod, budget, amountDelta)
 
-        expense.update(request.description, newAmount, request.category)
+        updateExpenseDetails(expense, request)
+
         evictCache(expense.team.id!!)
         return ExpenseMapper.toCreateExpenseResponse(expense, budget)
     }
@@ -90,7 +92,62 @@ class ExpenseService(
 
         expenseRepository.delete(expense)
         evictCache(expense.team.id!!)
+
         return ExpenseMapper.toExpenseBalanceResponse(budget)
+    }
+
+    private fun createAndSaveExpense(request: ExpenseRequest, team: Team, payer: Member): Expense {
+        val expense = ExpenseMapper.fromExpenseRequest(request, team, payer)
+        return expenseRepository.save(expense)
+    }
+
+    private fun createSettlements(request: ExpenseRequest, payer: Member, expense: Expense) {
+        settlementService.createAllSettlements(request, payer, expense)
+    }
+
+    private fun calculateAmountDelta(
+        originalAmount: BigDecimal,
+        newAmount: BigDecimal?
+    ): BigDecimal {
+        val actualNewAmount = newAmount ?: originalAmount
+        return actualNewAmount.subtract(originalAmount)
+    }
+
+    private fun updateExpenseDetails(expense: Expense, request: ExpenseUpdateRequest) {
+        val newAmount = request.amount ?: expense.amount
+        expense.update(request.description, newAmount, request.category)
+    }
+
+    private fun validateTeamExists(teamId: Long) {
+        if (!teamRepository.existsById(teamId)) {
+            throw CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
+        }
+    }
+
+    private fun adjustBudget(method: PaymentMethod, budget: Budget, delta: BigDecimal) {
+        when {
+            delta > BigDecimal.ZERO -> {
+                if (method == PaymentMethod.CASH) {
+                    budget.debitForeign(delta)
+                } else {
+                    budget.debitKrw(delta)
+                }
+            }
+
+            delta < BigDecimal.ZERO -> {
+                val absoluteAmount = delta.abs()
+                if (method == PaymentMethod.CASH) {
+                    budget.creditForeign(absoluteAmount)
+                } else {
+                    budget.creditKrw(absoluteAmount)
+                }
+            }
+        }
+    }
+
+    private fun evictCache(teamId: Long) {
+        val cachePrefix = String.format(CACHE_PREFIX_TEMPLATE, teamId)
+        cacheEvictService.evictByPrefix("recentExpenses", cachePrefix)
     }
 
     private fun findExpenseWithPayer(expenseId: Long): Expense =
@@ -108,32 +165,7 @@ class ExpenseService(
         teamRepository.findTeamWithBudget(teamId)
             ?: throw CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
 
-    private fun evictCache(teamId: Long) {
-        cacheEvictService.evictByPrefix("recentExpenses", "team:$teamId:")
-    }
-
-    fun findMemberOrThrow(id: Long): Member =
+    private fun findMemberOrThrow(id: Long): Member =
         memberRepository.findByIdOrNull(id)
             ?: throw CustomLogicException(ExceptionCode.MEMBER_ID_NOTFOUND, id)
-
 }
-
-private fun adjustBudget(
-    method: PaymentMethod,
-    budget: Budget,
-    delta: BigDecimal
-) {
-    when {
-        delta > BigDecimal.ZERO -> {
-            if (method == PaymentMethod.CASH) budget.debitForeign(delta)
-            else budget.debitKrw(delta)
-        }
-
-        delta < BigDecimal.ZERO -> {
-            val abs = delta.abs()
-            if (method == PaymentMethod.CASH) budget.creditForeign(abs)
-            else budget.creditKrw(abs)
-        }
-    }
-}
-
