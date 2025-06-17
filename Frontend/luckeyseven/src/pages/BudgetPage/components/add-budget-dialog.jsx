@@ -18,8 +18,8 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
         // budgetId가 없을 경우, team의 예산을 fetch하려 시도
 
         const url = budgetId
-            ? `/api/teams/${teamId}/budgets/${budgetId}`
-            : `/api/teams/${teamId}/budgets`;
+          ? `/api/teams/${teamId}/budgets/${budgetId}`
+          : `/api/teams/${teamId}/budgets`;
 
         const response = await axios.get(url);
         const budget = response.data;
@@ -113,11 +113,11 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
 
   if (!initialLoaded) {
     return (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2>예산 정보 로딩 중...</h2>
-          </div>
+      <div className="modal-overlay">
+        <div className="modal">
+          <h2>예산 정보 로딩 중...</h2>
         </div>
+      </div>
     );
   }
 
@@ -130,9 +130,9 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
           <div className="error-message">{error}</div>
           <div className="modal-buttons">
             <button onClick={handleClose}>닫기</button>
-
           </div>
         </div>
+      </div>
     );
   }
 
@@ -146,50 +146,51 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
         <div className="notice-box">
           <span>예산이 부족하다면 예산을 추가해 보세요!</span>
         </div>
-        
+
         <label>추가 예산 금액</label>
         <input
           type="number"
           value={additionalBudget}
           onChange={(e) => setAdditionalBudget(e.target.value)}
           placeholder="추가할 예산 금액"
-          min = "0"
-          step = "100"
+          min="0"
+          step="100"
         />
-        
+
         <label>환율 적용 여부</label>
         <div className="toggle-buttons">
-          <button 
-            className={isExchanged ? 'active' : ''} 
+          <button
+            className={isExchanged ? 'active' : ''}
             onClick={() => setIsExchanged(true)}
           >
             예
           </button>
-          <button 
-            className={!isExchanged ? 'active' : ''} 
+          <button
+            className={!isExchanged ? 'active' : ''}
             onClick={() => setIsExchanged(false)}
           >
             아니오
           </button>
         </div>
-        
+
         {isExchanged && (
           <>
             <label>환율</label>
             <input
               type="number"
-              value={additionalBudget}
-              onChange={(e) => setAdditionalBudget(e.target.value)}
-              placeholder="추가할 예산 금액"
+              value={exchangeRate}
+              onChange={(e) => setExchangeRate(e.target.value)}
+              placeholder="환율"
               min = "0"
+              step="0.01"
             />
           </>
         )}
-        
+
         <div className="modal-buttons">
           <button onClick={handleClose}>취소</button>
-          <button 
-            className="primary" 
+          <button
+            className="primary"
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
@@ -197,6 +198,7 @@ const AddBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => {
           </button>
         </div>
       </div>
+    </div>
   );
 };
 
