@@ -4,6 +4,10 @@ import jakarta.persistence.*
 import java.time.Instant
 
 @Entity
+@Table(name = "black_list_token", indexes = [
+   Index(name = "idx_blacklist_token_value", columnList = "tokenValue"),
+   Index(name = "idx_blacklist_expiration_time", columnList = "expirationTime")
+])
  class BlackListToken(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
