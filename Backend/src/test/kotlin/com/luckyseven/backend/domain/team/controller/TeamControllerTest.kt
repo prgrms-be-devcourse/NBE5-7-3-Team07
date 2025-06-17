@@ -1,4 +1,4 @@
-package domain.team.controller
+package com.luckyseven.backend.domain.team.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.luckyseven.backend.domain.budget.entity.CurrencyCode
@@ -7,14 +7,7 @@ import com.luckyseven.backend.domain.expense.enums.PaymentMethod
 import com.luckyseven.backend.domain.expense.repository.CategoryExpenseSum
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails
-import com.luckyseven.backend.domain.team.controller.TeamController
-import com.luckyseven.backend.domain.team.dto.TeamCreateRequest
-import com.luckyseven.backend.domain.team.dto.TeamCreateResponse
-import com.luckyseven.backend.domain.team.dto.TeamDashboardResponse
-import com.luckyseven.backend.domain.team.dto.TeamJoinRequest
-import com.luckyseven.backend.domain.team.dto.TeamJoinResponse
-import com.luckyseven.backend.domain.team.dto.TeamListResponse
-import com.luckyseven.backend.domain.team.dto.TeamMemberDto
+import com.luckyseven.backend.domain.team.dto.*
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.entity.TeamMember
 import com.luckyseven.backend.domain.team.service.TeamMemberService
@@ -23,12 +16,7 @@ import com.luckyseven.backend.sharedkernel.exception.CustomExceptionHandler
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import io.kotest.core.spec.style.FunSpec
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.runs
-import io.mockk.verify
+import io.mockk.*
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -123,8 +111,9 @@ class TeamControllerTest : FunSpec({
         // When & Then
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/teams")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
             .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("새로운팀"))
@@ -155,8 +144,9 @@ class TeamControllerTest : FunSpec({
         // When & Then
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/teams/members")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
             .andExpect(MockMvcResultMatchers.jsonPath("$.teamName").value("테스트팀"))
@@ -310,10 +300,14 @@ class TeamControllerTest : FunSpec({
             .andExpect(MockMvcResultMatchers.jsonPath("$.balance").value(1000.00))
             .andExpect(MockMvcResultMatchers.jsonPath("$.expenseList").isArray)
             .andExpect(MockMvcResultMatchers.jsonPath("$.expenseList.length()").value(1))
-            .andExpect(MockMvcResultMatchers.jsonPath("$.expenseList[0].description").value("점심 식사"))
+            .andExpect(
+                MockMvcResultMatchers.jsonPath("$.expenseList[0].description").value("점심 식사")
+            )
             .andExpect(MockMvcResultMatchers.jsonPath("$.categoryExpenseSumList").isArray)
             .andExpect(MockMvcResultMatchers.jsonPath("$.categoryExpenseSumList.length()").value(1))
-            .andExpect(MockMvcResultMatchers.jsonPath("$.categoryExpenseSumList[0].category").value("MEAL"))
+            .andExpect(
+                MockMvcResultMatchers.jsonPath("$.categoryExpenseSumList[0].category").value("MEAL")
+            )
             .andDo(MockMvcResultHandlers.print())
 
         verify { teamService.getTeamDashboard(teamId) }
@@ -349,8 +343,9 @@ class TeamControllerTest : FunSpec({
         // When & Then
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/teams/members")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        )
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andDo(MockMvcResultHandlers.print())
 
@@ -371,8 +366,9 @@ class TeamControllerTest : FunSpec({
         // When & Then
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/teams/members")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        )
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andDo(MockMvcResultHandlers.print())
 
