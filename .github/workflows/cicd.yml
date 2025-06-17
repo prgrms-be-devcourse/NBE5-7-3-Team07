@@ -16,8 +16,8 @@ env:
   DB_URL: ${{ secrets.DB_URL }}
   DB_USERNAME: ${{ secrets.DB_USERNAME }}
   DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
-  EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+  MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+  MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
   ACCESS_KEY: ${{ secrets.ACCESS_KEY}}
   REFRESH_KEY: ${{ secrets.REFRESH_KEY }}
 
@@ -83,6 +83,9 @@ jobs:
         run: |
           cd Backend
           ./gradlew build -x test
+        env:
+          SPRING_EMAIL_USERNAME: ${{ env.MAIL_USERNAME }}
+          SPRING_EMAIL_PASSWORD: ${{ env.MAIL_PASSWORD }}
 
       # 프론트엔드 빌드
       - name: Set up Node.js
