@@ -1,4 +1,4 @@
-package domain.team.service
+package com.luckyseven.backend.domain.team.service
 
 import com.luckyseven.backend.domain.budget.dao.BudgetRepository
 import com.luckyseven.backend.domain.budget.entity.Budget
@@ -19,7 +19,6 @@ import com.luckyseven.backend.domain.team.entity.TeamMember
 import com.luckyseven.backend.domain.team.enums.TeamStatus
 import com.luckyseven.backend.domain.team.repository.TeamMemberRepository
 import com.luckyseven.backend.domain.team.repository.TeamRepository
-import com.luckyseven.backend.domain.team.service.TeamService
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import io.kotest.assertions.assertSoftly
@@ -399,7 +398,7 @@ class TeamServiceTest : FunSpec({
 
         val pageableSlot = slot<Pageable>()
         every { expenseRepository.findByTeamId(eq(teamId), capture(pageableSlot)) } returns
-            PageImpl(listOf(expense))
+                PageImpl(listOf(expense))
 
         every { expenseRepository.findCategoryExpenseSumsByTeamId(teamId) } returns categorySums
         every { teamDashboardCacheService.cacheTeamDashboard(eq(teamId), any()) } returns Unit

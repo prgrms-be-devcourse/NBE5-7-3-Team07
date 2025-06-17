@@ -101,8 +101,12 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2>예산 설정</h2>
-        
+
         {error && <div className="error-message">{error}</div>}
+                
+        <div className="notice-box">
+          <span>팀의 예산을 설정해 보세요! 나중에 환율을 업데이트하거나 예산을 추가할 수 있습니다.</span>
+        </div>
         
         <label>예산 금액</label>
         <input
@@ -133,8 +137,8 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
           <option value="BRL">BRL - 브라질 헤알</option>
         </select>
         
+        <label>환율 적용 여부</label>
         <div className="toggle-buttons">
-          <label>환율 적용 여부</label>
           <button 
             className={isExchanged ? 'active' : ''} 
             onClick={() => setIsExchanged(true)}
@@ -169,7 +173,7 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? '처리 중...' : '예산 설정'}
+            {isSubmitting ? '처리 중...' : '완료'}
           </button>
         </div>
       </div>

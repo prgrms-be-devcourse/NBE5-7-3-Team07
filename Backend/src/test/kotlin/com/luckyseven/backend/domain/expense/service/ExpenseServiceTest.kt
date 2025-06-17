@@ -11,7 +11,7 @@ import com.luckyseven.backend.domain.expense.mapper.ExpenseMapper
 import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
 import com.luckyseven.backend.domain.expense.util.ExpenseTestUtils
 import com.luckyseven.backend.domain.member.entity.Member
-import com.luckyseven.backend.domain.member.service.MemberService
+import com.luckyseven.backend.domain.member.repository.MemberRepository
 import com.luckyseven.backend.domain.settlement.app.SettlementService
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.repository.TeamRepository
@@ -24,14 +24,12 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.justRun
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.repository.findByIdOrNull
 import java.math.BigDecimal
 
 @ExtendWith(MockKExtension::class)
@@ -41,9 +39,6 @@ internal class ExpenseServiceTest {
     private lateinit var teamRepository: TeamRepository
 
     @MockK
-    private lateinit var memberService: MemberService
-
-    @MockK
     private lateinit var expenseRepository: ExpenseRepository
 
     @MockK
@@ -51,6 +46,9 @@ internal class ExpenseServiceTest {
 
     @MockK
     private lateinit var cacheEvictService: CacheEvictService
+
+    @MockK
+    private lateinit var memberRepository: MemberRepository
 
     @InjectMockKs
     private lateinit var expenseService: ExpenseService
@@ -120,7 +118,7 @@ internal class ExpenseServiceTest {
 
             every { expenseRepository.save(any<Expense>()) } answers { firstArg() }
             every { teamRepository.findTeamWithBudget(1L) } returns team
-            every { memberService.findMemberOrThrow(1L) } returns payer
+            every { memberRepository.findByIdOrNull(1L) } returns payer
             justRun { settlementService.createAllSettlements(any(), any(), any()) }
 
             // when
@@ -159,7 +157,7 @@ internal class ExpenseServiceTest {
                     settlerIds = listOf(10L, 20L)
                 )
 
-                val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+                val exception = assertThrows<CustomLogicException> {
                     expenseService.saveExpense(999L, request)
                 }
                 assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.TEAM_NOT_FOUND)
@@ -169,7 +167,7 @@ internal class ExpenseServiceTest {
             @DisplayName("예산보다 큰 지출 금액")
             fun insufficientBalance_throwsException() {
                 every { teamRepository.findTeamWithBudget(1L) } returns team
-                every { memberService.findMemberOrThrow(1L) } returns payer
+                every { memberRepository.findByIdOrNull(1L) } returns payer
 
                 val request = ExpenseTestUtils.buildRequest(
                     description = "럭키비키즈 팀 배부르게 식사",
@@ -178,7 +176,7 @@ internal class ExpenseServiceTest {
                     settlerIds = listOf(10L)
                 )
 
-                val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+                val exception = assertThrows<CustomLogicException> {
                     expenseService.saveExpense(1L, request)
                 }
                 assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.INSUFFICIENT_BALANCE)
@@ -196,7 +194,7 @@ internal class ExpenseServiceTest {
 
             every { expenseRepository.save(any<Expense>()) } answers { firstArg() }
             every { teamRepository.findTeamWithBudget(1L) } returns team
-            every { memberService.findMemberOrThrow(1L) } returns payer
+            every { memberRepository.findByIdOrNull(1L) } returns payer
             justRun { settlementService.createAllSettlements(any(), any(), any()) }
 
             val response = expenseService.saveExpense(1L, request)
@@ -253,7 +251,7 @@ internal class ExpenseServiceTest {
         fun notFound_throwsException() {
             every { expenseRepository.findByIdWithPayer(999L) } returns null
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.getExpense(999L)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
@@ -334,7 +332,7 @@ internal class ExpenseServiceTest {
                 category = ExpenseCategory.MEAL
             )
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.updateExpense(999L, request)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
@@ -359,7 +357,7 @@ internal class ExpenseServiceTest {
             )
             every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.updateExpense(1L, request)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.INSUFFICIENT_BALANCE)
@@ -400,7 +398,7 @@ internal class ExpenseServiceTest {
         fun expenseNotFound_throwsException() {
             every { expenseRepository.findWithTeamAndBudgetById(999L) } returns null
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.deleteExpense(999L)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
@@ -443,7 +441,7 @@ internal class ExpenseServiceTest {
             val pageable = PageRequest.of(0, 5)
             every { teamRepository.existsById(999L) } returns false
 
-            val exception = org.junit.jupiter.api.assertThrows<CustomLogicException> {
+            val exception = assertThrows<CustomLogicException> {
                 expenseService.getExpenses(999L, pageable)
             }
             assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.TEAM_NOT_FOUND)

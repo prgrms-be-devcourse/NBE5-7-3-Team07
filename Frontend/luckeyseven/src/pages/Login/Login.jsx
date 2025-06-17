@@ -49,9 +49,6 @@ export default function Login() {
       const response = await login(req);
       console.log("로그인 응답:", response);
       
-      // 로그인 성공 처리
-      alert("로그인 성공!");
-      
       // 로그인 후 홈으로 이동 (200ms 지연)
       setTimeout(() => {
         navigate('/team-setup', { replace: true });

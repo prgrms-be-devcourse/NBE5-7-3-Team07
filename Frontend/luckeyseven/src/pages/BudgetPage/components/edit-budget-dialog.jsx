@@ -143,6 +143,10 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
         <h2>예산 수정</h2>
         
         {error && <div className="error-message">{error}</div>}
+
+        <div className="notice-box">
+          <span>총예산을 수정하거나 예산 설정 시 입력 못한 환율을 업데이트하고 싶다면 예산을 수정을 해보세요!</span>
+        </div>
         
         <label>수정 예산 금액</label>
         <input
@@ -177,8 +181,8 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
           <option value="BRL">BRL - 브라질 헤알</option>
         </select>
         
+        <label>환율 적용 여부</label>
         <div className="toggle-buttons">
-          <label>환율 적용 여부</label>
           <button 
             className={isExchanged ? 'active' : ''} 
             onClick={() => setIsExchanged(true)}
@@ -213,7 +217,7 @@ const EditBudgetDialog = ({ teamId, budgetId, closeDialog, onBudgetUpdate }) => 
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? '처리 중...' : '예산 수정'}
+            {isSubmitting ? '처리 중...' : '완료'}
           </button>
         </div>
       </div>

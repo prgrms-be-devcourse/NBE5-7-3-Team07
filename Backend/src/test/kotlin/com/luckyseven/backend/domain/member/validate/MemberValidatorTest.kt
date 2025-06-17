@@ -100,25 +100,25 @@ class MemberValidatorTest {
     }
     @Test
     @DisplayName("이메일이 중복되지 않으면 예외가 발생하지 않는다.")
-    fun `checkDuplicateEmail 성공`(){
-        //given
-        val email = "new@example().com"
-        //repository의 findByEmail이 null을 반환하도록 설정
-        every{memberRepository.findByEmail(email)} returns null
-        //when & then
+    fun `checkDuplicateEmail 성공`() {
+        // given
+        val email = "new@example.com"
+        every { memberRepository.existsByEmail(email) } returns false
+
+        // when & then
         assertDoesNotThrow { memberValidator.checkDuplicateEmail(email) }
-        verify(exactly = 1){memberRepository.findByEmail(email)}
+        verify(exactly = 1) { memberRepository.existsByEmail(email) }
     }
+
     @Test
     @DisplayName("이메일이 중복되면 MEMBER_EMAIL_DUPLICATE 예외가 발생한다")
-    fun `checkDuplicateEmail 실패`(){
-        //given
+    fun `checkDuplicateEmail 실패`() {
+        // given
         val email = "duplicate@example.com"
-        val dummyMember = Member(1L,email,"password","nickname")
+        every { memberRepository.existsByEmail(email) } returns true
 
-        every{ memberRepository.findByEmail(email)} returns dummyMember
-
-        val exception = assertThrows<CustomLogicException>{
+        // when & then
+        val exception = assertThrows<CustomLogicException> {
             memberValidator.checkDuplicateEmail(email)
         }
         exception.exceptionCode shouldBe ExceptionCode.MEMBER_EMAIL_DUPLICATE
@@ -126,27 +126,22 @@ class MemberValidatorTest {
 
     @Test
     @DisplayName("닉네임이 중복되지 않으면 예외가 발생하지 않는다.")
-    fun `checkDuplicateNickName 성공`(){
-        //given
+    fun `checkDuplicateNickName 성공`() {
+        // given
         val nickname = "new_user"
-        every{
-            memberRepository.findByNickname(nickname)
-        }returns null
-        //when  & then
-        assertDoesNotThrow{
-            memberValidator.checkDuplicateNickName(nickname)
-        }
-        verify(exactly = 1){
-            memberRepository.findByNickname(nickname)
-        }
+        every { memberRepository.existsByNickname(nickname) } returns false
+
+        // when  & then
+        assertDoesNotThrow { memberValidator.checkDuplicateNickName(nickname) }
+        verify(exactly = 1) { memberRepository.existsByNickname(nickname) }
     }
+
     @Test
     @DisplayName("닉네임이 중복되면 MEMBER_NICKNAME_DUPLICATE 예외가 발생한다.")
-    fun `checkDuplicateNickName 실패`(){
-        //given
+    fun `checkDuplicateNickName 실패`() {
+        // given
         val nickname = "duplicate_user"
-        val dummyMember = Member(1L,"email@example","password",nickname)
-        every{memberRepository.findByNickname(nickname)} returns dummyMember
+        every { memberRepository.existsByNickname(nickname) } returns true
 
         // when & then
         val exception = assertThrows<CustomLogicException> {
@@ -154,5 +149,4 @@ class MemberValidatorTest {
         }
         exception.exceptionCode shouldBe ExceptionCode.MEMBER_NICKNAME_DUPLICATE
     }
-
 }
