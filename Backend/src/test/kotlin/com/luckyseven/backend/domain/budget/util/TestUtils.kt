@@ -7,6 +7,7 @@ import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.service.utill.MemberDetails
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.entity.TeamMember
+import com.luckyseven.backend.domain.team.enums.TeamStatus
 import io.mockk.every
 import io.mockk.mockk
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -119,6 +120,8 @@ object TestUtils {
             "user1",
             "lucky",
             "abcd1234",
+            TeamStatus.ACTIVE,
+            LocalDateTime.now(),
             genMember(),
             null,
             teamMembers
