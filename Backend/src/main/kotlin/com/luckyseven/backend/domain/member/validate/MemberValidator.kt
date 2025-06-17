@@ -46,14 +46,14 @@ class MemberValidator(
     }
     
     fun checkDuplicateEmail(email: String) {
-        memberRepository.findByEmail(email)?.let{
-            foundMember -> throw CustomLogicException(ExceptionCode.MEMBER_EMAIL_DUPLICATE, foundMember.email)
+        if (memberRepository.existsByEmail(email)) {
+            throw CustomLogicException(ExceptionCode.MEMBER_EMAIL_DUPLICATE, email)
         }
     }
     
     fun checkDuplicateNickName(nickname: String) {
-        memberRepository.findByNickname(nickname)?.let{
-            foundMember -> throw CustomLogicException(ExceptionCode.MEMBER_NICKNAME_DUPLICATE, foundMember.nickname)
+        if (memberRepository.existsByNickname(nickname)) {
+            throw CustomLogicException(ExceptionCode.MEMBER_NICKNAME_DUPLICATE, nickname)
         }
     }
 } 
