@@ -87,10 +87,9 @@ class JwtTokenizer(
         val refreshToken = ResponseCookie.from("refreshToken", tokenValue)
             .httpOnly(true)
             .secure(true)
-            .sameSite("Lax")
+            .sameSite("None")
             .path("/")
             .maxAge(expirationTime)
-            .domain("localhost")
             .build()
         
         logger.info("Setting Cookie - Name: {}, Value: {}", refreshToken.name, refreshToken.value)
