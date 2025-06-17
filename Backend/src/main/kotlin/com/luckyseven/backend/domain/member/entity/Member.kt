@@ -8,7 +8,10 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "member")
+@Table(name = "member", indexes = [
+    Index(name = "idx_member_email", columnList = "email"),
+    Index(name = "idx_member_nickname", columnList = "nickname")
+])
 class Member(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
