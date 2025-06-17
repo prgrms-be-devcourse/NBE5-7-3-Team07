@@ -137,8 +137,8 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
           <option value="BRL">BRL - 브라질 헤알</option>
         </select>
         
+        <label>환율 적용 여부</label>
         <div className="toggle-buttons">
-          <label>환율 적용 여부</label>
           <button 
             className={isExchanged ? 'active' : ''} 
             onClick={() => setIsExchanged(true)}
@@ -173,7 +173,7 @@ const SetBudgetDialog = ({ teamId, closeDialog, onBudgetUpdate }) => {
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? '처리 중...' : '예산 설정'}
+            {isSubmitting ? '처리 중...' : '완료'}
           </button>
         </div>
       </div>
