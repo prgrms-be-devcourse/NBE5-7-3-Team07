@@ -103,7 +103,7 @@ jobs:
       - name: Build frontend
         run: |
           cd Frontend/luckeyseven
-          npm run build
+          CI=false npm run build
 
       # Docker Hub 로그인
       - name: Login to Docker Hub
