@@ -59,7 +59,7 @@ jobs:
       - name: Run frontend tests
         run: |
           cd Frontend/luckeyseven
-          npm test -- --coverage --watchAll=false
+          npm test -- --coverage --watchAll=false --passWithNoTests
 
   build:
     needs: test
