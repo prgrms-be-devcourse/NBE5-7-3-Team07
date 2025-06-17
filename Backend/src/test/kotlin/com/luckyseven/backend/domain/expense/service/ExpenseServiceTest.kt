@@ -13,6 +13,7 @@ import com.luckyseven.backend.domain.expense.util.ExpenseTestUtils
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.repository.MemberRepository
 import com.luckyseven.backend.domain.settlement.app.SettlementService
+import com.luckyseven.backend.domain.team.cache.TeamDashboardCacheService
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.repository.TeamRepository
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
@@ -52,6 +53,9 @@ internal class ExpenseServiceTest {
 
     @InjectMockKs
     private lateinit var expenseService: ExpenseService
+
+    @MockK
+    private lateinit var teamDashboardCacheService: TeamDashboardCacheService
 
     private lateinit var team: Team
     private lateinit var budget: Budget
@@ -100,6 +104,7 @@ internal class ExpenseServiceTest {
         budget.setTeam(team)
 
         justRun { cacheEvictService.evictByPrefix(any(), any()) }
+        justRun { teamDashboardCacheService.evictTeamDashboardCache(any()) }
     }
 
     @Nested
