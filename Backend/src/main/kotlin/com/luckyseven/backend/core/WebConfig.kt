@@ -8,7 +8,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
-@Configuration
+
 class WebConfig : WebMvcConfigurer {
     
     override fun addInterceptors(registry: InterceptorRegistry) {
@@ -18,7 +18,7 @@ class WebConfig : WebMvcConfigurer {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration().apply {
-            addAllowedOrigin("*") // 허용할 Origin
+            addAllowedOrigin("http://localhost:3000") // 허용할 Origin
             addAllowedMethod("*") // 모든 HTTP 메서드 허용
             addAllowedHeader("*") // 모든 헤더 허용
             addExposedHeader("Authorization")
