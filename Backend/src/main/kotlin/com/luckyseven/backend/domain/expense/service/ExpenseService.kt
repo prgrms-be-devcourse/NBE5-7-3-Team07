@@ -10,6 +10,7 @@ import com.luckyseven.backend.domain.expense.repository.ExpenseRepository
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.repository.MemberRepository
 import com.luckyseven.backend.domain.settlement.app.SettlementService
+import com.luckyseven.backend.domain.team.cache.TeamDashboardCacheService
 import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.repository.TeamRepository
 import com.luckyseven.backend.sharedkernel.dto.PageResponse
@@ -30,7 +31,8 @@ class ExpenseService(
     private val expenseRepository: ExpenseRepository,
     private val teamRepository: TeamRepository,
     private val memberRepository: MemberRepository,
-    private val cacheEvictService: CacheEvictService
+    private val cacheEvictService: CacheEvictService,
+    private val teamDashboardCacheService: TeamDashboardCacheService
 ) {
 
     companion object {
@@ -148,6 +150,7 @@ class ExpenseService(
     private fun evictCache(teamId: Long) {
         val cachePrefix = String.format(CACHE_PREFIX_TEMPLATE, teamId)
         cacheEvictService.evictByPrefix("recentExpenses", cachePrefix)
+        teamDashboardCacheService.evictTeamDashboardCache(teamId)
     }
 
     private fun findExpenseWithPayer(expenseId: Long): Expense =
