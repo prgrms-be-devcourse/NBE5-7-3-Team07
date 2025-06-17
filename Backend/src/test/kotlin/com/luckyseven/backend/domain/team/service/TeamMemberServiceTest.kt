@@ -1,4 +1,4 @@
-package domain.team.service
+package com.luckyseven.backend.domain.team.service
 
 import com.luckyseven.backend.domain.member.entity.Member
 import com.luckyseven.backend.domain.member.repository.MemberRepository
@@ -7,7 +7,6 @@ import com.luckyseven.backend.domain.team.entity.Team
 import com.luckyseven.backend.domain.team.entity.TeamMember
 import com.luckyseven.backend.domain.team.repository.TeamMemberRepository
 import com.luckyseven.backend.domain.team.repository.TeamRepository
-import com.luckyseven.backend.domain.team.service.TeamMemberService
 import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import io.kotest.assertions.assertSoftly
@@ -167,7 +166,8 @@ class TeamMemberServiceTest : FunSpec({
         val teamId = 1L
         val teamMemberId = 2L
         val nonExistentMemberId = 999L
-        val invalidMemberDetails = MemberDetails(nonExistentMemberId, "password", "invalid@example.com", "Invalid")
+        val invalidMemberDetails =
+            MemberDetails(nonExistentMemberId, "password", "invalid@example.com", "Invalid")
 
         every { memberRepository.findById(nonExistentMemberId) } returns Optional.empty()
 
@@ -269,7 +269,9 @@ class TeamMemberServiceTest : FunSpec({
 
         every { memberRepository.findById(leader.id!!) } returns Optional.of(leader)
         every { teamRepository.findById(teamId) } returns Optional.of(team)
-        every { teamMemberRepository.findById(leaderTeamMemberId) } returns Optional.of(leaderTeamMember)
+        every { teamMemberRepository.findById(leaderTeamMemberId) } returns Optional.of(
+            leaderTeamMember
+        )
 
         // When/Then
         val exception = shouldThrow<CustomLogicException> {
