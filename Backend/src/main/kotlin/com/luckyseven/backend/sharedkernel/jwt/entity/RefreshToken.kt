@@ -13,9 +13,12 @@ class RefreshToken(
    @Id
    @GeneratedValue(strategy = GenerationType.IDENTITY)
    val id: Long? = null,
+
    val userId: Long,
+
    @Column(length = 2000)
    val tokenValue: String,
+
    val issuedAt: Instant = Instant.now(),
    val expiresAt: Instant = Instant.now().plusMillis(JwtTokenizer.REFRESH_TOKEN_EXPIRE)
 )

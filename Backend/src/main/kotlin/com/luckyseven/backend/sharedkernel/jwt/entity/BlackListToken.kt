@@ -12,7 +12,8 @@ import java.time.Instant
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-    
+
+    @Column(length = 2000)
     val tokenValue: String,
     
     val expirationTime: Instant
