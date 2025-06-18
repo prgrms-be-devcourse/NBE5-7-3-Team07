@@ -42,13 +42,13 @@ class JwtTokenizer(
     fun reissueTokenPair(response: HttpServletResponse, memberDetails: MemberDetails): String {
         val accessToken = createToken(
             memberDetails,
-            ACCESS_TOKEN_EXPIRE,
+            ACCESS_TOKEN_EXPIRE/1000,
             getSigningKey(accessSecret)
         )
 
         val newRefreshTokenValue = createToken(
             memberDetails,
-            REFRESH_TOKEN_EXPIRE,
+            REFRESH_TOKEN_EXPIRE/1000,
             getSigningKey(refreshSecret)
         )
 
@@ -88,6 +88,7 @@ class JwtTokenizer(
             .httpOnly(true)
             .secure(true)
             .sameSite("None")
+            .domain(".travelexpensemanager.kro.kr")
             .path("/")
             .maxAge(expirationTime)
             .build()
