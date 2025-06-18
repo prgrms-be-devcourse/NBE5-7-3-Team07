@@ -12,6 +12,7 @@ import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.transaction.Transactional
+import org.hibernate.type.TrueFalseConverter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseCookie
@@ -86,7 +87,7 @@ class JwtTokenizer(
     ) {
         val maxAgeSec = expirationTime / 1000
         val refreshToken = ResponseCookie.from("refreshToken", tokenValue)
-            .httpOnly(false)
+            .httpOnly(true)
             .secure(false)
             .sameSite("Lax")
             .domain(".travelexpensemanager.kro.kr")
