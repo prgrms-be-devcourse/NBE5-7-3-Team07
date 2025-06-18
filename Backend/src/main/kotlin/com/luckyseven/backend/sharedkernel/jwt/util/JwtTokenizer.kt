@@ -89,7 +89,7 @@ class JwtTokenizer(
         val refreshToken = ResponseCookie.from("refreshToken", tokenValue)
             .httpOnly(true)
             .secure(false)
-            .sameSite("Lax")
+            .sameSite("None")
             .domain(".travelexpensemanager.kro.kr")
             .path("/")
             .maxAge(maxAgeSec)
