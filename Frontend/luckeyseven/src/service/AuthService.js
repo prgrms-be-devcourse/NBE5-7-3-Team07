@@ -162,6 +162,13 @@ export const login = async (req) => {
         console.log("로그인 성공, 데이터 파싱 시작");
         console.log("response.data 내용:", JSON.stringify(response.data, null, 2));
         
+        // 로그인 후 쿠키 상태 확인
+        console.log("=== 로그인 후 쿠키 상태 ===");
+        console.log("전체 쿠키:", document.cookie);
+        const cookies = document.cookie.split(';');
+        const refreshTokenCookie = cookies.find(cookie => cookie.trim().startsWith('refreshToken='));
+        console.log("refreshToken 쿠키:", refreshTokenCookie ? refreshTokenCookie.trim() : "없음");
+        
         // 헤더에서 토큰 추출
         const accessToken = response.headers?.authorization?.replace('Bearer ', '') ||
                           response.headers?.Authorization?.replace('Bearer ', '') ||

@@ -87,8 +87,8 @@ class JwtTokenizer(
         val maxAgeSec = expirationTime / 1000
         val refreshToken = ResponseCookie.from("refreshToken", tokenValue)
             .httpOnly(false)
-            .secure(true)
-            .sameSite("None")
+            .secure(false)
+            .sameSite("Lax")
             .domain(".travelexpensemanager.kro.kr")
             .path("/")
             .maxAge(maxAgeSec)
