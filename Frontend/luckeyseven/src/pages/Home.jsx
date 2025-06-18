@@ -37,18 +37,24 @@ export default function Home() {
     try {
       const result = await logout();
       if (result.success) {
-        // 서버 로그아웃 성공 또는 실패해도 클라이언트 측 로그아웃은 완료
-        navigate("/setup-team");
+        // 히스토리를 조작해서 뒤로가기 방지
+        window.history.replaceState(null, '', '/login');
+        navigate("/login", { replace: true });
+        
+        // 추가 보안: 뒤로가기 이벤트 리스너 추가
+        window.addEventListener('popstate', () => {
+          navigate("/login", { replace: true });
+        });
       } else {
         console.warn("서버 로그아웃 실패, 클라이언트 측 로그아웃은 완료됨");
-        // 클라이언트 측은 로그아웃되었으므로 로그인 페이지로 이동
-        navigate("/login");
+        window.history.replaceState(null, '', '/login');
+        navigate("/login", { replace: true });
       }
     } catch (err) {
       console.error("로그아웃 처리 중 예외 발생:", err);
       setError("로그아웃 중 오류가 발생했지만, 로그인 페이지로 이동합니다.");
-      // 오류가 발생해도 로그인 페이지로 이동
-      navigate("/login");
+      window.history.replaceState(null, '', '/login');
+      navigate("/login", { replace: true });
     }
   };
 

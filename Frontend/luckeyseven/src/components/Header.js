@@ -10,9 +10,18 @@ const Header = () => {
     const handleLogout = async () => {
         try {
             await logout();
-            navigate("/login");
+            // 히스토리를 조작해서 뒤로가기 방지
+            window.history.replaceState(null, '', '/login');
+            navigate("/login", { replace: true });
+            
+            // 추가 보안: 뒤로가기 이벤트 리스너 추가
+            window.addEventListener('popstate', () => {
+                navigate("/login", { replace: true });
+            });
         } catch (err) {
             setError("로그아웃 중 오류가 발생했습니다.");
+            window.history.replaceState(null, '', '/login');
+            navigate("/login", { replace: true });
         }
     };
     const isTeamSetup = location.pathname === "/team-setup";

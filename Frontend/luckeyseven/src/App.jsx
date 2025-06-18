@@ -25,15 +25,93 @@ import {
   SettlementAggregationPage
 } from "./pages/Settlement/SettlementAggregationPage";
 
-// 보호된 라우트 컴포넌트
-const ProtectedRoute = ({children}) => {
-  const user = getCurrentUser();
+// 강화된 보호된 라우트 컴포넌트
+const ProtectedRoute = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = React.useState(null);
 
-  if (!user) {
-    // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
-    return <Navigate to="/login" replace/>;
+  React.useEffect(() => {
+    const checkAuth = () => {
+      console.log("=== ProtectedRoute 인증 확인 시작 ===");
+      
+      const user = getCurrentUser();
+      const token = localStorage.getItem('accessToken');
+      
+      console.log("사용자 정보:", user);
+      console.log("토큰 존재 여부:", !!token);
+      console.log("토큰 미리보기:", token ? token.substring(0, 20) + "..." : "없음");
+      
+      // 사용자 정보 OR 토큰 중 하나라도 있으면 인증된 것으로 판단 (좀 더 관대하게)
+      const isAuth = !!(user || token);
+      console.log("인증 결과:", isAuth);
+      
+      setIsAuthenticated(isAuth);
+      
+      if (!user && !token) {
+        console.log("인증 실패: 로그인 페이지로 리다이렉트 준비");
+        // 인증되지 않은 경우에만 히스토리 조작 (현재 경로가 로그인이 아닌 경우)
+        if (window.location.pathname !== '/login') {
+          window.history.replaceState(null, '', '/login');
+        }
+      }
+      
+      console.log("=== ProtectedRoute 인증 확인 완료 ===");
+    };
+
+    // 즉시 확인 후 짧은 지연으로 재확인
+    checkAuth();
+    const timer = setTimeout(checkAuth, 200);
+    
+    return () => clearTimeout(timer);
+
+    // 로그아웃 후 뒤로가기 시도를 감지하는 이벤트 리스너
+    const handlePopState = () => {
+      const user = getCurrentUser();
+      const token = localStorage.getItem('accessToken');
+      
+      if (!user || !token) {
+        // 인증이 없으면 로그인 페이지로 강제 이동
+        window.history.replaceState(null, '', '/login');
+        window.location.href = '/login';
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    
+    // Storage 이벤트 리스너 (다른 탭에서 로그아웃한 경우 감지)
+    const handleStorageChange = (e) => {
+      if (e.key === 'accessToken' && !e.newValue) {
+        // 토큰이 삭제된 경우 (로그아웃)
+        window.history.replaceState(null, '', '/login');
+        window.location.href = '/login';
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // 로딩 중일 때
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">인증 확인 중...</p>
+        </div>
+      </div>
+    );
   }
 
+  // 인증되지 않은 경우 로그인 페이지로 리다이렉트
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // 인증된 경우 children 렌더링
   return children;
 };
 
@@ -300,7 +378,11 @@ function App() {
             <Route path="/email-verification-handler"
                    element={<EmailVerificationHandler/>}/>
             <Route path="/email-verify" element={<EmailRedirect/>}/>
-            <Route path="/TeamDashBoard" element={<TeamDashBoard/>}/>
+            <Route path="/TeamDashBoard" element={
+              <ProtectedRoute>
+                <TeamDashBoard/>
+              </ProtectedRoute>
+            }/>
             <Route
                 path="/"
                 element={
@@ -309,7 +391,11 @@ function App() {
                   </ProtectedRoute>
                 }
             />
-            <Route path="/team-setup" element={<TeamSetup/>}/>
+            <Route path="/team-setup" element={
+              <ProtectedRoute>
+                <TeamSetup/>
+              </ProtectedRoute>
+            }/>
 
             {/* Settlement 관련 라우트 */}
             <Route
