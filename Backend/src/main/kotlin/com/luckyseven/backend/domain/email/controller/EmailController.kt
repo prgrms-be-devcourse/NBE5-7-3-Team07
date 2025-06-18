@@ -34,7 +34,7 @@ class EmailController(
         logger.debug("회원가입 요청 받음 {}", req.email)
         
         val token = verificationService.generateAndSaveToken(email)
-        val link = "http://localhost:3000/email-verify?token=$token"
+        val link = "http://travelexpensemanager.kro.kr/email-verify?token=$token"
         
         val ctx = Context()
         ctx.setVariable("email", email)
