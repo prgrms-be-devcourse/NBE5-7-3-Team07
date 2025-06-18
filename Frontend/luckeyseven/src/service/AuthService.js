@@ -281,39 +281,27 @@ export const logout = async() => {
         console.log("- currentUser:", currentUser);
         console.log("- Authorization 헤더:", axios.defaults.headers.common['Authorization'] || "없음");
         
-        try {
-                    console.log("=== 로그아웃 API 호출 시작 ===");
+                // 서버 환경의 필터 문제로 인해 클라이언트에서만 로그아웃 처리
+        console.log("=== 서버 환경 문제로 클라이언트 측 로그아웃만 실행 ===");
         console.log("쿠키 상태 (httpOnly 제외):", document.cookie);
-        console.log("httpOnly 쿠키는 자동으로 전송됩니다.");
-            
-            // 서버 환경 문제로 인해 임시로 publicApi 사용 (쿠키만)
+        console.log("⚠️ 서버 API 호출 없이 클라이언트 상태만 정리합니다.");
+        
+        // TODO: 백엔드 JwtAuthenticationFilter 수정 후 서버 API 호출 복원 필요
+        
+        try {
+            // 임시로 서버 API 호출 주석 처리
+            /*
             const response = await publicApi.post("/api/users/logout", {}, {
-                withCredentials: true,  // refreshToken 쿠키만 전송
-                headers: {
-                    'Content-Type': 'application/json',
-                }
+                withCredentials: true,
+                headers: { 'Content-Type': 'application/json' }
             });
+            console.log("로그아웃 API 성공:", response.status);
+            */
             
-            console.log("로그아웃 API 성공:", response.status, response.data);
-            console.log("로그아웃 응답 헤더:", JSON.stringify(response.headers));
-            
-            // 백엔드에서 Authorization 헤더가 빈 문자열로 오면 토큰 무효화 처리
-            const authHeader = response.headers?.authorization || response.headers?.['authorization'];
-            if (authHeader === "" || authHeader === null) {
-                console.log("✅ 백엔드에서 Authorization 헤더 무효화 신호 수신");
-                console.log("클라이언트 측 토큰 정리 시작...");
-                
-                // 즉시 토큰 제거
-                TokenManager.removeToken();
-                UserManager.removeUser();
-                
-                console.log("서버 지시에 따른 토큰 정리 완료");
-            }
+            console.log("클라이언트 측 로그아웃 처리 시작...");
         } catch (apiError) {
-            console.error("로그아웃 API 오류:", 
-                apiError.response?.status, 
-                apiError.response?.data || apiError.message);
-            console.error("로그아웃 API 전체 오류:", apiError);
+            // 에러 발생 시에도 클라이언트 정리는 수행
+            console.warn("서버 로그아웃 실패하지만 클라이언트 정리는 계속 진행:", apiError.message);
         }
         
         // 최종적으로 클라이언트 상태 정리 (혹시 위에서 처리되지 않았을 경우 안전장치)
@@ -344,9 +332,20 @@ export const logout = async() => {
     }
 }
 
-// 토큰 갱신 요청 함수 추가
+// 토큰 갱신 요청 함수 (서버 환경 문제로 임시 비활성화)
 export const refreshAccessToken = async () => {
     try {
+        console.log("⚠️ 서버 환경 문제로 토큰 갱신 기능 임시 비활성화");
+        console.log("사용자에게 재로그인 안내 필요");
+        
+        // 서버 환경의 JwtAuthenticationFilter 문제로 인해 임시 비활성화
+        return { 
+            success: false, 
+            error: "서버 환경 문제로 인해 토큰 갱신이 불가능합니다. 다시 로그인해주세요.",
+            requireReLogin: true 
+        };
+        
+        /* 백엔드 수정 후 복원 필요
         console.log("토큰 갱신 요청 시작");
         console.log("현재 인증 상태:");
         console.log("- currentUser:", currentUser);
@@ -375,6 +374,7 @@ export const refreshAccessToken = async () => {
                 data: response.data
             };
         }
+        */
     } catch (error) {
         console.error("토큰 갱신 실패:", error);
         
