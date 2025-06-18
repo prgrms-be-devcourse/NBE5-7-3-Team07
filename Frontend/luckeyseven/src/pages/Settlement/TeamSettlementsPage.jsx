@@ -752,13 +752,13 @@ export function TeamSettlementsPage() {
                                     <div>
                                       <h3 className="text-sm text-muted">결제자
                                         정보</h3>
-                                      <p className="mt-1 font-medium">{selectedSettlement.payerNickname
+                                      <p className="mt-1 font-medium">{selectedSettlement.payerNickName
                                           || "알 수 없음"}</p>
                                     </div>
                                     <div>
                                       <h3 className="text-sm text-muted">정산자
                                         정보</h3>
-                                      <p className="mt-1 font-medium">{selectedSettlement.settlerNickname
+                                      <p className="mt-1 font-medium">{selectedSettlement.settlerNickName
                                           || "알 수 없음"}</p>
                                     </div>
                                   </div>

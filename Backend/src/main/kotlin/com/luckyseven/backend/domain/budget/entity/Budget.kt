@@ -6,13 +6,14 @@ import com.luckyseven.backend.sharedkernel.exception.CustomLogicException
 import com.luckyseven.backend.sharedkernel.exception.ExceptionCode
 import jakarta.persistence.*
 import java.math.BigDecimal
-import java.math.MathContext
 import java.math.RoundingMode
 
 @Entity
-@Table(indexes = [
-    Index(name = "idx_budget_team", columnList = "team_id")
-])
+@Table(
+    indexes = [
+        Index(name = "idx_budget_team", columnList = "team_id")
+    ]
+)
 class Budget(
 
     @Id
@@ -102,7 +103,7 @@ class Budget(
 
     fun setForeignBalance() {
         if (avgExchangeRate != null) {
-            this.foreignBalance = totalAmount.divide(avgExchangeRate, SCALE, ROUNDING)
+            this.foreignBalance = balance.divide(avgExchangeRate, SCALE, ROUNDING)
         }
     }
 
