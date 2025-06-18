@@ -50,10 +50,13 @@ class ExpenseService(
 
         val expense = createAndSaveExpense(request, team, payer)
 
-        createSettlements(request, payer, expense)
+        val isForeign = request.paymentMethod == PaymentMethod.CASH
+        val amountInKrw = calculateAmountInKrw(request, budget)
+        val settlementRequest = toSettlementRequest(request, amountInKrw, isForeign)
+
+        createSettlements(settlementRequest, payer, expense)
 
         evictCache(teamId)
-
         return ExpenseMapper.toCreateExpenseResponse(expense, budget)
     }
 
@@ -125,6 +128,27 @@ class ExpenseService(
             throw CustomLogicException(ExceptionCode.TEAM_NOT_FOUND)
         }
     }
+
+    private fun calculateAmountInKrw(request: ExpenseRequest, budget: Budget): BigDecimal {
+        return if (request.paymentMethod == PaymentMethod.CASH) {
+            request.amount.multiply(budget.avgExchangeRate)
+        } else {
+            request.amount
+        }
+    }
+
+    private fun toSettlementRequest(
+        request: ExpenseRequest,
+        amountInKrw: BigDecimal,
+        isForeign: Boolean
+    ): ExpenseRequest {
+        return if (isForeign) {
+            request.copy(amount = amountInKrw)
+        } else {
+            request
+        }
+    }
+
 
     private fun adjustBudget(method: PaymentMethod, budget: Budget, delta: BigDecimal) {
         when {
