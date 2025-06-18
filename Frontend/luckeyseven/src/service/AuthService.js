@@ -281,27 +281,22 @@ export const logout = async() => {
         console.log("- currentUser:", currentUser);
         console.log("- Authorization 헤더:", axios.defaults.headers.common['Authorization'] || "없음");
         
-                // 서버 환경의 필터 문제로 인해 클라이언트에서만 로그아웃 처리
-        console.log("=== 서버 환경 문제로 클라이언트 측 로그아웃만 실행 ===");
+                // 서버 로그아웃 API 호출
+        console.log("=== 서버 로그아웃 API 호출 시작 ===");
         console.log("쿠키 상태 (httpOnly 제외):", document.cookie);
-        console.log("⚠️ 서버 API 호출 없이 클라이언트 상태만 정리합니다.");
-        
-        // TODO: 백엔드 JwtAuthenticationFilter 수정 후 서버 API 호출 복원 필요
         
         try {
-            // 임시로 서버 API 호출 주석 처리
-            /*
+            console.log("로그아웃 API 호출 중...");
             const response = await publicApi.post("/api/users/logout", {}, {
                 withCredentials: true,
                 headers: { 'Content-Type': 'application/json' }
             });
-            console.log("로그아웃 API 성공:", response.status);
-            */
-            
-            console.log("클라이언트 측 로그아웃 처리 시작...");
+            console.log("✅ 로그아웃 API 성공:", response.status);
+            console.log("서버에서 refreshToken 쿠키 삭제됨");
         } catch (apiError) {
             // 에러 발생 시에도 클라이언트 정리는 수행
-            console.warn("서버 로그아웃 실패하지만 클라이언트 정리는 계속 진행:", apiError.message);
+            console.warn("❌ 서버 로그아웃 실패하지만 클라이언트 정리는 계속 진행:", apiError.message);
+            console.error("로그아웃 API 오류:", apiError.response?.status, apiError.response?.data);
         }
         
         // 최종적으로 클라이언트 상태 정리 (혹시 위에서 처리되지 않았을 경우 안전장치)
@@ -332,20 +327,9 @@ export const logout = async() => {
     }
 }
 
-// 토큰 갱신 요청 함수 (서버 환경 문제로 임시 비활성화)
+// 토큰 갱신 요청 함수
 export const refreshAccessToken = async () => {
     try {
-        console.log("⚠️ 서버 환경 문제로 토큰 갱신 기능 임시 비활성화");
-        console.log("사용자에게 재로그인 안내 필요");
-        
-        // 서버 환경의 JwtAuthenticationFilter 문제로 인해 임시 비활성화
-        return { 
-            success: false, 
-            error: "서버 환경 문제로 인해 토큰 갱신이 불가능합니다. 다시 로그인해주세요.",
-            requireReLogin: true 
-        };
-        
-        /* 백엔드 수정 후 복원 필요
         console.log("토큰 갱신 요청 시작");
         console.log("현재 인증 상태:");
         console.log("- currentUser:", currentUser);
@@ -374,7 +358,6 @@ export const refreshAccessToken = async () => {
                 data: response.data
             };
         }
-        */
     } catch (error) {
         console.error("토큰 갱신 실패:", error);
         
