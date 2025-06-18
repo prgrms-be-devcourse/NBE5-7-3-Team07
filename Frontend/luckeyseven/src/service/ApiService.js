@@ -63,6 +63,12 @@ privateApi.interceptors.request.use((config) => {
   console.log("요청 헤더:", JSON.stringify(config.headers));
   console.log("axios 기본 헤더:", JSON.stringify(axios.defaults.headers.common));
   console.log("쿠키 전송 여부(withCredentials):", config.withCredentials);
+  
+  // 쿠키 상태도 확인 (refresh 관련 API 호출 시)
+  if (config.url && config.url.includes('refresh')) {
+    console.log("=== Refresh API 호출 시 쿠키 확인 ===");
+    console.log("현재 쿠키:", document.cookie);
+  }
 
   // Authorization 헤더에 토큰 삽입
   const token = axios.defaults.headers.common['Authorization']?.split(' ')[1];
@@ -125,6 +131,22 @@ privateApi.interceptors.response.use(
 // refreshToken 재발급 요청
 export async function postRefreshToken() {
   console.log("refreshToken 재발급 요청 시작");
+  
+  // 현재 쿠키 상태 확인
+  console.log("=== 쿠키 상태 확인 ===");
+  console.log("전체 쿠키:", document.cookie);
+  
+  // refreshToken 쿠키 찾기
+  const cookies = document.cookie.split(';');
+  const refreshTokenCookie = cookies.find(cookie => cookie.trim().startsWith('refreshToken='));
+  console.log("refreshToken 쿠키:", refreshTokenCookie ? refreshTokenCookie.trim() : "없음");
+  
+  // 모든 쿠키 개별 출력
+  console.log("모든 쿠키 목록:");
+  cookies.forEach((cookie, index) => {
+    console.log(`${index + 1}. ${cookie.trim()}`);
+  });
+  
   const token = axios.defaults.headers.common['Authorization']?.split(' ')[1];
   try {
     const response = await privateApi.post(
