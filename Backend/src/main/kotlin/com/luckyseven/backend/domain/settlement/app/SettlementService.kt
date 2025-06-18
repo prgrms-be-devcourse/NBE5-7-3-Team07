@@ -129,7 +129,7 @@ class SettlementService(
 
     @Transactional(readOnly = true)
     fun getSettlementsAggregation(teamId: Long): SettlementAggregationResponse {
-        val memberIds = teamMemberService.getTeamMemberByTeamId(teamId).map { it -> it.id }
+        val memberIds = teamMemberService.getTeamMemberByTeamId(teamId).map { it -> it.memberId }
         val amountSum = Array(memberIds.size) { Array(memberIds.size) { BigDecimal.ZERO } }
         val memberIndexMap = memberIds.withIndex().associate { it.value to it.index }
         settlementRepository.findAllByTeamId(teamId).use { stream ->
