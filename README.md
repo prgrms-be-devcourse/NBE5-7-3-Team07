@@ -187,11 +187,7 @@
 ###  시스템 아키텍처
 
 ![시스템 아키텍쳐](![image (7)](https://github.com/user-attachments/assets/933e1319-13e8-44bc-8746-4f614fde33c3)
-![image (7)](https://github.com/user-attachments/assets/933e1319-13e8-44bc-8746-4f614fde33c3)
-![image (7)](https://github.com/user-attachments/assets/933e1319-13e8-44bc-8746-4f614fde33c3)
-![image (7)](https://github.com/user-attachments/assets/933e1319-13e8-44bc-8746-4f614fde33c3)
-![image (7)](https://github.com/user-attachments/assets/933e1319-13e8-44bc-8746-4f614fde33c3)
-)
+
 
 
 ### ERD
