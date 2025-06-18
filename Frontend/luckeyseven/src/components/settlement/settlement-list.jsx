@@ -44,8 +44,8 @@ export function SettlementList({
                   <div className="flex justify-between items-start">
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-medium">정산 #{String(
-                            settlement.id).substring(0, 8)}</h3>
+                        <h3 className="font-medium">{String(
+                            settlement.id).substring(0, 8)}번 정산내역</h3>
                         <StatusBadge isSettled={settlement.isSettled}/>
                       </div>
 
