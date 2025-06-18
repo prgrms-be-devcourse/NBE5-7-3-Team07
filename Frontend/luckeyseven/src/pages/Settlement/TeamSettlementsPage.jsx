@@ -214,6 +214,7 @@ export function TeamSettlementsPage() {
       const newAggregation = await getSettlementAggregation(teamId);
       setAggregationData(newAggregation);
 
+      // 토스트 메시지는 데이터 업데이트 후에 표시하고, 토스트가 사라질 때 추가 리로드를 하지 않음
       addToast({
         title: "정산 완료",
         description: `${getUserNickname(fromMemberId)}님과 ${getUserNickname(
@@ -367,7 +368,7 @@ export function TeamSettlementsPage() {
     }
 
     fetchData()
-  }, [teamId, page, size, sort, location.search, addToast])
+  }, [teamId, page, size, sort, location.search]) // addToast 의존성 제거
 
   // 화면 모드가 변경될 때마다 처리
   useEffect(() => {
@@ -866,3 +867,4 @@ export function TeamSettlementsPage() {
       </div>
   )
 }
+
