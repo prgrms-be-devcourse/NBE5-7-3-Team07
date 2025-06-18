@@ -90,7 +90,7 @@ const BudgetBreakdown = ({
             <span>Total Expenses:</span>
             <span>₩{Number(totalExpense ?? 0).toLocaleString()}</span>
           </div>
-          <div className={styles.budgetStatRow}>S
+          <div className={styles.budgetStatRow}>
             <span>Remaining Budget:</span>
             <span>₩{Number(balance ?? 0).toLocaleString()}</span>
           </div>
