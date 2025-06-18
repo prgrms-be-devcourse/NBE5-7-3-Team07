@@ -285,12 +285,11 @@ export const logout = async() => {
             console.log("=== 로그아웃 API 호출 시작 ===");
             console.log("쿠키 상태:", document.cookie);
             
-            // 로그아웃은 publicApi 사용 (Authorization 헤더 없이)
-            const response = await publicApi.post("/api/users/logout", {}, {
-                withCredentials: true,  // refreshToken 쿠키만 전송
+            // 로그아웃은 privateApi 사용 (Authorization 헤더 + refreshToken 쿠키)
+            const response = await privateApi.post("/api/users/logout", {}, {
+                withCredentials: true,  // refreshToken 쿠키 전송
                 headers: {
                     'Content-Type': 'application/json',
-                    // Authorization 헤더는 제외
                 }
             });
             
