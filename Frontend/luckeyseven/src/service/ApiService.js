@@ -121,13 +121,35 @@ privateApi.interceptors.response.use(
       try {
         console.log("401 오류로 인한 토큰 재발급 시도");
         const response = await postRefreshToken();
-        const newAccessToken = response.data.accessToken;
+        
+        if (!response.data.accessToken) {
+          console.error('토큰 갱신 실패: accessToken이 응답에 없음');
+          // localStorage와 axios 헤더 정리
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('currentUser');
+          delete axios.defaults.headers.common['Authorization'];
+          window.location.href = "/login";
+          return Promise.reject(new Error('토큰 갱신 실패'));
+        }
 
+        const newAccessToken = response.data.accessToken;
+        console.log('새 토큰으로 요청 재시도:', newAccessToken.substring(0, 10) + "...");
+
+        // axios 기본 헤더와 원래 요청 헤더 모두 업데이트
         axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+        
         return axios(originalRequest);
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
+        console.error('토큰 갱신 실패:', refreshError);
+        console.log('토큰 갱신 실패로 인한 로그아웃 처리');
+        
+        // localStorage와 axios 헤더 정리
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('currentUser'); 
+        delete axios.defaults.headers.common['Authorization'];
+        
+        // 로그인 페이지로 리다이렉트
         window.location.href = "/login";
         return Promise.reject(refreshError);
       }

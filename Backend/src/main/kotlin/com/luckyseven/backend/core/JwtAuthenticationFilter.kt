@@ -36,7 +36,7 @@ class JwtAuthenticationFilter(
 
         val shouldSkip = path.startsWith("/api/users/") ||
                 path.startsWith("/api/email/") ||
-                path == "/api/refresh"
+                path.startsWith("/api/refresh")
 
         logger.error("=== FILTER DEBUG === shouldSkip: $shouldSkip")  // 긴급 디버깅
         return shouldSkip
