@@ -128,18 +128,25 @@ internal class ExpenseServiceTest {
 
             // when
             val response = expenseService.saveExpense(1L, request)
+            val expectedSettlementRequest = request.copy(
+                amount = request.amount.multiply(budget.avgExchangeRate)
+            )
 
             // then
             verify { expenseRepository.save(match { it.description == request.description }) }
             verify { cacheEvictService.evictByPrefix(any(), any()) }
             verify {
                 settlementService.createAllSettlements(
-                    request,
-                    payer,
-                    match { savedExpense ->
-                        savedExpense.description == request.description &&
-                                savedExpense.amount == request.amount &&
-                                savedExpense.payer.id == payer.id
+                    match { req ->
+                        // BigDecimal.compareTo 로 값만 비교 (스케일 무시)
+                        req.amount.compareTo(expectedSettlementRequest.amount) == 0 &&
+                                req.description == expectedSettlementRequest.description &&
+                                req.settlerId == expectedSettlementRequest.settlerId
+                    },
+                    eq(payer),
+                    match { exp ->
+                        exp.description == expectedSettlementRequest.description &&
+                                exp.amount.compareTo(expectedSettlementRequest.amount) == 0
                     }
                 )
             }
@@ -191,27 +198,39 @@ internal class ExpenseServiceTest {
         @Test
         @DisplayName("지출 등록 성공 및 정산 생성 호출")
         fun success_and_createSettlements() {
+            // given
             val request = ExpenseTestUtils.buildRequest(
                 description = "럭키비키즈 점심 식사",
                 amount = BigDecimal("50000.00"),
                 settlerIds = listOf(10L, 20L)
             )
-
             every { expenseRepository.save(any<Expense>()) } answers { firstArg() }
             every { teamRepository.findTeamWithBudget(1L) } returns team
             every { memberRepository.findByIdOrNull(1L) } returns payer
             justRun { settlementService.createAllSettlements(any(), any(), any()) }
 
+            // when
             val response = expenseService.saveExpense(1L, request)
 
+            // then
             verify { expenseRepository.save(any()) }
+            // 환율 적용(=avgExchangeRate이 1.00)이 반영된 expectedSettlementRequest
+            val expectedSettlementRequest = request.copy(
+                amount = request.amount.multiply(budget.avgExchangeRate)
+            )
             verify {
                 settlementService.createAllSettlements(
-                    request,
-                    payer,
+                    match { req ->
+                        // BigDecimal.compareTo 로 값만 비교
+                        req.amount.compareTo(expectedSettlementRequest.amount) == 0 &&
+                                req.description == expectedSettlementRequest.description &&
+                                req.settlerId == expectedSettlementRequest.settlerId
+                    },
+                    eq(payer),
                     match { savedExpense ->
                         savedExpense.description == request.description &&
-                                savedExpense.amount == request.amount &&
+                                // 엔티티에 저장된 원금(request.amount)과 비교할 때도 compareTo 사용
+                                savedExpense.amount.compareTo(request.amount) == 0 &&
                                 savedExpense.payer.id == payer.id
                     }
                 )
@@ -222,248 +241,249 @@ internal class ExpenseServiceTest {
             assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
             assertThat(response.balance).isEqualByComparingTo(expectedBalance)
         }
-    }
 
-    @Nested
-    @DisplayName("지출 조회 테스트")
-    inner class GetExpenseTests {
 
-        @Test
-        @DisplayName("지출 조회 성공")
-        fun success() {
-            val expense = Expense(
-                id = 1L,
-                description = "럭키비키즈 점심 식사",
-                amount = BigDecimal("50000.00"),
+        @Nested
+        @DisplayName("지출 조회 테스트")
+        inner class GetExpenseTests {
+
+            @Test
+            @DisplayName("지출 조회 성공")
+            fun success() {
+                val expense = Expense(
+                    id = 1L,
+                    description = "럭키비키즈 점심 식사",
+                    amount = BigDecimal("50000.00"),
+                    category = ExpenseCategory.MEAL,
+                    paymentMethod = PaymentMethod.CARD,
+                    payer = payer,
+                    team = team
+                )
+                every { expenseRepository.findByIdWithPayer(1L) } returns expense
+
+                val response = expenseService.getExpense(1L)
+
+                assertThat(response.description).isEqualTo(expense.description)
+                assertThat(response.amount).isEqualByComparingTo(expense.amount)
+                assertThat(response.category).isEqualTo(expense.category)
+                assertThat(response.paymentMethod).isEqualTo(expense.paymentMethod)
+                verify { expenseRepository.findByIdWithPayer(1L) }
+            }
+
+            @Test
+            @DisplayName("존재하지 않는 지출 조회 시 예외 발생")
+            fun notFound_throwsException() {
+                every { expenseRepository.findByIdWithPayer(999L) } returns null
+
+                val exception = assertThrows<CustomLogicException> {
+                    expenseService.getExpense(999L)
+                }
+                assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
+            }
+        }
+
+        @Nested
+        @DisplayName("지출 수정 테스트")
+        inner class UpdateExpenseTests {
+
+            @Test
+            @DisplayName("지출 금액 증가 수정 성공")
+            fun increaseAmountSuccess() {
+                val request = ExpenseUpdateRequest(
+                    description = "잘못 계산해서 수정한 럭키비키즈 점심 식사",
+                    amount = BigDecimal("70000.00"),
+                    category = ExpenseCategory.MEAL
+                )
+                val original = Expense(
+                    id = 1L,
+                    description = "원래 럭키비키즈 점심 식사",
+                    amount = BigDecimal("50000.00"),
+                    category = ExpenseCategory.MEAL,
+                    paymentMethod = PaymentMethod.CASH,
+                    payer = payer,
+                    team = team
+                )
+                every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
+
+                val response = expenseService.updateExpense(1L, request)
+
+                assertThat(original.description).isEqualTo(request.description)
+                assertThat(original.amount).isEqualByComparingTo(request.amount)
+                verify { cacheEvictService.evictByPrefix(any(), any()) }
+
+                val expectedDelta = request.amount!! - BigDecimal("50000.00")
+                val expectedBalance = BigDecimal("100000.00") - expectedDelta
+                assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
+                assertThat(response.balance).isEqualByComparingTo(expectedBalance)
+            }
+
+            @Test
+            @DisplayName("지출 금액 감소 수정 성공")
+            fun decreaseAmountSuccess() {
+                val request = ExpenseUpdateRequest(
+                    description = "업데이트된 점심 식사",
+                    amount = BigDecimal("30000.00"),
+                    category = ExpenseCategory.MEAL
+                )
+                val original = Expense(
+                    id = 1L,
+                    description = "원본 점심 식사",
+                    amount = BigDecimal("50000.00"),
+                    category = ExpenseCategory.MEAL,
+                    paymentMethod = PaymentMethod.CARD,
+                    payer = payer,
+                    team = team
+                )
+                every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
+
+                val response = expenseService.updateExpense(1L, request)
+
+                verify { cacheEvictService.evictByPrefix(any(), any()) }
+
+                val expectedDelta = request.amount!! - BigDecimal("50000.00")
+                val expectedBalance = BigDecimal("100000.00") - expectedDelta
+                assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
+                assertThat(response.balance).isEqualByComparingTo(expectedBalance)
+            }
+
+            @Test
+            @DisplayName("존재하지 않는 지출")
+            fun expenseNotFound_throwsException() {
+                every { expenseRepository.findWithTeamAndBudgetById(999L) } returns null
+                val request = ExpenseUpdateRequest(
+                    description = "없는 지출 수정",
+                    amount = BigDecimal("1000.00"),
+                    category = ExpenseCategory.MEAL
+                )
+
+                val exception = assertThrows<CustomLogicException> {
+                    expenseService.updateExpense(999L, request)
+                }
+                assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
+            }
+
+            @Test
+            @DisplayName("예산 부족으로 수정 실패")
+            fun insufficientBalance_throwsException() {
+                val request = ExpenseUpdateRequest(
+                    description = "너무 많이 먹었는데 예산보다 많은 지출 수정",
+                    amount = BigDecimal("200000.00"),
+                    category = ExpenseCategory.MEAL
+                )
+                val original = Expense(
+                    id = 1L,
+                    description = "럭키비키즈 원래 점심 식사",
+                    amount = BigDecimal("50000.00"),
+                    category = ExpenseCategory.MEAL,
+                    paymentMethod = PaymentMethod.CARD,
+                    payer = payer,
+                    team = team
+                )
+                every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
+
+                val exception = assertThrows<CustomLogicException> {
+                    expenseService.updateExpense(1L, request)
+                }
+                assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.INSUFFICIENT_BALANCE)
+            }
+        }
+
+        @Nested
+        @DisplayName("지출 삭제 테스트")
+        inner class DeleteExpenseTests {
+
+            @Test
+            @DisplayName("지출 삭제 성공")
+            fun success() {
+                val expense = Expense(
+                    id = 1L,
+                    description = "삭제할 지출",
+                    amount = BigDecimal("30000.00"),
+                    category = ExpenseCategory.MEAL,
+                    paymentMethod = PaymentMethod.CASH,
+                    payer = payer,
+                    team = team
+                )
+                every { expenseRepository.findWithTeamAndBudgetById(1L) } returns expense
+                justRun { expenseRepository.delete(expense) }
+
+                val response = expenseService.deleteExpense(1L)
+
+                val expectedBalance = BigDecimal("130000.00")
+                assertThat(team.budget?.balance).isEqualByComparingTo(expectedBalance)
+                assertThat(response.balance).isEqualByComparingTo(expectedBalance)
+
+                verify { expenseRepository.delete(expense) }
+                verify { cacheEvictService.evictByPrefix(any(), any()) }
+            }
+
+            @Test
+            @DisplayName("존재하지 않는 지출 삭제 시 예외 발생")
+            fun expenseNotFound_throwsException() {
+                every { expenseRepository.findWithTeamAndBudgetById(999L) } returns null
+
+                val exception = assertThrows<CustomLogicException> {
+                    expenseService.deleteExpense(999L)
+                }
+                assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
+            }
+        }
+
+        @Nested
+        @DisplayName("지출 리스트 조회 테스트")
+        inner class GetListExpenseTests {
+
+            @Test
+            @DisplayName("지출 리스트 정상 반환")
+            fun success() {
+                val pageable: Pageable = PageRequest.of(0, 10)
+                val responses = listOf(
+                    createExpense("점심 식사", BigDecimal("10000.00"), PaymentMethod.CASH),
+                    createExpense("저녁 식사", BigDecimal("15000.00"), PaymentMethod.CARD)
+                ).map { ExpenseMapper.toExpenseResponse(it) }
+                val page = PageImpl(responses, pageable, responses.size.toLong())
+
+                every { teamRepository.existsById(1L) } returns true
+                every { expenseRepository.findResponsesByTeamId(1L, pageable) } returns page
+
+                val result = expenseService.getExpenses(1L, pageable)
+
+                assertThat(result.content).hasSize(2)
+                assertThat(result.page).isEqualTo(0)
+                assertThat(result.size).isEqualTo(10)
+                assertThat(result.totalElements).isEqualTo(2)
+                assertThat(result.totalPages).isEqualTo(1)
+
+                val first = result.content[0]
+                assertThat(first.description).isEqualTo("점심 식사")
+                assertThat(first.amount).isEqualByComparingTo(BigDecimal("10000.00"))
+            }
+
+            @Test
+            @DisplayName("존재하지 않는 팀으로 조회 시 예외 발생")
+            fun teamNotFound() {
+                val pageable = PageRequest.of(0, 5)
+                every { teamRepository.existsById(999L) } returns false
+
+                val exception = assertThrows<CustomLogicException> {
+                    expenseService.getExpenses(999L, pageable)
+                }
+                assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.TEAM_NOT_FOUND)
+            }
+
+            private fun createExpense(
+                description: String,
+                amount: BigDecimal,
+                paymentMethod: PaymentMethod
+            ) = Expense(
+                id = null,
+                description = description,
+                amount = amount,
                 category = ExpenseCategory.MEAL,
-                paymentMethod = PaymentMethod.CARD,
+                paymentMethod = paymentMethod,
                 payer = payer,
                 team = team
             )
-            every { expenseRepository.findByIdWithPayer(1L) } returns expense
-
-            val response = expenseService.getExpense(1L)
-
-            assertThat(response.description).isEqualTo(expense.description)
-            assertThat(response.amount).isEqualByComparingTo(expense.amount)
-            assertThat(response.category).isEqualTo(expense.category)
-            assertThat(response.paymentMethod).isEqualTo(expense.paymentMethod)
-            verify { expenseRepository.findByIdWithPayer(1L) }
         }
-
-        @Test
-        @DisplayName("존재하지 않는 지출 조회 시 예외 발생")
-        fun notFound_throwsException() {
-            every { expenseRepository.findByIdWithPayer(999L) } returns null
-
-            val exception = assertThrows<CustomLogicException> {
-                expenseService.getExpense(999L)
-            }
-            assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
-        }
-    }
-
-    @Nested
-    @DisplayName("지출 수정 테스트")
-    inner class UpdateExpenseTests {
-
-        @Test
-        @DisplayName("지출 금액 증가 수정 성공")
-        fun increaseAmountSuccess() {
-            val request = ExpenseUpdateRequest(
-                description = "잘못 계산해서 수정한 럭키비키즈 점심 식사",
-                amount = BigDecimal("70000.00"),
-                category = ExpenseCategory.MEAL
-            )
-            val original = Expense(
-                id = 1L,
-                description = "원래 럭키비키즈 점심 식사",
-                amount = BigDecimal("50000.00"),
-                category = ExpenseCategory.MEAL,
-                paymentMethod = PaymentMethod.CASH,
-                payer = payer,
-                team = team
-            )
-            every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
-
-            val response = expenseService.updateExpense(1L, request)
-
-            assertThat(original.description).isEqualTo(request.description)
-            assertThat(original.amount).isEqualByComparingTo(request.amount)
-            verify { cacheEvictService.evictByPrefix(any(), any()) }
-
-            val expectedDelta = request.amount!! - BigDecimal("50000.00")
-            val expectedBalance = BigDecimal("100000.00") - expectedDelta
-            assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
-            assertThat(response.balance).isEqualByComparingTo(expectedBalance)
-        }
-
-        @Test
-        @DisplayName("지출 금액 감소 수정 성공")
-        fun decreaseAmountSuccess() {
-            val request = ExpenseUpdateRequest(
-                description = "업데이트된 점심 식사",
-                amount = BigDecimal("30000.00"),
-                category = ExpenseCategory.MEAL
-            )
-            val original = Expense(
-                id = 1L,
-                description = "원본 점심 식사",
-                amount = BigDecimal("50000.00"),
-                category = ExpenseCategory.MEAL,
-                paymentMethod = PaymentMethod.CARD,
-                payer = payer,
-                team = team
-            )
-            every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
-
-            val response = expenseService.updateExpense(1L, request)
-
-            verify { cacheEvictService.evictByPrefix(any(), any()) }
-
-            val expectedDelta = request.amount!! - BigDecimal("50000.00")
-            val expectedBalance = BigDecimal("100000.00") - expectedDelta
-            assertThat(budget.balance).isEqualByComparingTo(expectedBalance)
-            assertThat(response.balance).isEqualByComparingTo(expectedBalance)
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 지출")
-        fun expenseNotFound_throwsException() {
-            every { expenseRepository.findWithTeamAndBudgetById(999L) } returns null
-            val request = ExpenseUpdateRequest(
-                description = "없는 지출 수정",
-                amount = BigDecimal("1000.00"),
-                category = ExpenseCategory.MEAL
-            )
-
-            val exception = assertThrows<CustomLogicException> {
-                expenseService.updateExpense(999L, request)
-            }
-            assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
-        }
-
-        @Test
-        @DisplayName("예산 부족으로 수정 실패")
-        fun insufficientBalance_throwsException() {
-            val request = ExpenseUpdateRequest(
-                description = "너무 많이 먹었는데 예산보다 많은 지출 수정",
-                amount = BigDecimal("200000.00"),
-                category = ExpenseCategory.MEAL
-            )
-            val original = Expense(
-                id = 1L,
-                description = "럭키비키즈 원래 점심 식사",
-                amount = BigDecimal("50000.00"),
-                category = ExpenseCategory.MEAL,
-                paymentMethod = PaymentMethod.CARD,
-                payer = payer,
-                team = team
-            )
-            every { expenseRepository.findWithTeamAndBudgetById(1L) } returns original
-
-            val exception = assertThrows<CustomLogicException> {
-                expenseService.updateExpense(1L, request)
-            }
-            assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.INSUFFICIENT_BALANCE)
-        }
-    }
-
-    @Nested
-    @DisplayName("지출 삭제 테스트")
-    inner class DeleteExpenseTests {
-
-        @Test
-        @DisplayName("지출 삭제 성공")
-        fun success() {
-            val expense = Expense(
-                id = 1L,
-                description = "삭제할 지출",
-                amount = BigDecimal("30000.00"),
-                category = ExpenseCategory.MEAL,
-                paymentMethod = PaymentMethod.CASH,
-                payer = payer,
-                team = team
-            )
-            every { expenseRepository.findWithTeamAndBudgetById(1L) } returns expense
-            justRun { expenseRepository.delete(expense) }
-
-            val response = expenseService.deleteExpense(1L)
-
-            val expectedBalance = BigDecimal("130000.00")
-            assertThat(team.budget?.balance).isEqualByComparingTo(expectedBalance)
-            assertThat(response.balance).isEqualByComparingTo(expectedBalance)
-
-            verify { expenseRepository.delete(expense) }
-            verify { cacheEvictService.evictByPrefix(any(), any()) }
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 지출 삭제 시 예외 발생")
-        fun expenseNotFound_throwsException() {
-            every { expenseRepository.findWithTeamAndBudgetById(999L) } returns null
-
-            val exception = assertThrows<CustomLogicException> {
-                expenseService.deleteExpense(999L)
-            }
-            assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.EXPENSE_NOT_FOUND)
-        }
-    }
-
-    @Nested
-    @DisplayName("지출 리스트 조회 테스트")
-    inner class GetListExpenseTests {
-
-        @Test
-        @DisplayName("지출 리스트 정상 반환")
-        fun success() {
-            val pageable: Pageable = PageRequest.of(0, 10)
-            val responses = listOf(
-                createExpense("점심 식사", BigDecimal("10000.00"), PaymentMethod.CASH),
-                createExpense("저녁 식사", BigDecimal("15000.00"), PaymentMethod.CARD)
-            ).map { ExpenseMapper.toExpenseResponse(it) }
-            val page = PageImpl(responses, pageable, responses.size.toLong())
-
-            every { teamRepository.existsById(1L) } returns true
-            every { expenseRepository.findResponsesByTeamId(1L, pageable) } returns page
-
-            val result = expenseService.getExpenses(1L, pageable)
-
-            assertThat(result.content).hasSize(2)
-            assertThat(result.page).isEqualTo(0)
-            assertThat(result.size).isEqualTo(10)
-            assertThat(result.totalElements).isEqualTo(2)
-            assertThat(result.totalPages).isEqualTo(1)
-
-            val first = result.content[0]
-            assertThat(first.description).isEqualTo("점심 식사")
-            assertThat(first.amount).isEqualByComparingTo(BigDecimal("10000.00"))
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 팀으로 조회 시 예외 발생")
-        fun teamNotFound() {
-            val pageable = PageRequest.of(0, 5)
-            every { teamRepository.existsById(999L) } returns false
-
-            val exception = assertThrows<CustomLogicException> {
-                expenseService.getExpenses(999L, pageable)
-            }
-            assertThat(exception.exceptionCode).isEqualTo(ExceptionCode.TEAM_NOT_FOUND)
-        }
-
-        private fun createExpense(
-            description: String,
-            amount: BigDecimal,
-            paymentMethod: PaymentMethod
-        ) = Expense(
-            id = null,
-            description = description,
-            amount = amount,
-            category = ExpenseCategory.MEAL,
-            paymentMethod = paymentMethod,
-            payer = payer,
-            team = team
-        )
     }
 }
