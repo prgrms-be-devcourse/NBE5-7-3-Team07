@@ -102,7 +102,7 @@ class Budget(
 
     fun setForeignBalance() {
         if (avgExchangeRate != null) {
-            this.foreignBalance = totalAmount.divide(avgExchangeRate, SCALE, ROUNDING)
+            this.foreignBalance = balance.divide(avgExchangeRate, SCALE, ROUNDING)
         }
     }
 
