@@ -29,17 +29,16 @@ class JwtAuthenticationFilter(
 ) : OncePerRequestFilter() {
     
     private val logger = LoggerFactory.getLogger(JwtAuthenticationFilter::class.java)
-    
-    override fun shouldNotFilter(request: HttpServletRequest): Boolean {
 
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path = request.requestURI
-        logger.info("shouldNotFilter 호출됨 - path: $path")  // 디버깅 로그 추가
+        logger.error("=== FILTER DEBUG === path: $path")  // 긴급 디버깅
 
         val shouldSkip = path.startsWith("/api/users/") ||
                 path.startsWith("/api/email/") ||
                 path == "/api/refresh"
 
-        logger.info("필터 제외 여부: $shouldSkip")  // 디버깅 로그 추가
+        logger.error("=== FILTER DEBUG === shouldSkip: $shouldSkip")  // 긴급 디버깅
         return shouldSkip
     }
     
