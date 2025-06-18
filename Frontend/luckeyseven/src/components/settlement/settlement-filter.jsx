@@ -101,7 +101,7 @@ export function SettlementFilter({users, expenses, initialFilters}) {
                 <option value="">전체</option>
                 {expenses.map((expense) => (
                     <option key={expense.id} value={expense.id}>
-                      {expense.description} ({expense.amount})
+                      {expense.description}
                     </option>
                 ))}
               </select>
