@@ -49,10 +49,11 @@ export default function Login() {
       const response = await login(req);
       console.log("로그인 응답:", response);
       
-      // 로그인 후 홈으로 이동 (200ms 지연)
+      // 로그인 후 홈으로 이동 (사용자 정보 저장 완료 대기)
       setTimeout(() => {
+        console.log("로그인 완료 후 네비게이션 시작");
         navigate('/team-setup', { replace: true });
-      }, 200);
+      }, 500);
     } catch(err) {
       console.error("로그인 오류:", err);
       setError(err.response?.data?.message || '로그인에 실패했습니다.');

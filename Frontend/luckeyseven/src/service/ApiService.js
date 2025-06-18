@@ -24,11 +24,33 @@ export const privateApi = axios.create({
 
 // publicApi 요청 디버깅
 publicApi.interceptors.request.use((config) => {
-  console.log("publicApi 요청:", config.url);
-  console.log("publicApi 요청 헤더:", config.headers);
-  console.log("publicApi 요청 withCredentials:", config.withCredentials);
+  console.log("=== publicApi 요청 디버깅 ===");
+  console.log("요청 URL:", config.url);
+  console.log("요청 메서드:", config.method);
+  console.log("요청 헤더:", config.headers);
+  console.log("요청 데이터:", config.data);
+  console.log("요청 withCredentials:", config.withCredentials);
+  console.log("Base URL:", config.baseURL);
   return config;
 });
+
+// publicApi 응답 디버깅
+publicApi.interceptors.response.use(
+  (response) => {
+    console.log("=== publicApi 응답 성공 ===");
+    console.log("응답 상태:", response.status);
+    console.log("응답 데이터:", response.data);
+    return response;
+  },
+  (error) => {
+    console.error("=== publicApi 응답 오류 ===");
+    console.error("오류 상태:", error.response?.status);
+    console.error("오류 데이터:", error.response?.data);
+    console.error("오류 헤더:", error.response?.headers);
+    console.error("전체 오류:", error);
+    return Promise.reject(error);
+  }
+);
 
 // privateApi 생성 시점의 기본 헤더 로그
 console.log("privateApi 생성 시점의 기본 헤더:", privateApi.defaults.headers);
