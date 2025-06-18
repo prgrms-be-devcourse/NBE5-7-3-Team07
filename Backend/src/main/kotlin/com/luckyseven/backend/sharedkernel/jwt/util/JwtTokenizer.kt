@@ -42,13 +42,13 @@ class JwtTokenizer(
     fun reissueTokenPair(response: HttpServletResponse, memberDetails: MemberDetails): String {
         val accessToken = createToken(
             memberDetails,
-            ACCESS_TOKEN_EXPIRE/1000,
+            ACCESS_TOKEN_EXPIRE,
             getSigningKey(accessSecret)
         )
 
         val newRefreshTokenValue = createToken(
             memberDetails,
-            REFRESH_TOKEN_EXPIRE/1000,
+            REFRESH_TOKEN_EXPIRE,
             getSigningKey(refreshSecret)
         )
 
@@ -84,13 +84,14 @@ class JwtTokenizer(
         tokenValue: String,
         expirationTime: Long
     ) {
+        val maxAgeSec = expirationTime / 1000
         val refreshToken = ResponseCookie.from("refreshToken", tokenValue)
             .httpOnly(true)
-            .secure(true)
+            .secure(false)
             .sameSite("None")
             .domain(".travelexpensemanager.kro.kr")
             .path("/")
-            .maxAge(expirationTime)
+            .maxAge(maxAgeSec)
             .build()
         
         logger.info("Setting Cookie - Name: {}, Value: {}", refreshToken.name, refreshToken.value)
