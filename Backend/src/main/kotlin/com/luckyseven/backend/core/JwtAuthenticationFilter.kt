@@ -31,9 +31,16 @@ class JwtAuthenticationFilter(
     private val logger = LoggerFactory.getLogger(JwtAuthenticationFilter::class.java)
     
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
+
         val path = request.requestURI
-        return path.startsWith("/api/users/") || path.startsWith("/api/email/")
-                || path.startsWith("/api/refresh")
+        logger.info("shouldNotFilter 호출됨 - path: $path")  // 디버깅 로그 추가
+
+        val shouldSkip = path.startsWith("/api/users/") ||
+                path.startsWith("/api/email/") ||
+                path == "/api/refresh"
+
+        logger.info("필터 제외 여부: $shouldSkip")  // 디버깅 로그 추가
+        return shouldSkip
     }
     
     @Throws(ServletException::class, IOException::class)
