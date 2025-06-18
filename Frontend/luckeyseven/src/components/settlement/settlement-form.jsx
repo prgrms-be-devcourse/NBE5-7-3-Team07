@@ -3,7 +3,6 @@
 import {useEffect, useState} from "react"
 import {useNavigate} from "react-router-dom"
 import {useToast} from "../../context/ToastContext"
-import {formatCurrency} from "../../lib/utils"
 import {
   createSettlement,
   updateSettlement
@@ -203,19 +202,12 @@ export function SettlementForm({
                     <option value="">지출 항목 선택</option>
                     {expenses.map((expense) => (
                         <option key={expense.id} value={expense.id}>
-                          {expense.description} ({formatCurrency(
-                            expense.amount)})
+                          {expense.description}
                         </option>
                     ))}
                   </select>
 
-                  <div className="h-6 mt-1">
-                    {selectedExpense ? (
-                        <p className="text-sm text-muted">총 지출
-                          금액: {formatCurrency(selectedExpense.amount)}</p>
-                    ) : (
-                        <p className="text-sm opacity-0">총 지출 금액: ₩0</p>
-                    )}
+                  <div className="h-3 mt-1">
                   </div>
 
                 </div>
