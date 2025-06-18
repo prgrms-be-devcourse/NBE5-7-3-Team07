@@ -157,21 +157,21 @@ export async function postRefreshToken() {
   
   const token = axios.defaults.headers.common['Authorization']?.split(' ')[1];
   
-  // refresh API는 특별히 publicApi 사용 (Authorization 헤더 없이, 쿠키만)
-  console.log("=== Refresh API: publicApi 사용 (헤더 없음) ===");
+  // refresh API는 privateApi 사용 (Authorization 헤더 포함, 쿠키도 함께)
+  console.log("=== Refresh API: privateApi 사용 (헤더 + 쿠키) ===");
   try {
-    const response = await publicApi.post(
+    const response = await privateApi.post(
       '/api/refresh',
       {}, // 빈 body
       {
-        withCredentials: true, // refreshToken 쿠키만 전송
+        withCredentials: true, // refreshToken 쿠키도 전송
         headers: {
           'Content-Type': 'application/json',
         }
       }
     );
     
-    console.log('✅ Refresh API 성공 (publicApi 사용)');
+    console.log('✅ Refresh API 성공 (privateApi 사용)');
     console.log('토큰 갱신 응답 상태:', response.status);
     console.log('토큰 갱신 응답 헤더:', JSON.stringify(response.headers));
     
@@ -200,7 +200,7 @@ export async function postRefreshToken() {
     }
     return response;
   } catch (error) {
-    console.error('❌ Refresh API 실패 (publicApi 사용)');
+    console.error('❌ Refresh API 실패 (privateApi 사용)');
     console.error('오류 상태:', error.response?.status);
     console.error('오류 데이터:', error.response?.data);
     console.error('전체 오류 객체:', error);
