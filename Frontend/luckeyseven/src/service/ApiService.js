@@ -70,7 +70,8 @@ privateApi.interceptors.request.use((config) => {
   // 쿠키 상태도 확인 (refresh 관련 API 호출 시)
   if (config.url && config.url.includes('refresh')) {
     console.log("=== Refresh API 호출 시 쿠키 확인 ===");
-    console.log("현재 쿠키:", document.cookie);
+    console.log("현재 쿠키 (httpOnly 제외):", document.cookie);
+    console.log("httpOnly 쿠키는 자동으로 전송됩니다.");
   }
 
   // Authorization 헤더에 토큰 강제 설정
@@ -144,16 +145,18 @@ export async function postRefreshToken() {
   console.log("=== 쿠키 상태 확인 ===");
   console.log("전체 쿠키:", document.cookie);
   
-  // refreshToken 쿠키 찾기
+  // httpOnly 쿠키는 JavaScript로 접근 불가능
+  console.log("⚠️ refreshToken이 httpOnly로 설정된 경우 JavaScript로 확인 불가");
+  console.log("하지만 withCredentials:true로 자동 전송됩니다.");
+  
+  // 일반 쿠키만 확인 (httpOnly가 아닌 것들)
   const cookies = document.cookie.split(';');
   const refreshTokenCookie = cookies.find(cookie => cookie.trim().startsWith('refreshToken='));
-  console.log("refreshToken 쿠키:", refreshTokenCookie ? refreshTokenCookie.trim() : "없음");
-  
-  // 모든 쿠키 개별 출력
-  console.log("모든 쿠키 목록:");
-  cookies.forEach((cookie, index) => {
-    console.log(`${index + 1}. ${cookie.trim()}`);
-  });
+  if (refreshTokenCookie) {
+    console.log("refreshToken 쿠키 (non-httpOnly):", refreshTokenCookie.trim());
+  } else {
+    console.log("refreshToken 쿠키: httpOnly 설정이거나 없음");
+  }
   
   const token = axios.defaults.headers.common['Authorization']?.split(' ')[1];
   

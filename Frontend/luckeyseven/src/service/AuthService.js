@@ -282,8 +282,9 @@ export const logout = async() => {
         console.log("- Authorization 헤더:", axios.defaults.headers.common['Authorization'] || "없음");
         
         try {
-            console.log("=== 로그아웃 API 호출 시작 ===");
-            console.log("쿠키 상태:", document.cookie);
+                    console.log("=== 로그아웃 API 호출 시작 ===");
+        console.log("쿠키 상태 (httpOnly 제외):", document.cookie);
+        console.log("httpOnly 쿠키는 자동으로 전송됩니다.");
             
             // 서버 환경 문제로 인해 임시로 publicApi 사용 (쿠키만)
             const response = await publicApi.post("/api/users/logout", {}, {
