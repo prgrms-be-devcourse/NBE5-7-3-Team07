@@ -60,7 +60,7 @@ export function SettlementFilter({users, expenses, initialFilters}) {
               >
                 <option value="">전체</option>
                 {users.map((user) => (
-                    <option key={user.id} value={user.id}>
+                    <option key={user.memberId} value={user.memberId}>
                       {user.memberNickName}
                     </option>
                 ))}
@@ -80,7 +80,7 @@ export function SettlementFilter({users, expenses, initialFilters}) {
               >
                 <option value="">전체</option>
                 {users.map((user) => (
-                    <option key={user.id} value={user.id}>
+                    <option key={user.memberId} value={user.memberId}>
                       {user.memberNickName}
                     </option>
                 ))}

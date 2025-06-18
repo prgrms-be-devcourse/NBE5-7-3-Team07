@@ -56,7 +56,7 @@ export function SettlementAggregationPage() {
 
   // 사용자 ID로 닉네임 찾기
   const getUserNickname = (userId) => {
-    const user = users.find(user => user.id === userId)
+    const user = users.find(user => user.memberId === userId)
     return user ? user.memberNickName : `사용자 ${userId}`
   }
 

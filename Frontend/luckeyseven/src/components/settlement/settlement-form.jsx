@@ -157,7 +157,7 @@ export function SettlementForm({
                   >
                     <option value="">결제자 선택</option>
                     {users.map((user) => (
-                        <option key={user.id} value={user.id}>
+                        <option key={user.memberId} value={user.memberId}>
                           {user.memberNickName}
                         </option>
                     ))}
@@ -180,7 +180,7 @@ export function SettlementForm({
                   >
                     <option value="">정산자 선택</option>
                     {users.map((user) => (
-                        <option key={user.id} value={user.id}>
+                        <option key={user.memberId} value={user.memberId}>
                           {user.memberNickName}
                         </option>
                     ))}

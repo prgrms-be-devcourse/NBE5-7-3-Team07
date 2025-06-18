@@ -198,7 +198,7 @@ export function TeamSettlementsPage() {
 
   // 사용자 ID로 닉네임 찾기
   const getUserNickname = (userId) => {
-    const user = users.find(user => user.id === userId)
+    const user = users.find(user => user.memberId === userId)
     return user ? user.memberNickName : `사용자 ${userId}`
   }
 
@@ -455,7 +455,7 @@ export function TeamSettlementsPage() {
                       >
                         <option value="">전체</option>
                         {users.map((user) => (
-                            <option key={`payer-${user.id}`}
+                            <option key={`payer-${user.memberId}`}
                                     value={user.memberNickName}>
                               {user.memberNickName}
                             </option>
@@ -475,7 +475,7 @@ export function TeamSettlementsPage() {
                       >
                         <option value="">전체</option>
                         {users.map((user) => (
-                            <option key={`receiver-${user.id}`}
+                            <option key={`receiver-${user.memberId}`}
                                     value={user.memberNickName}>
                               {user.memberNickName}
                             </option>
