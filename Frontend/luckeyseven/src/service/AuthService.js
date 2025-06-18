@@ -282,20 +282,49 @@ export const logout = async() => {
         console.log("- Authorization 헤더:", axios.defaults.headers.common['Authorization'] || "없음");
         
         try {
-            const response = await privateApi.post("/api/users/logout", {}, {
-                withCredentials: true,
+            console.log("=== 로그아웃 API 호출 시작 ===");
+            console.log("쿠키 상태:", document.cookie);
+            
+            // 로그아웃은 publicApi 사용 (Authorization 헤더 없이)
+            const response = await publicApi.post("/api/users/logout", {}, {
+                withCredentials: true,  // refreshToken 쿠키만 전송
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Authorization 헤더는 제외
+                }
             });
             
-            console.log("로그아웃 성공:", response.data);
+            console.log("로그아웃 API 성공:", response.status, response.data);
+            console.log("로그아웃 응답 헤더:", JSON.stringify(response.headers));
+            
+            // 백엔드에서 Authorization 헤더가 빈 문자열로 오면 토큰 무효화 처리
+            const authHeader = response.headers?.authorization || response.headers?.['authorization'];
+            if (authHeader === "" || authHeader === null) {
+                console.log("✅ 백엔드에서 Authorization 헤더 무효화 신호 수신");
+                console.log("클라이언트 측 토큰 정리 시작...");
+                
+                // 즉시 토큰 제거
+                TokenManager.removeToken();
+                UserManager.removeUser();
+                
+                console.log("서버 지시에 따른 토큰 정리 완료");
+            }
         } catch (apiError) {
             console.error("로그아웃 API 오류:", 
                 apiError.response?.status, 
                 apiError.response?.data || apiError.message);
+            console.error("로그아웃 API 전체 오류:", apiError);
         }
         
-        // 클라이언트 상태 정리 (통합된 함수 사용)
-        TokenManager.removeToken();
-        UserManager.removeUser();
+        // 최종적으로 클라이언트 상태 정리 (혹시 위에서 처리되지 않았을 경우 안전장치)
+        console.log("최종 클라이언트 상태 정리 확인...");
+        if (localStorage.getItem('accessToken') || currentUser) {
+            console.log("아직 토큰/사용자 정보가 남아있음 - 추가 정리 수행");
+            TokenManager.removeToken();
+            UserManager.removeUser();
+        } else {
+            console.log("이미 모든 토큰/사용자 정보가 정리됨");
+        }
         
         console.log("로그아웃 후 인증 상태:");
         console.log("- currentUser:", currentUser);
