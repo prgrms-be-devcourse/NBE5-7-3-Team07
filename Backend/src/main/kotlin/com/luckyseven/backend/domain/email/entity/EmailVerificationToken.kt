@@ -12,13 +12,13 @@ import java.time.LocalDateTime
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-    
+
     @Column(nullable = false, unique = true, length = 36)
     val token: String,
-    
+
     @Column(nullable = false)
     val email: String,
-    
+
     @Column(nullable = false)
     val expireTime: LocalDateTime
-) 
+)

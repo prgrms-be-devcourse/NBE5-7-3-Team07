@@ -4,6 +4,7 @@ import com.luckyseven.backend.sharedkernel.jwt.util.JwtTokenizer
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
@@ -43,7 +44,7 @@ class SecurityConfig(
                 ex.authenticationEntryPoint(customAuthenticationEntryPoint)
             }
             .authorizeHttpRequests { auth ->
-                auth
+                auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers(
                         "/api/users/**",
                         "/v3/api-docs/**",
@@ -71,4 +72,6 @@ class SecurityConfig(
     fun passwordEncoder(): BCryptPasswordEncoder {
         return BCryptPasswordEncoder()
     }
+
+    // CORS settings provided by WebConfig.corsConfigurationSource()
 } 

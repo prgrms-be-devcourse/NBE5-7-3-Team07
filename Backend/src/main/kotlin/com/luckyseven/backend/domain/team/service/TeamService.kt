@@ -163,8 +163,7 @@ class TeamService(
     fun getTeamDashboard(teamId: Long): TeamDashboardResponse? {
         // 1. 캐시에서 대시보드 데이터 조회
         val cachedDashboard = teamDashboardCacheService.getCachedTeamDashboard(teamId)
-
-        // 2. 캐시가 있으면 Budget의 updatedAt 확인
+        //2. 캐시가 있으면 Budget의 updatedAt 확인
         if (cachedDashboard != null) {
             val latestBudgetUpdate = budgetRepository.findUpdatedAtByTeamId(teamId)
 
@@ -204,9 +203,11 @@ class TeamService(
         val pageable: Pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending())
         val recentExpenses = expenseRepository.findByTeamId(teamId, pageable).getContent()
 
-        // 카테고리별 지출 합계 조회
-        val categoryExpenseSums =
-            expenseRepository.findCategoryExpenseSumsByTeamId(teamId)
+        // 카테고리별 지출 합계 조회 (팀/예산 조인 없이 환율을 파라미터로 전달)
+        val categoryExpenseSums = expenseRepository.findCategoryExpenseSumsByTeamId(
+            teamId,
+            budget?.avgExchangeRate
+        )
 
         // 대시보드 응답 생성
         val dashboard = TeamMapper.toTeamDashboardResponse(
@@ -265,4 +266,3 @@ class TeamService(
         }
     }
 }
-

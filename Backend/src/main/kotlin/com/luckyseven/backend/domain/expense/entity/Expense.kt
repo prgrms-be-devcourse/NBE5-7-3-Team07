@@ -13,7 +13,8 @@ import java.math.BigDecimal
     name = "expense",
     indexes = [
         Index(name = "idx_expense_payer", columnList = "payer_id"),
-        Index(name = "idx_team", columnList = "team_id")
+        Index(name = "idx_team", columnList = "team_id"),
+        Index(name = "idx_team_category", columnList = "team_id, category")
     ]
 )
 class Expense(

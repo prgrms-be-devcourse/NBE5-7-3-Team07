@@ -16,7 +16,7 @@ class RefreshToken(
 
    val userId: Long,
 
-   @Column(length = 2000)
+   @Column(length = 500)
    val tokenValue: String,
 
    val issuedAt: Instant = Instant.now(),

@@ -2,6 +2,7 @@ package com.luckyseven.backend.domain.expense.repository
 
 import com.luckyseven.backend.domain.expense.dto.ExpenseResponse
 import com.luckyseven.backend.domain.expense.entity.Expense
+import java.math.BigDecimal
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.EntityGraph
@@ -87,6 +88,28 @@ interface ExpenseRepository : JpaRepository<Expense, Long> {
     )
     fun findCategoryExpenseSumsByTeamId(
         @Param("teamId") teamId: Long
+    ): List<CategoryExpenseSum>
+
+    @Query(
+        value = """
+        SELECT 
+          e.category AS category,
+          SUM(
+            CASE 
+              WHEN e.payment_method = 'CASH'
+                THEN e.amount * COALESCE(:avgExchangeRate, 1)
+              ELSE e.amount
+            END
+          ) AS total_amount
+        FROM expense e
+        WHERE e.team_id = :teamId
+        GROUP BY e.category
+        """,
+        nativeQuery = true
+    )
+    fun findCategoryExpenseSumsByTeamId(
+        @Param("teamId") teamId: Long,
+        @Param("avgExchangeRate") avgExchangeRate: BigDecimal?
     ): List<CategoryExpenseSum>
 
     // 지출이 있는 경우 예산 삭제를 제한하기 위한 지출 조회

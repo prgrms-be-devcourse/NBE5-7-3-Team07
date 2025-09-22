@@ -17,10 +17,6 @@ import java.time.LocalDateTime
             name = "idx_team_leader_id",
             columnList = "leader_id"
         ),
-        Index(
-            name = "idx_team_budget_id",
-            columnList = "budget_id"
-        )
     ]
 )
 @AttributeOverride(name = "id", column = Column(name = "team_id"))
